@@ -1,3 +1,4 @@
+// Barrel — exports de tous les écrans secondaires
 export 'heritage_screen.dart';
 export 'notification_screen.dart';
 export 'quiz_screen.dart';

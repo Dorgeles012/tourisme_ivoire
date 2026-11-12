@@ -21,8 +21,18 @@ require_once APP_ROOT . '/controllers/PassportController.php';
 require_once APP_ROOT . '/controllers/NotificationController.php';
 require_once APP_ROOT . '/controllers/SettingsController.php';
 require_once APP_ROOT . '/controllers/HeritageController.php';
-$basePath = rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? ''), '/\\');
-$path = preg_replace('#^' . preg_quote($basePath, '#') . '#', '', parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/');
+$requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+// Under Apache mod_rewrite SCRIPT_NAME may refer to index.php or to the
+// rewritten request. Normalize from REQUEST_URI so both forms route correctly.
+$apiOffset = strpos($requestPath, '/api/');
+if ($apiOffset !== false) {
+    $path = substr($requestPath, $apiOffset);
+} else {
+    $basePath = rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? ''), '/\\');
+    $path = $basePath !== '' && str_starts_with($requestPath, $basePath)
+        ? substr($requestPath, strlen($basePath))
+        : $requestPath;
+}
 $path = '/' . trim($path, '/');
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 try {
@@ -74,5 +84,11 @@ try {
     api_error('route_not_found', 'Route API introuvable.', 404);
 } catch (Throwable $e) {
     error_log((string)$e);
-    api_error('server_error', 'Une erreur interne est survenue.', 500);
+    $error = ['code' => 'server_error', 'message' => 'Une erreur interne est survenue.'];
+    // Expose the exception only in the local XAMPP development environment.
+    // Production responses must not disclose SQL or filesystem details.
+    if (env_value('APP_ENV', 'production') === 'local') {
+        $error['details'] = $e->getMessage();
+    }
+    json_response(['error' => $error], 500);
 }

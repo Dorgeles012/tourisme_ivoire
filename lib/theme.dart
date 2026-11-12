@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 const ivorianOrange = Color(0xFFF77F00);
 const ivorianGreen = Color(0xFF009E60);

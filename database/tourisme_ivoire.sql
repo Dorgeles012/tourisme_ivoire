@@ -1,3 +1,4 @@
+CREATE DATABASE IF NOT EXISTS tourisme_ivoire CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE tourisme_ivoire;
 SET NAMES utf8mb4;
 CREATE TABLE IF NOT EXISTS langues (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, code VARCHAR(10) NOT NULL UNIQUE, nom VARCHAR(80) NOT NULL, actif BOOLEAN NOT NULL DEFAULT TRUE, created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP) ENGINE=InnoDB;
@@ -48,3 +49,30 @@ CREATE TABLE IF NOT EXISTS historique_mot_de_passe (id BIGINT UNSIGNED AUTO_INCR
 CREATE TABLE IF NOT EXISTS jetons_auth (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, utilisateur_id BIGINT UNSIGNED NOT NULL, jti CHAR(36) NOT NULL UNIQUE, expire_at DATETIME NOT NULL, revoque_at DATETIME NULL, created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, KEY idx_jetons_auth_user(utilisateur_id,revoque_at,expire_at), FOREIGN KEY(utilisateur_id) REFERENCES utilisateurs(id) ON DELETE CASCADE) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS tentatives_auth (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, email_hash CHAR(64) NOT NULL, ip_hash CHAR(64) NOT NULL, reussie BOOLEAN NOT NULL DEFAULT FALSE, created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, KEY idx_auth_email_date(email_hash,created_at), KEY idx_auth_ip_date(ip_hash,created_at)) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS participations_quiz_reponses (participation_id BIGINT UNSIGNED NOT NULL, question_id BIGINT UNSIGNED NOT NULL, reponse_id BIGINT UNSIGNED NOT NULL, est_correcte BOOLEAN NOT NULL, PRIMARY KEY(participation_id,question_id), FOREIGN KEY(participation_id) REFERENCES participations_quiz(id) ON DELETE CASCADE, FOREIGN KEY(question_id) REFERENCES questions(id) ON DELETE RESTRICT, FOREIGN KEY(reponse_id) REFERENCES reponses(id) ON DELETE RESTRICT) ENGINE=InnoDB;
+
+USE tourisme_ivoire;
+CREATE FULLTEXT INDEX ft_destinations_recherche ON destinations(nom,description);
+CREATE INDEX idx_videos_publication_date ON videos(statut,created_at);
+CREATE INDEX idx_quiz_publication_theme ON quiz(statut,theme,difficulte);
+CREATE INDEX idx_reservations_utilisateur_statut ON reservations(utilisateur_id,statut,created_at);
+CREATE INDEX idx_participations_quiz_score ON participations_quiz(quiz_id,score);
+CREATE INDEX idx_historique_points_user_date ON historique_points(utilisateur_id,created_at);
+
+USE tourisme_ivoire;
+CREATE OR REPLACE VIEW v_destinations_publiees AS
+SELECT d.id,d.nom,d.slug,d.description,d.image_principale,d.latitude,d.longitude,
+ l.nom AS localite,COALESCE(r.nom,di.nom) AS region,c.nom AS categorie,d.published_at
+FROM destinations d
+JOIN localites l ON l.id=d.localite_id
+JOIN departements dep ON dep.id=l.departement_id
+LEFT JOIN regions r ON r.id=dep.region_id
+LEFT JOIN districts di ON di.id=dep.district_id
+JOIN categories c ON c.id=d.categorie_id
+WHERE d.statut_publication='publie' AND d.deleted_at IS NULL;
+
+CREATE OR REPLACE VIEW v_classement_quiz AS
+SELECT p.quiz_id,q.titre AS quiz,u.id AS utilisateur_id,u.nom,p.score,p.bonnes_reponses,p.total_questions,p.termine_at
+FROM participations_quiz p
+JOIN quiz q ON q.id=p.quiz_id
+JOIN utilisateurs u ON u.id=p.utilisateur_id
+WHERE p.termine_at IS NOT NULL AND q.statut='publie';

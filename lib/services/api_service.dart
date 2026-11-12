@@ -356,6 +356,8 @@ class ApiService {
     await _tokenStore.saveToken(token);
     return Map<String, dynamic>.from(payload);
   }
+
+  void dispose() {}
 }
 
 abstract interface class TokenStore {

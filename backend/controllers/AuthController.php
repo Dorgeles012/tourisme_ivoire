@@ -13,13 +13,19 @@ final class AuthController {
         if ($stmt->fetch()) api_error('email_exists', 'Cette adresse courriel est déjà utilisée.', 409);
         $pdo->beginTransaction();
         try {
-            $stmt = $pdo->prepare("INSERT INTO utilisateurs(nom,email,mot_de_passe_hash,langue_id) VALUES(?,?,?,(SELECT id FROM langues WHERE code='fr' LIMIT 1))");
+            $stmt = $pdo->prepare("INSERT INTO utilisateurs(nom,email,mot_de_passe_hash,langue_id) VALUES(?,?,?,(SELECT id FROM langues WHERE code='fr' AND actif=1 LIMIT 1))");
             $stmt->execute([$name, $email, password_hash($password, PASSWORD_DEFAULT)]);
             $id = (int)$pdo->lastInsertId();
-            $role = $pdo->query("SELECT id FROM roles WHERE code='voyageur'")->fetchColumn();
-            if (!$role) throw new RuntimeException('Le rôle voyageur doit être initialisé.');
-            $link = $pdo->prepare('INSERT INTO utilisateurs_roles(utilisateur_id,role_id) VALUES(?,?)');
-            $link->execute([$id, $role]);
+            // `client` is the standard role in the current installation. Keep
+            // `voyageur` as a compatibility fallback for databases seeded by
+            // earlier versions of this project.
+            $role = $pdo->query("SELECT id FROM roles WHERE code IN ('client','voyageur') ORDER BY CASE WHEN code='client' THEN 0 ELSE 1 END LIMIT 1")->fetchColumn();
+            // Le schéma initial reste vide. Si les rôles ont été créés par un
+            // administrateur, attribuer le rôle client; sinon le compte reste un utilisateur standard.
+            if ($role) {
+                $link = $pdo->prepare('INSERT INTO utilisateurs_roles(utilisateur_id,role_id) VALUES(?,?)');
+                $link->execute([$id, $role]);
+            }
             $passport = $pdo->prepare('INSERT INTO passeports(utilisateur_id,numero,date_emission) VALUES(?,?,CURRENT_DATE)');
             $passport->execute([$id, 'TI-' . strtoupper(bin2hex(random_bytes(6)))]);
             $settings = $pdo->prepare('INSERT INTO parametres_utilisateurs(utilisateur_id) VALUES(?)');

@@ -11,23 +11,11 @@ Application Flutter multiplateforme, API PHP/PDO et interface d’administration
 
 ## Base de données et migrations
 
-Flutter communique avec l’API PHP en HTTP; seul le backend PHP se connecte à MySQL. Ne mettez jamais les identifiants MySQL dans l’application Flutter.
+Flutter communique avec l’API PHP en HTTP; seul le backend PHP se connecte à MySQL. Ne mettez jamais les identifiants MySQL dans Flutter.
 
-Après avoir configuré `backend/.env` et démarré MySQL, lancez depuis la racine du projet :
+Pour une base neuve vide, importez database/tourisme_ivoire_vide.sql dans phpMyAdmin, ou configurez backend/.env et lancez php backend/migrate.php. La migration applique uniquement la création de la base, les tables, index et vues. Elle n’exécute aucun script de données. php backend/migrate.php --status affiche son état.
 
-```powershell
-php backend/migrate.php
-```
-
-Le script crée `tourisme_ivoire` si nécessaire, applique dans l’ordre les scripts `database/*.sql` qui ne sont pas encore enregistrés, puis garde leur état dans `schema_migrations`. Pour voir les migrations en attente :
-
-```powershell
-php backend/migrate.php --status
-```
-
-Les scripts de démonstration sont destinés au développement et ne doivent pas être importés en production. Les contenus de démonstration sont non publiés tant qu’ils n’ont pas été vérifiés. Les médias, horaires, tarifs, coordonnées et rattachements administratifs non vérifiés ne sont pas inventés.
-
-Le compte MySQL indiqué dans `backend/.env` doit avoir les droits de créer la base et ses tables. `backend/.env.example` fournit les noms de paramètres attendus; copiez-le sous `backend/.env`, puis remplacez le mot de passe et le secret JWT.
+Le SQL d’installation crée 48 tables InnoDB en utf8mb4 sans INSERT. Les scripts de remplissage historiques database/03–13 et 16 sont exclus. Voir database/INSTALLATION_VIDE.md pour l’import XAMPP, les tables et leurs relations. L’import est non destructif; il ne supprime pas une ancienne base.
 
 ## Backend PHP
 

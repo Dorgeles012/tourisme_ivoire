@@ -33,6 +33,9 @@ if (!$databaseDir || !$files) {
 }
 natsort($files);
 $files = array_values($files);
+// Installation vide : seules la structure, les index et les vues sont appliqués.
+$structureFiles = ['01_create_database.sql','02_create_tables.sql','14_indexes.sql','15_views.sql'];
+$files = array_values(array_filter($files, static fn(string $file): bool => in_array(basename($file), $structureFiles, true)));
 if (basename($files[0]) !== '01_create_database.sql') {
     fwrite(STDERR, "Le premier script doit être 01_create_database.sql.\n");
     exit(1);
@@ -80,11 +83,7 @@ try {
             exit(1);
         }
     }
-    // Activer les contenus de base pour l'affichage dans l'application mobile Flutter
-    $pdo->exec("UPDATE destinations SET statut_publication='publie', published_at=NOW() WHERE statut_publication='brouillon'");
-    $pdo->exec("UPDATE quiz SET statut='publie' WHERE statut='brouillon'");
-    $pdo->exec("UPDATE patrimoines SET statut='publie' WHERE statut='brouillon'");
-    echo "Migrations terminées pour {$dbName}. Les contenus sont prêts pour Flutter.\n";
+    echo "Structure vide créée pour {$dbName}; aucun jeu de données n'a été chargé.\n";
 } catch (Throwable $e) {
     fwrite(STDERR, "Erreur de migration : {$e->getMessage()}\n");
     exit(1);
