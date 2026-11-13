@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once dirname(__DIR__,2) . '/admin/bootstrap.php';
-admin_require_role(['administrateur']);
+admin_require_module('geography',true);
 $error='';
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET')==='POST') {
     admin_check_csrf();
@@ -57,7 +57,8 @@ $relations=db()->query('SELECT d.id AS district_id,d.nom AS district,r.id AS reg
 $csrf=admin_csrf();
 ?>
 <!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Géographie — Administration</title><link rel="stylesheet" href="style.css"></head>
-<body><header class="topbar"><strong>TOURISME IVOIRE · ADMIN</strong><a href="index.php">Tableau de bord</a></header><main class="content">
+<body class="admin-page">
+<?php require __DIR__ . '/_sidebar.php'; ?><header class="topbar"><strong>TOURISME IVOIRE · ADMIN</strong><a href="index.php">Tableau de bord</a></header><main class="content">
 <h1>Référentiel géographique</h1><p class="muted">N’ajoutez un rattachement district-région que si une source officielle l’atteste. Les coordonnées restent facultatives lorsqu’elles ne sont pas vérifiées.</p>
 <?php if ($error!==''): ?><div class="notice error"><?= admin_escape($error) ?></div><?php endif; ?>
 <div class="editor-grid">

@@ -325,10 +325,10 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         PageRouteBuilder<void>(
-          pageBuilder: (_, animation, __) => QuizResultScreen(result: result),
+          pageBuilder: (_, animation, _) => QuizResultScreen(result: result),
           transitionDuration: kNormalAnim,
           reverseTransitionDuration: kFastAnim,
-          transitionsBuilder: (_, animation, __, child) => FadeTransition(
+          transitionsBuilder: (_, animation, _, child) => FadeTransition(
             opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
             child: SlideTransition(
               position: Tween<Offset>(
@@ -476,6 +476,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
                                 ),
                                 child: RadioListTile<int>(
                                   value: id,
+                                  // ignore: deprecated_member_use
                                   groupValue: selected,
                                   activeColor: ivorianOrange,
                                   shape: RoundedRectangleBorder(
@@ -491,6 +492,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
                                           : FontWeight.w400,
                                     ),
                                   ),
+                                  // ignore: deprecated_member_use
                                   onChanged: (value) {
                                     if (value != null) {
                                       setState(

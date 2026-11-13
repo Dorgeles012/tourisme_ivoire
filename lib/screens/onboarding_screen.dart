@@ -1,7 +1,4 @@
-// lib/screens/onboarding_screen.dart
-// Onboarding — 3 slides avec design orange africain contemporain
 import 'package:material_ui/material_ui.dart';
-
 import '../theme/design_system.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -156,9 +153,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   }
 }
 
-// ═══════════════════════════════════════════════════════════
 // 🎨 Cercles décoratifs de fond
-// ═══════════════════════════════════════════════════════════
 
 class _Circles extends StatelessWidget {
   const _Circles({required this.color});
@@ -206,9 +201,7 @@ class _Circles extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════
 // 📄 Contenu d'un slide
-// ═══════════════════════════════════════════════════════════
 
 class _SlideContent extends StatelessWidget {
   const _SlideContent({required this.slide});

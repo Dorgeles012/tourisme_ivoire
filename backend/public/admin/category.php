@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once dirname(__DIR__,2) . '/admin/bootstrap.php';
-admin_require_role(['administrateur','editeur']);
+admin_require_module('categories',true);
 $id = filter_var($_GET['id'] ?? null,FILTER_VALIDATE_INT);
 $category = ['nom'=>'','slug'=>'','description'=>'','icone'=>'','ordre'=>0,'statut'=>'actif','parent_id'=>''];
 $error = '';
@@ -47,7 +47,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
 $csrf = admin_csrf();
 ?>
 <!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Catégorie — Administration</title><link rel="stylesheet" href="style.css"></head>
-<body><header class="topbar"><strong>TOURISME IVOIRE · ADMIN</strong><a href="index.php?module=categories">Retour aux catégories</a></header><main class="content editor"><h1><?= $id?'Modifier':'Créer' ?> une catégorie</h1>
+<body class="admin-page">
+<?php require __DIR__ . '/_sidebar.php'; ?><header class="topbar"><strong>TOURISME IVOIRE · ADMIN</strong><a href="index.php?module=categories">Retour aux catégories</a></header><main class="content editor"><h1><?= $id?'Modifier':'Créer' ?> une catégorie</h1>
 <?php if ($error!==''): ?><div class="notice error"><?= admin_escape($error) ?></div><?php endif; ?>
 <form class="panel" method="post"><input type="hidden" name="csrf" value="<?= admin_escape($csrf) ?>">
 <label>Nom</label><input name="nom" maxlength="100" required value="<?= admin_escape($category['nom']) ?>">

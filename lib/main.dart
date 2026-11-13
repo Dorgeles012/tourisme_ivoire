@@ -98,13 +98,13 @@ class _TourismeIvoireAppState extends State<TourismeIvoireApp> {
               if (!context.mounted) return;
               Navigator.of(context).pushReplacement(
                 PageRouteBuilder<void>(
-                  pageBuilder: (_, __, ___) => AppShell(
+                  pageBuilder: (_, _, _) => AppShell(
                     api: widget.api,
                     onThemeChanged: _setTheme,
                     onAccessibilityChanged: _setAccessibility,
                   ),
                   transitionDuration: const Duration(milliseconds: 400),
-                  transitionsBuilder: (_, anim, __, child) => FadeTransition(
+                  transitionsBuilder: (_, anim, _, child) => FadeTransition(
                     opacity: CurvedAnimation(parent: anim, curve: Curves.easeOut),
                     child: child,
                   ),
@@ -124,9 +124,7 @@ class _TourismeIvoireAppState extends State<TourismeIvoireApp> {
   );
 }
 
-// ═══════════════════════════════════════════════════════════
 // 🌅 Splash Screen stylisé
-// ═══════════════════════════════════════════════════════════
 
 class _SplashScreen extends StatefulWidget {
   const _SplashScreen();

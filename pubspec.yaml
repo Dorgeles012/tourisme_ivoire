@@ -42,7 +42,7 @@ dependencies:
   url_launcher: ^6.3.1
   video_player: ^2.9.2
 
-  material_ui: any
+  material_ui: ^1.11.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -64,6 +64,12 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+  assets:
+    - lib/images/Stade.jfif
+    - lib/images/basilique.jpg
+    - lib/images/Cascade.jfif
+    - lib/images/Profile.avif
+    - lib/images/Tourisme.jpg
 
   # To add assets to your application, add an assets section, like this:
   # assets:

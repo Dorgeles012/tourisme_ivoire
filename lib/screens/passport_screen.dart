@@ -5,9 +5,7 @@ import '../services/api_service.dart';
 import '../theme/design_system.dart';
 import '../widgets/common.dart';
 
-// ═══════════════════════════════════════════════════════════════════════════════
 // PASSPORT SCREEN — Passeport numérique du voyageur
-// ═══════════════════════════════════════════════════════════════════════════════
 class PassportScreen extends StatelessWidget {
   const PassportScreen({required this.api, super.key});
   final ApiService api;
@@ -370,9 +368,7 @@ class _BadgeCard extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
 // FAVORITES SCREEN
-// ═══════════════════════════════════════════════════════════════════════════════
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({required this.api, super.key});
   final ApiService api;

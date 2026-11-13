@@ -29,6 +29,12 @@ class ApiService {
           }
           handler.next(options);
         },
+        onError: (error, handler) async {
+          if (error.response?.statusCode == 401) {
+            await _tokenStore.clearToken();
+          }
+          handler.next(error);
+        },
       ),
     );
   }
@@ -95,6 +101,8 @@ class ApiService {
 
   Future<Map<String, dynamic>> register({
     required String name,
+    String? firstName,
+    String? phone,
     required String email,
     required String password,
   }) async {
@@ -102,6 +110,9 @@ class ApiService {
       'api/auth/register',
       data: {
         'nom': name.trim(),
+        if (firstName != null && firstName.trim().isNotEmpty)
+          'prenom': firstName.trim(),
+        if (phone != null && phone.trim().isNotEmpty) 'telephone': phone.trim(),
         'email': email.trim(),
         'mot_de_passe': password,
       },
@@ -149,6 +160,45 @@ class ApiService {
     }
     return Map<String, dynamic>.from(payload);
   }
+
+  Future<Map<String, dynamic>> uploadAvatar(PlatformFile file) async {
+    final size = await file.length();
+    if (size == null || size < 1 || size > 5 * 1024 * 1024) {
+      throw const FormatException('L’image doit faire au maximum 5 Mo.');
+    }
+    final extension = file.extension?.toLowerCase();
+    if (!['jpg', 'jpeg', 'png', 'webp'].contains(extension)) {
+      throw const FormatException('Formats acceptés : JPEG, PNG ou WebP.');
+    }
+    final bytes = await file.readAsBytes();
+    if (bytes.isEmpty || bytes.length != size) {
+      throw const FormatException('Impossible de lire le fichier image.');
+    }
+    final response = await _dio.post<Map<String, dynamic>>(
+      'api/auth/me/avatar',
+      data: FormData.fromMap({
+        'avatar': MultipartFile.fromBytes(bytes, filename: file.name),
+      }),
+    );
+    final payload = _unwrap(response.data);
+    if (payload is! Map) {
+      throw const FormatException('Réponse avatar invalide.');
+    }
+    return Map<String, dynamic>.from(payload);
+  }
+
+  Future<String> createAdminHandoff() async {
+    final response = await _dio.post<Map<String, dynamic>>('api/admin/handoff');
+    final payload = _unwrap(response.data);
+    if (payload is! Map || payload['code'] is! String) {
+      throw const FormatException('Code de connexion administrateur invalide.');
+    }
+    return payload['code'] as String;
+  }
+
+  Uri adminHandoffUri(String code) => Uri.parse(
+    _dio.options.baseUrl,
+  ).resolve('admin/handoff.php#$code');
 
   Future<void> logout() async {
     try {
@@ -215,18 +265,20 @@ class ApiService {
     required bool rightsConfirmed,
     String? description,
   }) async {
-    final path = file.path;
-    if (path == null) {
-      throw StateError(
-        'Le chemin du fichier vidéo est indisponible sur cet appareil.',
-      );
+    final size = await file.length();
+    if (size == null || size < 1 || size > 100 * 1024 * 1024) {
+      throw const FormatException('La vidéo doit faire au maximum 100 Mo.');
     }
     final form = FormData.fromMap({
       'titre': title,
       'autorisation_diffusion': rightsConfirmed ? '1' : '0',
       if (description != null && description.trim().isNotEmpty)
         'description': description.trim(),
-      'video': await MultipartFile.fromFile(path, filename: file.name),
+      'video': MultipartFile.fromStream(
+        file.readAsByteStream,
+        size,
+        filename: file.name,
+      ),
     });
     final response = await _dio.post<Map<String, dynamic>>(
       'api/videos',

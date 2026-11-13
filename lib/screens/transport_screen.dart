@@ -5,9 +5,7 @@ import '../services/reservation_service.dart';
 import '../theme/design_system.dart';
 import '../widgets/common.dart';
 
-// ═══════════════════════════════════════════════════════════════════════════════
 // TRANSPORT SCREEN
-// ═══════════════════════════════════════════════════════════════════════════════
 class TransportScreen extends StatefulWidget {
   const TransportScreen({required this.api, super.key});
   final ApiService api;
@@ -411,9 +409,7 @@ class _InfoChip extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
 // RESERVATION HISTORY SCREEN
-// ═══════════════════════════════════════════════════════════════════════════════
 class ReservationHistoryScreen extends StatelessWidget {
   const ReservationHistoryScreen({required this.api, super.key});
   final ApiService api;

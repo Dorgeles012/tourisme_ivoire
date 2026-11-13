@@ -46,3 +46,10 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# User supplied profile images
+/backend/public/uploads/avatars/*
+!/backend/public/uploads/avatars/.gitkeep
+
+# Local database backups contain personal data and must not be committed
+/database/backups/

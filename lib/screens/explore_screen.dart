@@ -1,5 +1,3 @@
-// lib/screens/explore_screen.dart
-// Écran Explorer — recherche, filtres, grille responsive
 import 'package:material_ui/material_ui.dart';
 
 import '../models/destination.dart';

@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once dirname(__DIR__,2) . '/admin/bootstrap.php';
-admin_require_role(['administrateur','editeur']);
+admin_require_module('notifications',true);
 $error = '';
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     admin_check_csrf();
@@ -29,7 +29,8 @@ $users = db()->query("SELECT id,nom,email FROM utilisateurs WHERE statut='actif'
 $csrf = admin_csrf();
 ?>
 <!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Notification — Administration</title><link rel="stylesheet" href="style.css"></head>
-<body><header class="topbar"><strong>TOURISME IVOIRE · ADMIN</strong><a href="index.php?module=notifications">Retour aux notifications</a></header><main class="content editor"><h1>Créer une notification</h1>
+<body class="admin-page">
+<?php require __DIR__ . '/_sidebar.php'; ?><header class="topbar"><strong>TOURISME IVOIRE · ADMIN</strong><a href="index.php?module=notifications">Retour aux notifications</a></header><main class="content editor"><h1>Créer une notification</h1>
 <?php if ($error!==''): ?><div class="notice error"><?= admin_escape($error) ?></div><?php endif; ?>
 <form class="panel" method="post"><input type="hidden" name="csrf" value="<?= admin_escape($csrf) ?>">
 <label>Titre</label><input name="titre" maxlength="180" required>

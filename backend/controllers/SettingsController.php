@@ -21,6 +21,16 @@ final class SettingsController {
         foreach (['notifications','accessibilite'] as $key) {
             if (isset($data[$key]) && !is_array($data[$key])) api_error('validation_error',"$key doit être un objet JSON.",422);
         }
+        if (array_key_exists('mode_hors_ligne',$data) && !is_bool($data['mode_hors_ligne'])) {
+            api_error('validation_error','mode_hors_ligne doit être un booléen.',422);
+        }
+        if (isset($data['accessibilite'])) {
+            foreach ($data['accessibilite'] as $key => $value) {
+                if (!in_array($key,['contraste_eleve','texte_agrandi'],true) || !is_bool($value)) {
+                    api_error('validation_error','Les options d’accessibilité doivent être des booléens connus.',422);
+                }
+            }
+        }
         $current = db()->prepare('SELECT theme,notifications_json,accessibilite_json,mode_hors_ligne FROM parametres_utilisateurs WHERE utilisateur_id=?');
         $current->execute([$userId]);
         $stored = $current->fetch();

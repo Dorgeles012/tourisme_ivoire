@@ -8,9 +8,7 @@ import '../services/api_service.dart';
 import '../theme/design_system.dart';
 import '../widgets/common.dart';
 
-// ═══════════════════════════════════════════════════════════════════════════════
 // SETTINGS SCREEN
-// ═══════════════════════════════════════════════════════════════════════════════
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({
     required this.api,
@@ -179,7 +177,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Column(
                   children: [
                     SwitchListTile(
-                      activeColor: ivorianOrange,
+                      activeThumbColor: ivorianOrange,
                       title: const Text('Contraste renforcé'),
                       subtitle: const Text(
                         'Améliore la lisibilité sur fond clair ou sombre',
@@ -197,7 +195,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     Divider(height: 1, indent: 16, endIndent: 16),
                     SwitchListTile(
-                      activeColor: ivorianOrange,
+                      activeThumbColor: ivorianOrange,
                       title: const Text('Texte agrandi'),
                       subtitle: const Text(
                         'Augmente la taille de la police dans l\'app',
@@ -354,9 +352,7 @@ class _SettingsCard extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
 // OFFLINE LIBRARY SCREEN
-// ═══════════════════════════════════════════════════════════════════════════════
 class OfflineLibraryScreen extends StatefulWidget {
   const OfflineLibraryScreen({required this.api, super.key});
   final ApiService api;

@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once dirname(__DIR__, 2) . '/admin/bootstrap.php';
-$user = admin_require_role(['administrateur','editeur']);
+$user = admin_require_login();
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
     http_response_code(405);
     exit('Méthode non autorisée.');
@@ -10,29 +10,32 @@ admin_check_csrf();
 $module = (string)($_POST['module'] ?? '');
 $id = filter_var($_POST['id'] ?? null,FILTER_VALIDATE_INT);
 $action = (string)($_POST['action'] ?? '');
+$successMessage = 'Modification enregistrée.';
 
 $configuration = [
-    'users' => ['table'=>'utilisateurs','column'=>'statut','values'=>['actif','suspendu','en_attente'],'roles'=>['administrateur']],
-    'regions' => ['table'=>'regions','column'=>'statut','values'=>['actif','inactif'],'roles'=>['administrateur']],
-    'districts' => ['table'=>'districts','column'=>'statut','values'=>['actif','inactif'],'roles'=>['administrateur']],
-    'localities' => ['table'=>'localites','column'=>'statut','values'=>['actif','inactif'],'roles'=>['administrateur']],
-    'categories' => ['table'=>'categories','column'=>'statut','values'=>['actif','inactif'],'roles'=>['administrateur','editeur']],
-    'destinations' => ['table'=>'destinations','column'=>'statut_publication','values'=>['brouillon','publie','archive'],'roles'=>['administrateur','editeur']],
-    'images' => ['table'=>'images_destinations','column'=>'statut','values'=>['actif','inactif'],'roles'=>['administrateur','editeur']],
-    'videos' => ['table'=>'videos','column'=>'statut','values'=>['en_attente','publie','rejete','archive'],'roles'=>['administrateur','editeur']],
-    'quizzes' => ['table'=>'quiz','column'=>'statut','values'=>['brouillon','publie','archive'],'roles'=>['administrateur','editeur']],
-    'badges' => ['table'=>'badges','column'=>'statut','values'=>['actif','inactif'],'roles'=>['administrateur','editeur']],
-    'reservations' => ['table'=>'reservations','column'=>'statut','values'=>['demande','confirmee','annulee','terminee'],'roles'=>['administrateur']],
-    'reviews' => ['table'=>'avis','column'=>'statut','values'=>['en_attente','publie','rejete'],'roles'=>['administrateur','editeur']],
+    'users' => ['table'=>'utilisateurs','column'=>'statut','values'=>['actif','suspendu','en_attente'],'module'=>'users'],
+    'regions' => ['table'=>'regions','column'=>'statut','values'=>['actif','inactif'],'module'=>'geography'],
+    'districts' => ['table'=>'districts','column'=>'statut','values'=>['actif','inactif'],'module'=>'geography'],
+    'localities' => ['table'=>'localites','column'=>'statut','values'=>['actif','inactif'],'module'=>'geography'],
+    'categories' => ['table'=>'categories','column'=>'statut','values'=>['actif','inactif'],'module'=>'categories'],
+    'destinations' => ['table'=>'destinations','column'=>'statut_publication','values'=>['brouillon','publie','archive'],'module'=>'destinations'],
+    'heritage' => ['table'=>'patrimoines','column'=>'statut','values'=>['brouillon','publie','archive'],'module'=>'heritage'],
+    'virtual_visits' => ['table'=>'visites_virtuelles','column'=>'statut','values'=>['actif','inactif'],'module'=>'virtual_visits'],
+    'images' => ['table'=>'images_destinations','column'=>'statut','values'=>['actif','inactif'],'module'=>'images'],
+    'videos' => ['table'=>'videos','column'=>'statut','values'=>['en_attente','publie','rejete','archive'],'module'=>'videos'],
+    'quizzes' => ['table'=>'quiz','column'=>'statut','values'=>['brouillon','publie','archive'],'module'=>'quizzes'],
+    'badges' => ['table'=>'badges','column'=>'statut','values'=>['actif','inactif'],'module'=>'badges'],
+    'reservations' => ['table'=>'reservations','column'=>'statut','values'=>['demande','confirmee','annulee','terminee'],'module'=>'reservations'],
+    'reviews' => ['table'=>'avis','column'=>'statut','values'=>['en_attente','publie','rejete'],'module'=>'reviews'],
 ];
 
 try {
     if ($action === 'read_notification') {
-        admin_require_role(['administrateur','editeur']);
+        admin_require_module('notifications',true);
         if (!$id || $id < 1) throw new InvalidArgumentException('Notification invalide.');
         db()->prepare('UPDATE notifications SET lu_at=COALESCE(lu_at,NOW()) WHERE id=?')->execute([$id]);
     } elseif ($action === 'delete_destination') {
-        admin_require_role(['administrateur','editeur']);
+        admin_require_module('destinations',true);
         if (!$id || $id < 1) throw new InvalidArgumentException('Destination invalide.');
         db()->prepare("UPDATE destinations SET deleted_at=NOW() WHERE id=? AND deleted_at IS NULL")->execute([$id]);
     } else {
@@ -40,7 +43,20 @@ try {
         if (!$config || !in_array($action,$config['values'],true) || !$id || $id < 1) {
             throw new InvalidArgumentException('Action ou élément invalide.');
         }
-        admin_require_role($config['roles']);
+        admin_require_module($config['module'],true);
+        if ($module==='users') {
+            $targetRoleQuery = db()->prepare('SELECT `role` FROM utilisateurs WHERE id=? AND deleted_at IS NULL');
+            $targetRoleQuery->execute([$id]);
+            $targetRoleCode = $targetRoleQuery->fetchColumn();
+            $targetRoleCodes = $targetRoleCode ? [$targetRoleCode] : [];
+            $actorRoleCodes = admin_role_codes((int)$user['id']);
+            if (in_array('Sadmin',$targetRoleCodes,true) && !in_array('Sadmin',$actorRoleCodes,true)) {
+                throw new RuntimeException('Seul un Sadmin peut modifier le statut d’un compte Sadmin.');
+            }
+            if ((int)$id===(int)$user['id'] && $action!=='actif') {
+                throw new RuntimeException('Vous ne pouvez pas suspendre votre propre compte depuis cette page.');
+            }
+        }
         if ($module==='destinations' && $action==='publie') {
             $source = db()->prepare('SELECT source_reference FROM destinations WHERE id=? AND deleted_at IS NULL');
             $source->execute([$id]);
@@ -61,11 +77,42 @@ try {
                 throw new RuntimeException('La publication est bloquée : le quiz doit avoir 10 questions avec 4 propositions et une seule bonne réponse.');
             }
         }
-        $statement = db()->prepare("UPDATE {$config['table']} SET {$config['column']}=? WHERE id=?");
-        $statement->execute([$action,$id]);
-        if ($statement->rowCount() === 0) admin_flash('Aucun changement : l’élément est peut-être déjà dans cet état.');
+        if ($module==='virtual_visits' && $action==='actif') {
+            $publication = db()->prepare("SELECT CASE WHEN v.patrimoine_id IS NOT NULL THEN p.statut ELSE d.statut_publication END FROM visites_virtuelles v LEFT JOIN patrimoines p ON p.id=v.patrimoine_id LEFT JOIN destinations d ON d.id=v.destination_id WHERE v.id=?");
+            $publication->execute([$id]);
+            if ($publication->fetchColumn()!=='publie') {
+                throw new RuntimeException('La visite virtuelle ne peut être activée que si son contenu associé est publié.');
+            }
+        }
+        if ($module==='users' && $action!=='actif') {
+            $pdo = db();
+            $pdo->beginTransaction();
+            try {
+                $actorLock = $pdo->prepare("SELECT `role` FROM utilisateurs WHERE id=? AND statut='actif' AND deleted_at IS NULL FOR UPDATE");
+                $actorLock->execute([(int)$user['id']]);
+                if ($actorLock->fetchColumn() !== 'Sadmin') throw new RuntimeException('Votre rôle ne permet plus cette opération.');
+                $targetLock = $pdo->prepare('SELECT `role`,statut FROM utilisateurs WHERE id=? AND deleted_at IS NULL FOR UPDATE');
+                $targetLock->execute([$id]);
+                $lockedUser = $targetLock->fetch();
+                if (!$lockedUser) throw new RuntimeException('Utilisateur introuvable.');
+                if ($lockedUser['role'] === 'Sadmin' && $lockedUser['statut'] === 'actif') {
+                    $admins = $pdo->query("SELECT id FROM utilisateurs WHERE `role`='Sadmin' AND statut='actif' AND deleted_at IS NULL FOR UPDATE")->fetchAll(PDO::FETCH_COLUMN);
+                    if (count($admins) <= 1) throw new RuntimeException('Impossible de suspendre le dernier Sadmin actif.');
+                }
+                $statement = $pdo->prepare("UPDATE utilisateurs SET statut=? WHERE id=? AND deleted_at IS NULL");
+                $statement->execute([$action,$id]);
+                $pdo->commit();
+            } catch (Throwable $e) {
+                if ($pdo->inTransaction()) $pdo->rollBack();
+                throw $e;
+            }
+        } else {
+            $statement = db()->prepare("UPDATE {$config['table']} SET {$config['column']}=? WHERE id=?");
+            $statement->execute([$action,$id]);
+        }
+        if ($statement->rowCount() === 0) $successMessage = 'Aucun changement : l’élément est peut-être déjà dans cet état.';
     }
-    admin_flash(admin_flash() ?? 'Modification enregistrée.');
+    admin_flash($successMessage);
 } catch (Throwable $e) {
     error_log((string)$e);
     admin_flash('Échec de la modification. Vérifiez les données et vos permissions.');

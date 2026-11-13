@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once dirname(__DIR__,2) . '/admin/bootstrap.php';
-admin_require_role(['administrateur','editeur']);
+admin_require_module('quizzes',true);
 $id = filter_var($_GET['id'] ?? null,FILTER_VALIDATE_INT);
 $quiz = ['titre'=>'','slug'=>'','description'=>'','theme'=>'culture','difficulte'=>'debutant','statut'=>'brouillon'];
 $questions = [];
@@ -95,7 +95,8 @@ while (count($questions)<10) $questions[]=['enonce'=>'','explication'=>'','repon
 $csrf=admin_csrf();
 ?>
 <!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Éditeur de quiz — Administration</title><link rel="stylesheet" href="style.css"></head>
-<body><header class="topbar"><strong>TOURISME IVOIRE · ADMIN</strong><a href="index.php?module=quizzes">Retour aux quiz</a></header><main class="content editor"><h1><?= $id?'Modifier':'Créer' ?> un quiz</h1>
+<body class="admin-page">
+<?php require __DIR__ . '/_sidebar.php'; ?><header class="topbar"><strong>TOURISME IVOIRE · ADMIN</strong><a href="index.php?module=quizzes">Retour aux quiz</a></header><main class="content editor"><h1><?= $id?'Modifier':'Créer' ?> un quiz</h1>
 <?php if ($error!==''): ?><div class="notice error"><?= admin_escape($error) ?></div><?php endif; ?>
 <form class="panel" method="post"><input type="hidden" name="csrf" value="<?= admin_escape($csrf) ?>">
 <label>Titre</label><input name="titre" maxlength="180" required value="<?= admin_escape($quiz['titre']) ?>">

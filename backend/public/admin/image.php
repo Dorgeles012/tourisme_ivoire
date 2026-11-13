@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once dirname(__DIR__,2) . '/admin/bootstrap.php';
-admin_require_role(['administrateur','editeur']);
+admin_require_module('images',true);
 $imageId = filter_var($_GET['id'] ?? null,FILTER_VALIDATE_INT);
 $destinationId = filter_var($_GET['destination_id'] ?? $_POST['destination_id'] ?? null,FILTER_VALIDATE_INT);
 $error = '';
@@ -87,7 +87,8 @@ $images = db()->query('SELECT i.id,i.destination_id,i.url,i.credit,i.licence,i.t
 $csrf = admin_csrf();
 ?>
 <!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Images — Administration</title><link rel="stylesheet" href="style.css"></head>
-<body><header class="topbar"><strong>TOURISME IVOIRE · ADMIN</strong><a href="index.php?module=images">Retour aux images</a></header><main class="content editor"><h1><?= $imageId?'Modifier les crédits':'Téléverser une image' ?></h1>
+<body class="admin-page">
+<?php require __DIR__ . '/_sidebar.php'; ?><header class="topbar"><strong>TOURISME IVOIRE · ADMIN</strong><a href="index.php?module=images">Retour aux images</a></header><main class="content editor"><h1><?= $imageId?'Modifier les crédits':'Téléverser une image' ?></h1>
 <?php if ($error!==''): ?><div class="notice error"><?= admin_escape($error) ?></div><?php endif; ?>
 <form class="panel" method="post" enctype="multipart/form-data"><input type="hidden" name="csrf" value="<?= admin_escape($csrf) ?>"><input type="hidden" name="destination_id" value="<?= admin_escape($destinationId) ?>">
 <?php if (!$imageId): ?><label>Destination</label><select name="destination_id" required><option value="">Choisir</option><?php foreach ($destinations as $row): ?><option value="<?= admin_escape($row['id']) ?>" <?= (string)$destinationId===(string)$row['id']?'selected':'' ?>><?= admin_escape($row['nom']) ?></option><?php endforeach; ?></select><label>Fichier image</label><input type="file" name="image" accept="image/jpeg,image/png,image/webp" required><?php endif; ?>

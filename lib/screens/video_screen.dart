@@ -9,9 +9,7 @@ import '../services/video_service.dart';
 import '../theme/design_system.dart';
 import '../widgets/common.dart';
 
-// ═══════════════════════════════════════════════════════════════════════════════
 // VIDEO FEED SCREEN — TikTok-style vertical scroll
-// ═══════════════════════════════════════════════════════════════════════════════
 class VideoFeedScreen extends StatefulWidget {
   const VideoFeedScreen({required this.api, super.key});
   final ApiService api;
@@ -32,8 +30,8 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
   Future<void> _studio() async {
     final published = await Navigator.of(context).push<bool>(
       PageRouteBuilder<bool>(
-        pageBuilder: (_, anim, __) => VideoStudioScreen(api: widget.api),
-        transitionsBuilder: (_, anim, __, child) => SlideTransition(
+        pageBuilder: (_, anim, _) => VideoStudioScreen(api: widget.api),
+        transitionsBuilder: (_, anim, _, child) => SlideTransition(
           position: Tween(begin: const Offset(0, 1), end: Offset.zero)
               .animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
           child: child,
@@ -171,9 +169,7 @@ class _EmptyVideoState extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
 // _VIDEO CARD — carte fullscreen TikTok
-// ═══════════════════════════════════════════════════════════════════════════════
 class _VideoCard extends StatefulWidget {
   const _VideoCard({required this.api, required this.video});
   final ApiService api;
@@ -251,9 +247,9 @@ class _VideoCardState extends State<_VideoCard>
   void _openComments() {
     Navigator.of(context).push(
       PageRouteBuilder<void>(
-        pageBuilder: (_, anim, __) =>
+        pageBuilder: (_, anim, _) =>
             VideoDetailScreen(api: widget.api, video: widget.video),
-        transitionsBuilder: (_, anim, __, child) => SlideTransition(
+        transitionsBuilder: (_, anim, _, child) => SlideTransition(
           position: Tween(begin: const Offset(0, 1), end: Offset.zero)
               .animate(
                   CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
@@ -430,9 +426,7 @@ class _VideoCardState extends State<_VideoCard>
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
 // VIDEO STUDIO SCREEN — publication d'une vidéo
-// ═══════════════════════════════════════════════════════════════════════════════
 class VideoStudioScreen extends StatefulWidget {
   const VideoStudioScreen({required this.api, super.key});
   final ApiService api;
@@ -705,9 +699,7 @@ class _VideoStudioScreenState extends State<VideoStudioScreen> {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
 // VIDEO DETAIL SCREEN — commentaires
-// ═══════════════════════════════════════════════════════════════════════════════
 class VideoDetailScreen extends StatefulWidget {
   const VideoDetailScreen(
       {required this.api, required this.video, super.key});

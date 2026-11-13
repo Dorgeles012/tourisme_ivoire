@@ -1,6 +1,7 @@
 // lib/screens/app_shell.dart
 // Navigation principale — responsive bottom nav / rail latéral
 import 'package:material_ui/material_ui.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../services/api_service.dart';
 import '../theme/design_system.dart';
@@ -40,6 +41,27 @@ class _AppShellState extends State<AppShell> {
   void initState() {
     super.initState();
     _api = widget.api ?? ApiService();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _routeExistingAdmin());
+  }
+
+  Future<void> _routeExistingAdmin() async {
+    if (!await _api.hasSession || !mounted) return;
+    try {
+      final user = await _api.currentUser();
+      if (!mounted || user['role'] != 'Sadmin') return;
+      final code = await _api.createAdminHandoff();
+      final opened = await launchUrl(
+        _api.adminHandoffUri(code),
+        mode: LaunchMode.externalApplication,
+      );
+      if (!opened && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Impossible d’ouvrir le back-office.')),
+        );
+      }
+    } catch (_) {
+      // An expired token or offline start leaves the public app available.
+    }
   }
 
   List<Widget> get _pages => [
@@ -63,12 +85,14 @@ class _AppShellState extends State<AppShell> {
     final width = MediaQuery.sizeOf(context).width;
     final useRail = isDesktop(width);
 
-    if (useRail) return _DesktopLayout(
+    if (useRail) {
+      return _DesktopLayout(
       index: _index,
       onIndexChanged: (i) => setState(() => _index = i),
       pages: _pages,
       destinations: _destinations,
     );
+    }
 
     return _MobileLayout(
       index: _index,
@@ -79,9 +103,7 @@ class _AppShellState extends State<AppShell> {
   }
 }
 
-// ═══════════════════════════════════════════════════════════
 // 📱 Layout Mobile/Tablette — NavigationBar bottom
-// ═══════════════════════════════════════════════════════════
 
 class _MobileLayout extends StatelessWidget {
   const _MobileLayout({
@@ -136,9 +158,7 @@ class _MobileLayout extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════
 // 🖥️ Layout Desktop — NavigationRail latéral
-// ═══════════════════════════════════════════════════════════
 
 class _DesktopLayout extends StatelessWidget {
   const _DesktopLayout({

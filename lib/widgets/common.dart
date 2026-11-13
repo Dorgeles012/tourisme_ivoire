@@ -11,9 +11,7 @@ import '../services/api_service.dart';
 import '../screens/destination_detail_screen.dart';
 import '../theme/design_system.dart';
 
-// ═══════════════════════════════════════════════════════════
 // 🛠️ UTILITAIRES
-// ═══════════════════════════════════════════════════════════
 
 String readableError(Object error) {
   if (error is DioException) {
@@ -58,10 +56,10 @@ String readableError(Object error) {
 Future<T?> navigateTo<T>(BuildContext context, Widget page) {
   return Navigator.of(context).push<T>(
     PageRouteBuilder<T>(
-      pageBuilder: (_, animation, __) => page,
+      pageBuilder: (_, animation, _) => page,
       transitionDuration: kNormalAnim,
       reverseTransitionDuration: kFastAnim,
-      transitionsBuilder: (_, animation, __, child) {
+      transitionsBuilder: (_, animation, _, child) {
         return FadeTransition(
           opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
           child: SlideTransition(
@@ -77,9 +75,7 @@ Future<T?> navigateTo<T>(BuildContext context, Widget page) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════
 // ✨ _FadeSlideIn — Animation d'entrée stagger
-// ═══════════════════════════════════════════════════════════
 
 class FadeSlideIn extends StatelessWidget {
   const FadeSlideIn({
@@ -103,6 +99,7 @@ class FadeSlideIn extends StatelessWidget {
         1.0,
         curve: Curves.easeOutCubic,
       ),
+      // ignore: no_leading_underscores_for_local_identifiers
       builder: (_, value, _child) => Opacity(
         opacity: value,
         child: Transform.translate(
@@ -115,9 +112,7 @@ class FadeSlideIn extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════
 // 💀 SkeletonBox — Rectangle shimmer animé
-// ═══════════════════════════════════════════════════════════
 
 class SkeletonBox extends StatefulWidget {
   const SkeletonBox({
@@ -162,7 +157,7 @@ class _SkeletonBoxState extends State<SkeletonBox>
 
     return AnimatedBuilder(
       animation: _controller,
-      builder: (_, __) => ShaderMask(
+      builder: (_, _) => ShaderMask(
         blendMode: BlendMode.srcATop,
         shaderCallback: (bounds) => LinearGradient(
           begin: Alignment.centerLeft,
@@ -187,9 +182,7 @@ class _SkeletonBoxState extends State<SkeletonBox>
   }
 }
 
-// ═══════════════════════════════════════════════════════════
 // ⏳ LoadingView — Skeleton shimmer adaptatif
-// ═══════════════════════════════════════════════════════════
 
 class LoadingView extends StatelessWidget {
   const LoadingView({
@@ -219,7 +212,7 @@ class LoadingView extends StatelessWidget {
             mainAxisSpacing: 12,
             childAspectRatio: 0.82,
           ),
-          itemBuilder: (_, __) => const SkeletonBox(height: double.infinity, borderRadius: 18),
+          itemBuilder: (_, _) => const SkeletonBox(height: double.infinity, borderRadius: 18),
         ),
       );
     }
@@ -239,9 +232,7 @@ class LoadingView extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════
 // ❌ ErrorView — Vue d'erreur
-// ═══════════════════════════════════════════════════════════
 
 class ErrorView extends StatelessWidget {
   const ErrorView({required this.message, this.onRetry, super.key});
@@ -304,9 +295,7 @@ class ErrorView extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════
 // 📭 EmptyView — Vue vide
-// ═══════════════════════════════════════════════════════════
 
 class EmptyView extends StatelessWidget {
   const EmptyView({
@@ -363,9 +352,7 @@ class EmptyView extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════
 // 📌 PageHeading — Entête de page
-// ═══════════════════════════════════════════════════════════
 
 class PageHeading extends StatelessWidget {
   const PageHeading({
@@ -414,16 +401,14 @@ class PageHeading extends StatelessWidget {
               ],
             ),
           ),
-          if (action != null) action!,
+          ?action,
         ],
       ),
     );
   }
 }
 
-// ═══════════════════════════════════════════════════════════
 // 📋 SectionHeader — Titre de section + CTA "Tout voir"
-// ═══════════════════════════════════════════════════════════
 
 class SectionHeader extends StatelessWidget {
   const SectionHeader({
@@ -476,9 +461,7 @@ class SectionHeader extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════
 // 🃏 DestinationTile — Carte destination (liste & grille)
-// ═══════════════════════════════════════════════════════════
 
 class DestinationTile extends StatelessWidget {
   const DestinationTile({
@@ -737,7 +720,7 @@ class _DestinationImage extends StatelessWidget {
     return Image.network(
       imageUrl!,
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => Container(
+      errorBuilder: (_, _, _) => Container(
         color: ivorianForest.withValues(alpha: 0.1),
         child: const Icon(Icons.landscape_rounded, size: 36, color: ivorianForest),
       ),
@@ -749,9 +732,7 @@ class _DestinationImage extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════
 // 🃏 FeatureCard — Carte fonctionnalité
-// ═══════════════════════════════════════════════════════════
 
 class FeatureCard extends StatefulWidget {
   const FeatureCard({
@@ -849,9 +830,7 @@ class _FeatureCardState extends State<FeatureCard> {
   }
 }
 
-// ═══════════════════════════════════════════════════════════
 // 🏷️ FilterChipRow — Rangée de chips filtrables
-// ═══════════════════════════════════════════════════════════
 
 class FilterChipRow extends StatelessWidget {
   const FilterChipRow({
@@ -930,9 +909,7 @@ class _AnimatedChipState extends State<_AnimatedChip> {
   }
 }
 
-// ═══════════════════════════════════════════════════════════
 // 🔍 SearchField — Champ de recherche stylisé avec debounce
-// ═══════════════════════════════════════════════════════════
 
 class SearchField extends StatefulWidget {
   const SearchField({
@@ -1055,9 +1032,7 @@ class _SearchFieldState extends State<SearchField> {
   }
 }
 
-// ═══════════════════════════════════════════════════════════
 // ⭐ RatingBadge — Badge note étoilée
-// ═══════════════════════════════════════════════════════════
 
 class RatingBadge extends StatelessWidget {
   const RatingBadge({required this.rating, super.key});
@@ -1090,9 +1065,7 @@ class RatingBadge extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════
 // 🔵 IvorianButton — Bouton primaire avec gradient optionnel
-// ═══════════════════════════════════════════════════════════
 
 class IvorianButton extends StatefulWidget {
   const IvorianButton({

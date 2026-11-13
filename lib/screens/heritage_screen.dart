@@ -5,9 +5,7 @@ import '../services/api_service.dart';
 import '../theme/design_system.dart';
 import '../widgets/common.dart';
 
-// ═══════════════════════════════════════════════════════════════════════════════
 // HERITAGE SCREEN — Culture & visites virtuelles
-// ═══════════════════════════════════════════════════════════════════════════════
 class HeritageScreen extends StatefulWidget {
   const HeritageScreen({required this.api, super.key});
   final ApiService api;
@@ -126,7 +124,7 @@ class _HeritageScreenState extends State<HeritageScreen> {
                         scrollDirection: Axis.horizontal,
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         itemCount: _categories.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 8),
+                        separatorBuilder: (_, _) => const SizedBox(width: 8),
                         itemBuilder: (context, index) {
                           final cat = _categories[index];
                           final selected = cat == _filter;

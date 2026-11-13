@@ -1,5 +1,9 @@
 <?php
 declare(strict_types=1);
+// Keep startup/runtime notices out of API bodies while retaining them in logs.
+ob_start();
+ini_set('display_errors', '0');
+ini_set('log_errors', '1');
 require_once dirname(__DIR__) . '/config/bootstrap.php';
 header('X-Content-Type-Options: nosniff');
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
@@ -11,6 +15,7 @@ header('Access-Control-Allow-Headers: Content-Type, Authorization');
 header('Access-Control-Allow-Methods: GET, POST, DELETE, PUT, OPTIONS');
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') { http_response_code(204); exit; }
 require_once APP_ROOT . '/controllers/AuthController.php';
+require_once APP_ROOT . '/controllers/AdminHandoffController.php';
 require_once APP_ROOT . '/controllers/DestinationController.php';
 require_once APP_ROOT . '/controllers/ReferenceController.php';
 require_once APP_ROOT . '/controllers/FavoriteController.php';
@@ -41,8 +46,11 @@ try {
     if ($method === 'POST' && $path === '/api/auth/logout') AuthController::logout();
     if ($method === 'GET' && $path === '/api/auth/me') AuthController::me();
     if ($method === 'PUT' && $path === '/api/auth/me') AuthController::updateMe();
+    if ($method === 'POST' && $path === '/api/auth/me/avatar') AuthController::uploadAvatar();
     if ($method === 'POST' && $path === '/api/auth/forgot-password') AuthController::forgotPassword();
     if ($method === 'POST' && $path === '/api/auth/reset-password') AuthController::resetPassword();
+    if ($method === 'POST' && $path === '/api/admin/handoff') AdminHandoffController::create();
+    if ($method === 'POST' && $path === '/api/admin/handoff/consume') AdminHandoffController::consume();
     if ($method === 'GET' && $path === '/api/destinations') DestinationController::index();
     if ($method === 'GET' && $path === '/api/destinations/featured') DestinationController::featured();
     if ($method === 'GET' && preg_match('#^/api/destinations/(\d+)$#', $path, $m)) DestinationController::show((int)$m[1]);

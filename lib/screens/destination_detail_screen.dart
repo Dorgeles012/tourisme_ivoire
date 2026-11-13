@@ -177,7 +177,7 @@ class _DetailBody extends StatelessWidget {
                     : Image.network(
                         destination.imageUrl!,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
+                        errorBuilder: (_, _, _) => Container(
                           color: ivorianForest.withValues(alpha: .3),
                           child: const Icon(Icons.landscape,
                               size: 80, color: Colors.white38),
