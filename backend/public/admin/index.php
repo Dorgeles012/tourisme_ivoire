@@ -68,76 +68,66 @@ function status_badge(string $status): string {
     :root {
       --primary: #e67e22;
       --primary-dark: #d35400;
-      --sidebar-bg: #1a1d29;
-      --sidebar-hover: #2a2e3f;
-      --sidebar-text: #a0a6b8;
       --bg-body: #f4f6f9;
       --border-color: #e9ecef;
+      --sidebar-width: 260px;   /* ⚠️ À ajuster selon la largeur réelle de votre _sidebar.php */
+      --topbar-height: 64px;    /* ⚠️ À ajuster selon la hauteur réelle de votre topbar */
     }
-    * { font-family: 'Inter', sans-serif; }
+    * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
     body { background: var(--bg-body); min-height: 100vh; margin: 0; }
 
-    /* Topbar */
+    /* ============================================
+       LAYOUT FIXE :
+       - Sidebar fixée à gauche (gérée par _sidebar.php)
+       - Topbar fixée en haut
+       - Contenu scrollable avec les bons offsets
+       ============================================ */
+
+    /* La sidebar est déjà positionnée par votre _sidebar.php.
+       On s'assure qu'elle reste bien fixée à gauche sur grand écran. */
+    .sidebar {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      bottom: 0 !important;
+      height: 100vh !important;
+      overflow-y: auto;
+      z-index: 1000;
+    }
+
+    /* Topbar fixe en haut, décalée à droite de la sidebar */
     .topbar {
+      position: fixed;
+      top: 0;
+      left: var(--sidebar-width);
+      right: 0;
+      height: var(--topbar-height);
       background: #fff;
       border-bottom: 1px solid var(--border-color);
-      padding: 0.85rem 1.75rem;
+      padding: 0 1.75rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      z-index: 900;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
     }
     .topbar strong { font-weight: 700; letter-spacing: 0.5px; color: #1a1d29; font-size: 0.95rem; }
-    .topbar .user-info { display: flex; align-items: center; gap: 1rem; font-size: 0.9rem; color: #4a5568; }
-    .topbar .user-info button {
-      background: transparent; border: 1px solid var(--border-color); border-radius: 8px;
-      padding: 0.4rem 0.9rem; font-size: 0.85rem; color: #e74c3c; font-weight: 500;
-      transition: all 0.2s;
-    }
-    .topbar .user-info button:hover { background: #fdecea; border-color: #e74c3c; }
-
-    /* Layout */
-    .layout { display: flex; min-height: calc(100vh - 60px); }
-
-    /* Sidebar */
-    .sidebar {
-      width: 260px;
-      background: var(--sidebar-bg);
-      padding: 1.5rem 0.75rem;
-      flex-shrink: 0;
-      position: sticky;
-      top: 60px;
-      height: calc(100vh - 60px);
-      overflow-y: auto;
-    }
-    .sidebar::-webkit-scrollbar { width: 4px; }
-    .sidebar::-webkit-scrollbar-thumb { background: #3a3f54; border-radius: 4px; }
-    .sidebar a {
-      display: block;
-      color: var(--sidebar-text);
-      text-decoration: none;
-      padding: 0.65rem 1rem;
-      border-radius: 8px;
-      font-size: 0.875rem;
-      font-weight: 500;
-      margin-bottom: 2px;
-      transition: all 0.2s;
-    }
-    .sidebar a:hover { background: var(--sidebar-hover); color: #fff; }
-    .sidebar a.active {
+    .topbar .user-info { display: flex; align-items: center; gap: 0.65rem; font-size: 0.875rem; color: #4a5568; }
+    .topbar .user-info .avatar {
+      width: 32px; height: 32px; border-radius: 50%;
       background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-      color: #fff;
-      box-shadow: 0 4px 12px rgba(230, 126, 34, 0.3);
-    }
-    .sidebar .nav-section {
-      color: #5a6078; font-size: 0.7rem; text-transform: uppercase;
-      letter-spacing: 1px; padding: 1rem 1rem 0.5rem; font-weight: 600;
+      color: #fff; display: flex; align-items: center; justify-content: center;
+      font-weight: 600; font-size: 0.85rem;
     }
 
-    /* Content */
-    .content { flex: 1; padding: 2rem 2.5rem; max-width: 100%; overflow-x: hidden; }
+    /* Contenu principal : décalé à droite de la sidebar et sous la topbar */
+    .content {
+      margin-left: var(--sidebar-width);
+      padding: calc(var(--topbar-height) + 2rem) 2.5rem 2rem;
+      min-height: 100vh;
+      max-width: 100%;
+      overflow-x: hidden;
+    }
     .content h1 { font-size: 1.75rem; font-weight: 700; color: #1a1d29; margin-bottom: 0.25rem; }
     .eyebrow {
       font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.5px;
@@ -197,136 +187,143 @@ function status_badge(string $status): string {
     /* Notice */
     .notice { background: #e8f8f0; color: #1e8449; border-left: 4px solid #27ae60; padding: 0.9rem 1.25rem; border-radius: 8px; font-size: 0.875rem; margin-bottom: 1.25rem; font-weight: 500; }
 
-    /* Responsive */
+    /* ============================================
+       RESPONSIVE : la sidebar passe en haut
+       On annule les décalages fixes
+       ============================================ */
     @media (max-width: 992px) {
-      .layout { flex-direction: column; }
-      .sidebar { width: 100%; height: auto; position: static; display: flex; flex-wrap: wrap; gap: 0.25rem; padding: 1rem; }
-      .sidebar a { padding: 0.5rem 0.75rem; font-size: 0.8rem; }
-      .sidebar .nav-section { width: 100%; padding: 0.5rem 0.75rem; }
-      .content { padding: 1.5rem 1rem; }
+      .sidebar {
+        position: static !important;
+        height: auto !important;
+        width: 100% !important;
+      }
+      .topbar {
+        position: static;
+        left: 0;
+        height: auto;
+        padding: 0.85rem 1rem;
+      }
+      .content {
+        margin-left: 0;
+        padding: 1.5rem 1rem;
+      }
     }
   </style>
 </head>
 <body class="admin-page">
 <?php require __DIR__ . '/_sidebar.php'; ?>
+
 <header class="topbar">
   <strong>TOURISME IVOIRE · ADMIN</strong>
   <div class="user-info">
-    <span>👤 <?= admin_escape($user['nom']) ?></span>
-    <form method="post" action="logout.php" style="display:inline">
-      <input type="hidden" name="csrf" value="<?= admin_escape($csrf) ?>">
-      <button type="submit">Déconnexion</button>
-    </form>
+    <span class="avatar"><?= admin_escape(mb_strtoupper(mb_substr($user['nom'], 0, 1))) ?></span>
+    <span><?= admin_escape($user['nom']) ?></span>
   </div>
 </header>
 
-<div class="layout">
-
-
-  <main class="content">
-    <?php if ($message): ?><div class="notice"><?= admin_escape($message) ?></div><?php endif; ?>
+<main class="content">
+  <?php if ($message): ?><div class="notice"><?= admin_escape($message) ?></div><?php endif; ?>
+  
+  <?php if ($config === null): ?>
+    <p class="eyebrow">ESPACE DE GESTION</p>
+    <h1>Tableau de bord</h1>
+    <p class="muted">Les contenus de démonstration restent non publiés tant qu’ils ne sont pas vérifiés par un éditeur.</p>
     
-    <?php if ($config === null): ?>
-      <p class="eyebrow">ESPACE DE GESTION</p>
-      <h1>Tableau de bord</h1>
-      <p class="muted">Les contenus de démonstration restent non publiés tant qu’ils ne sont pas vérifiés par un éditeur.</p>
-      
-      <section class="stats">
-        <?php foreach ($counts as $label=>$value): ?>
-          <div class="stat">
-            <span><?= admin_escape($label) ?></span>
-            <b><?= admin_escape($value) ?></b>
-          </div>
+    <section class="stats">
+      <?php foreach ($counts as $label=>$value): ?>
+        <div class="stat">
+          <span><?= admin_escape($label) ?></span>
+          <b><?= admin_escape($value) ?></b>
+        </div>
+      <?php endforeach; ?>
+    </section>
+
+    <div class="panel">
+      <h2>Raccourcis</h2>
+      <p class="mb-0">
+        <?php if (admin_can_module('destinations',true,$user)): ?><a class="button primary" href="destination.php">Créer une destination</a><?php endif; ?>
+        <?php if (admin_can_module('heritage',true,$user)): ?><a class="button" href="heritage.php">Ajouter un patrimoine</a><?php endif; ?>
+        <?php if (admin_can_module('virtual_visits',true,$user)): ?><a class="button" href="virtual_visit.php">Ajouter une visite virtuelle</a><?php endif; ?>
+        <?php if (admin_can_module('images',true,$user)): ?><a class="button" href="image.php">Téléverser une image</a><?php endif; ?>
+        <?php if (admin_can_module('notifications',true,$user)): ?><a class="button" href="notification.php">Nouvelle notification</a><?php endif; ?>
+      </p>
+    </div>
+
+  <?php else: ?>
+    <p class="eyebrow">GESTION DE CONTENU</p>
+    <h1><?= admin_escape($config['label']) ?></h1>
+    
+    <div class="mb-3">
+      <?php if ($module==='users' && $canManageRoles): ?><a class="button primary" href="create_user.php">Créer un utilisateur</a><?php endif; ?>
+      <?php if ($module==='destinations' && $canManageModule): ?><a class="button primary" href="destination.php">Ajouter une destination</a><?php endif; ?>
+      <?php if ($module==='heritage' && $canManageModule): ?><a class="button primary" href="heritage.php">Ajouter un patrimoine</a><?php endif; ?>
+      <?php if ($module==='virtual_visits' && $canManageModule): ?><a class="button primary" href="virtual_visit.php">Ajouter une visite virtuelle</a><?php endif; ?>
+      <?php if ($module==='categories' && $canManageModule): ?><a class="button primary" href="category.php">Ajouter une catégorie</a><?php endif; ?>
+      <?php if ($module==='images' && $canManageModule): ?><a class="button primary" href="image.php">Téléverser une image</a><?php endif; ?>
+      <?php if ($module==='quizzes' && $canManageModule): ?><a class="button primary" href="quiz.php">Créer un quiz</a><?php endif; ?>
+      <?php if ($module==='notifications' && $canManageModule): ?><a class="button primary" href="notification.php">Créer une notification</a><?php endif; ?>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>ID</th><th>Élément</th><th>État</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+        <?php foreach ($rows as $row): ?>
+          <tr>
+            <td><span class="text-muted">#<?= admin_escape($row['id']) ?></span></td>
+            <td>
+              <strong><?= admin_escape($row['label']) ?></strong>
+              <?php if ($canManageModule && $module==='destinations'): ?> <a href="destination.php?id=<?= admin_escape($row['id']) ?>">Modifier</a>
+              <?php elseif ($canManageModule && $module==='heritage'): ?> <a href="heritage.php?id=<?= admin_escape($row['id']) ?>">Modifier</a>
+              <?php elseif ($canManageModule && $module==='virtual_visits'): ?> <a href="virtual_visit.php?id=<?= admin_escape($row['id']) ?>">Modifier</a>
+              <?php elseif ($canManageModule && $module==='categories'): ?> <a href="category.php?id=<?= admin_escape($row['id']) ?>">Modifier</a>
+              <?php elseif ($canManageModule && $module==='quizzes'): ?> <a href="quiz.php?id=<?= admin_escape($row['id']) ?>">Modifier</a><?php endif; ?>
+              <?php if ($canManageRoles && $module==='users'): ?> <a href="user_roles.php?id=<?= admin_escape($row['id']) ?>">Gérer les rôles</a><?php endif; ?>
+            </td>
+            <td><?= status_badge((string)$row['statut']) ?></td>
+            <td>
+              <?php if ($canManageModule && $module==='images'): ?><a href="image.php?id=<?= admin_escape($row['id']) ?>">Modifier les crédits</a><?php endif; ?>
+              <?php if ($canManageModule && $module==='notifications' && $row['statut']==='non_lue'): ?>
+                <form class="inline-form" method="post" action="actions.php">
+                  <input type="hidden" name="csrf" value="<?= admin_escape($csrf) ?>">
+                  <input type="hidden" name="module" value="notifications">
+                  <input type="hidden" name="id" value="<?= admin_escape($row['id']) ?>">
+                  <input type="hidden" name="action" value="read_notification">
+                  <button class="button small" type="submit">Marquer comme lue</button>
+                </form>
+              <?php endif; ?>
+              <?php if ($canManageModule && $config['values']): ?>
+                <form class="inline-form" method="post" action="actions.php">
+                  <input type="hidden" name="csrf" value="<?= admin_escape($csrf) ?>">
+                  <input type="hidden" name="module" value="<?= admin_escape($module) ?>">
+                  <input type="hidden" name="id" value="<?= admin_escape($row['id']) ?>">
+                  <select name="action" aria-label="Nouvel état">
+                    <?php foreach ($config['values'] as $value): ?>
+                      <option value="<?= admin_escape($value) ?>" <?= $row['statut']===$value?'selected':'' ?>><?= admin_escape($value) ?></option>
+                    <?php endforeach; ?>
+                  </select>
+                  <button class="button small" type="submit">Mettre à jour</button>
+                </form>
+              <?php endif; ?>
+              <?php if ($canManageModule && $module==='destinations'): ?>
+                <form class="inline-form" method="post" action="actions.php" onsubmit="return confirm('Archiver cette destination ?')">
+                  <input type="hidden" name="csrf" value="<?= admin_escape($csrf) ?>">
+                  <input type="hidden" name="module" value="destinations">
+                  <input type="hidden" name="id" value="<?= admin_escape($row['id']) ?>">
+                  <input type="hidden" name="action" value="delete_destination">
+                  <button class="button small" type="submit">Archiver</button>
+                </form>
+              <?php endif; ?>
+            </td>
+          </tr>
         <?php endforeach; ?>
-      </section>
-
-      <div class="panel">
-        <h2>Raccourcis</h2>
-        <p class="mb-0">
-          <?php if (admin_can_module('destinations',true,$user)): ?><a class="button primary" href="destination.php">Créer une destination</a><?php endif; ?>
-          <?php if (admin_can_module('heritage',true,$user)): ?><a class="button" href="heritage.php">Ajouter un patrimoine</a><?php endif; ?>
-          <?php if (admin_can_module('virtual_visits',true,$user)): ?><a class="button" href="virtual_visit.php">Ajouter une visite virtuelle</a><?php endif; ?>
-          <?php if (admin_can_module('images',true,$user)): ?><a class="button" href="image.php">Téléverser une image</a><?php endif; ?>
-          <?php if (admin_can_module('notifications',true,$user)): ?><a class="button" href="notification.php">Nouvelle notification</a><?php endif; ?>
-        </p>
-      </div>
-
-    <?php else: ?>
-      <p class="eyebrow">GESTION DE CONTENU</p>
-      <h1><?= admin_escape($config['label']) ?></h1>
-      
-      <div class="mb-3">
-        <?php if ($module==='users' && $canManageRoles): ?><a class="button primary" href="create_user.php">Créer un utilisateur</a><?php endif; ?>
-        <?php if ($module==='destinations' && $canManageModule): ?><a class="button primary" href="destination.php">Ajouter une destination</a><?php endif; ?>
-        <?php if ($module==='heritage' && $canManageModule): ?><a class="button primary" href="heritage.php">Ajouter un patrimoine</a><?php endif; ?>
-        <?php if ($module==='virtual_visits' && $canManageModule): ?><a class="button primary" href="virtual_visit.php">Ajouter une visite virtuelle</a><?php endif; ?>
-        <?php if ($module==='categories' && $canManageModule): ?><a class="button primary" href="category.php">Ajouter une catégorie</a><?php endif; ?>
-        <?php if ($module==='images' && $canManageModule): ?><a class="button primary" href="image.php">Téléverser une image</a><?php endif; ?>
-        <?php if ($module==='quizzes' && $canManageModule): ?><a class="button primary" href="quiz.php">Créer un quiz</a><?php endif; ?>
-        <?php if ($module==='notifications' && $canManageModule): ?><a class="button primary" href="notification.php">Créer une notification</a><?php endif; ?>
-      </div>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr><th>ID</th><th>Élément</th><th>État</th><th>Actions</th></tr>
-          </thead>
-          <tbody>
-          <?php foreach ($rows as $row): ?>
-            <tr>
-              <td><span class="text-muted">#<?= admin_escape($row['id']) ?></span></td>
-              <td>
-                <strong><?= admin_escape($row['label']) ?></strong>
-                <?php if ($canManageModule && $module==='destinations'): ?> <a href="destination.php?id=<?= admin_escape($row['id']) ?>">Modifier</a>
-                <?php elseif ($canManageModule && $module==='heritage'): ?> <a href="heritage.php?id=<?= admin_escape($row['id']) ?>">Modifier</a>
-                <?php elseif ($canManageModule && $module==='virtual_visits'): ?> <a href="virtual_visit.php?id=<?= admin_escape($row['id']) ?>">Modifier</a>
-                <?php elseif ($canManageModule && $module==='categories'): ?> <a href="category.php?id=<?= admin_escape($row['id']) ?>">Modifier</a>
-                <?php elseif ($canManageModule && $module==='quizzes'): ?> <a href="quiz.php?id=<?= admin_escape($row['id']) ?>">Modifier</a><?php endif; ?>
-                <?php if ($canManageRoles && $module==='users'): ?> <a href="user_roles.php?id=<?= admin_escape($row['id']) ?>">Gérer les rôles</a><?php endif; ?>
-              </td>
-              <td><?= status_badge((string)$row['statut']) ?></td>
-              <td>
-                <?php if ($canManageModule && $module==='images'): ?><a href="image.php?id=<?= admin_escape($row['id']) ?>">Modifier les crédits</a><?php endif; ?>
-                <?php if ($canManageModule && $module==='notifications' && $row['statut']==='non_lue'): ?>
-                  <form class="inline-form" method="post" action="actions.php">
-                    <input type="hidden" name="csrf" value="<?= admin_escape($csrf) ?>">
-                    <input type="hidden" name="module" value="notifications">
-                    <input type="hidden" name="id" value="<?= admin_escape($row['id']) ?>">
-                    <input type="hidden" name="action" value="read_notification">
-                    <button class="button small" type="submit">Marquer comme lue</button>
-                  </form>
-                <?php endif; ?>
-                <?php if ($canManageModule && $config['values']): ?>
-                  <form class="inline-form" method="post" action="actions.php">
-                    <input type="hidden" name="csrf" value="<?= admin_escape($csrf) ?>">
-                    <input type="hidden" name="module" value="<?= admin_escape($module) ?>">
-                    <input type="hidden" name="id" value="<?= admin_escape($row['id']) ?>">
-                    <select name="action" aria-label="Nouvel état">
-                      <?php foreach ($config['values'] as $value): ?>
-                        <option value="<?= admin_escape($value) ?>" <?= $row['statut']===$value?'selected':'' ?>><?= admin_escape($value) ?></option>
-                      <?php endforeach; ?>
-                    </select>
-                    <button class="button small" type="submit">Mettre à jour</button>
-                  </form>
-                <?php endif; ?>
-                <?php if ($canManageModule && $module==='destinations'): ?>
-                  <form class="inline-form" method="post" action="actions.php" onsubmit="return confirm('Archiver cette destination ?')">
-                    <input type="hidden" name="csrf" value="<?= admin_escape($csrf) ?>">
-                    <input type="hidden" name="module" value="destinations">
-                    <input type="hidden" name="id" value="<?= admin_escape($row['id']) ?>">
-                    <input type="hidden" name="action" value="delete_destination">
-                    <button class="button small" type="submit">Archiver</button>
-                  </form>
-                <?php endif; ?>
-              </td>
-            </tr>
-          <?php endforeach; ?>
-          <?php if (!$rows): ?><tr><td colspan="4" class="text-center text-muted py-4">Aucun élément.</td></tr><?php endif; ?>
-          </tbody>
-        </table>
-      </div>
-    <?php endif; ?>
-  </main>
-</div>
+        <?php if (!$rows): ?><tr><td colspan="4" class="text-center text-muted py-4">Aucun élément.</td></tr><?php endif; ?>
+        </tbody>
+      </table>
+    </div>
+  <?php endif; ?>
+</main>
 </body>
 </html>

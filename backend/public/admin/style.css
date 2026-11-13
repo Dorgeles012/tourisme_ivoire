@@ -60,3 +60,16 @@ label{display:block;font-weight:700;font-size:13px;margin:14px 0 6px}
  .admin-page .layout,.admin-page main.content{margin-left:210px}
 }
   
+/* Shared frame for every back-office page */
+@media(min-width:993px){
+  body.admin-page>.sidebar{position:fixed!important;top:0!important;left:0!important;width:250px!important;height:100vh!important;min-height:100vh!important;z-index:50}
+  body.admin-page>header.topbar{position:sticky;top:0;z-index:40;margin-left:250px;width:calc(100% - 250px)}
+  body.admin-page>.layout{display:block;margin-left:250px;min-height:calc(100vh - 60px)}
+  body.admin-page>.layout>main.content{margin:0;min-width:0}
+  body.admin-page>main.content{margin-left:250px;min-height:calc(100vh - 60px)}
+}
+@media(max-width:992px){
+  body.admin-page>.sidebar{position:static!important;top:auto!important;left:auto!important;width:100%!important;height:auto!important;min-height:auto!important}
+  body.admin-page>header.topbar{position:relative;margin-left:0;width:100%}
+  body.admin-page>.layout,body.admin-page>main.content{display:block;margin-left:0;width:100%}
+}

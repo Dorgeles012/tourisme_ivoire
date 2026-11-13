@@ -61,23 +61,27 @@ $csrf = admin_csrf();
     :root {
       --primary: #e67e22;
       --primary-dark: #d35400;
-      --border-color: #e9ecef;
       --bg-body: #f4f6f9;
+      --border-color: #e9ecef;
+      --sidebar-width: 260px;   /* ⚠️ À ajuster selon la largeur réelle de votre _sidebar.php */
+      --topbar-height: 64px;    /* ⚠️ À ajuster selon la hauteur réelle de votre topbar */
     }
-    * { font-family: 'Inter', sans-serif; }
+    * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
     body { background: var(--bg-body); min-height: 100vh; margin: 0; }
 
-    /* Topbar */
+    /* ===== LAYOUT FIXE ===== */
+    .sidebar {
+      position: fixed !important;
+      top: 0 !important; left: 0 !important; bottom: 0 !important;
+      height: 100vh !important; overflow-y: auto; z-index: 1000;
+    }
     .topbar {
-      background: #fff;
-      border-bottom: 1px solid var(--border-color);
-      padding: 0.85rem 1.75rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      position: fixed; top: 0; left: var(--sidebar-width); right: 0;
+      height: var(--topbar-height);
+      background: #fff; border-bottom: 1px solid var(--border-color);
+      padding: 0 1.75rem;
+      display: flex; justify-content: space-between; align-items: center;
+      z-index: 900; box-shadow: 0 1px 3px rgba(0,0,0,0.03);
     }
     .topbar strong { font-weight: 700; letter-spacing: 0.5px; color: #1a1d29; font-size: 0.95rem; }
     .topbar a {
@@ -87,8 +91,13 @@ $csrf = admin_csrf();
     }
     .topbar a:hover { background: #f8f9fb; border-color: #d0d5dd; color: #1a1d29; }
 
-    /* Content */
-    .content { padding: 2.5rem 2rem; max-width: 720px; margin: 0 auto; }
+    /* Contenu centré */
+    .content {
+      margin-left: var(--sidebar-width);
+      padding: calc(var(--topbar-height) + 2.5rem) 2rem 2.5rem;
+      min-height: 100vh;
+    }
+    .content-inner { max-width: 640px; margin: 0 auto; }
     .content h1 { font-size: 1.75rem; font-weight: 700; color: #1a1d29; margin-bottom: 0.25rem; }
     .muted { color: #8892a6; font-size: 0.9rem; margin-bottom: 1.75rem; }
 
@@ -99,14 +108,16 @@ $csrf = admin_csrf();
       box-shadow: 0 4px 16px rgba(0,0,0,0.04);
     }
     .panel label {
-      display: block; font-size: 0.85rem; font-weight: 600;
+      display: block; font-size: 0.82rem; font-weight: 600;
       color: #34495e; margin-bottom: 0.4rem; margin-top: 1.1rem;
     }
     .panel label:first-of-type { margin-top: 0; }
     .panel input, .panel select {
-      width: 100%; 
+      width: 100%;
+      border: 1px solid var(--border-color);   /* ← corrigé : bordure manquante */
+      border-radius: 10px;
       padding: 0.7rem 1rem; font-size: 0.95rem; color: #1a1d29;
-      background: #fafbfc; transition: all 0.2s;
+      background: #fafbfc; transition: all 0.2s; font-family: inherit;
     }
     .panel input:focus, .panel select:focus {
       outline: none; border-color: var(--primary);
@@ -120,7 +131,7 @@ $csrf = admin_csrf();
       border: 1px solid var(--border-color); background: #fff; color: #4a5568;
       transition: all 0.2s; cursor: pointer;
     }
-    .button:hover { background: #f8f9fb; }
+    .button:hover { background: #f8f9fb; border-color: #d0d5dd; color: #1a1d29; }
     .button.primary {
       background: linear-gradient(135deg, var(--primary), var(--primary-dark));
       color: #fff; border: none; box-shadow: 0 4px 12px rgba(230,126,34,0.3);
@@ -132,49 +143,59 @@ $csrf = admin_csrf();
     .notice.error { background: #fdecea; color: #c0392b; border-left: 4px solid #e74c3c; }
 
     /* Hint */
-    .hint {
-      font-size: 0.78rem; color: #8892a6; margin-top: 0.35rem;
+    .hint { font-size: 0.78rem; color: #8892a6; margin-top: 0.35rem; }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .sidebar { position: static !important; height: auto !important; width: 100% !important; }
+      .topbar { position: static; left: 0; height: auto; padding: 0.85rem 1rem; }
+      .content { margin-left: 0; padding: 1.5rem 1rem; }
+      .panel { padding: 1.5rem; }
     }
   </style>
 </head>
 <body class="admin-page">
 <?php require __DIR__ . '/_sidebar.php'; ?>
+
 <header class="topbar">
   <strong>TOURISME IVOIRE · ADMIN</strong>
   <a href="index.php?module=users">← Retour aux utilisateurs</a>
 </header>
 
 <main class="content">
-  <h1>Créer un utilisateur</h1>
-  <p class="muted">Les comptes publics reçoivent toujours le rôle Client. Seul le Sadmin peut créer ou promouvoir un autre Sadmin.</p>
+  <div class="content-inner">
+    <h1>Créer un utilisateur</h1>
+    <p class="muted">Les comptes publics reçoivent toujours le rôle Client. Seul le Sadmin peut créer ou promouvoir un autre Sadmin.</p>
 
-  <?php if ($error!==''): ?>
-    <div class="notice error"><?= admin_escape($error) ?></div>
-  <?php endif; ?>
+    <?php if ($error!==''): ?>
+      <div class="notice error"><?= admin_escape($error) ?></div>
+    <?php endif; ?>
 
-  <form class="panel" method="post">
-    <input type="hidden" name="csrf" value="<?= admin_escape($csrf) ?>">
+    <form class="panel" method="post">
+      <input type="hidden" name="csrf" value="<?= admin_escape($csrf) ?>">
 
-    <label for="nom">Nom</label>
-    <input id="nom" name="nom" maxlength="100" required value="<?= admin_escape($name) ?>" placeholder="Nom complet de l'utilisateur">
+      <label for="nom">Nom</label>
+      <input id="nom" name="nom" maxlength="100" required value="<?= admin_escape($name) ?>" placeholder="Nom complet de l'utilisateur">
 
-    <label for="email">Adresse e-mail</label>
-    <input id="email" name="email" type="email" maxlength="190" required value="<?= admin_escape($email) ?>" placeholder="exemple@tourisme.ci">
+      <label for="email">Adresse e-mail</label>
+      <input id="email" name="email" type="email" maxlength="190" required value="<?= admin_escape($email) ?>" placeholder="exemple@tourisme.ci">
 
-    <label for="password">Mot de passe</label>
-    <input id="password" name="password" type="password" minlength="10" required autocomplete="new-password" placeholder="••••••••••">
-    <div class="hint">10 caractères minimum.</div>
+      <label for="password">Mot de passe</label>
+      <input id="password" name="password" type="password" minlength="10" required autocomplete="new-password" placeholder="••••••••••">
+      <div class="hint">10 caractères minimum.</div>
 
-    <label for="role">Rôle</label>
-    <select id="role" name="role">
-      <option value="Client" <?= $roleCode==='Client'?'selected':'' ?>>Client</option>
-      <option value="Sadmin" <?= $roleCode==='Sadmin'?'selected':'' ?>>Sadmin</option>
-    </select>
+      <label for="role">Rôle</label>
+      <select id="role" name="role">
+        <option value="Client" <?= $roleCode==='Client'?'selected':'' ?>>Client</option>
+        <option value="Sadmin" <?= $roleCode==='Sadmin'?'selected':'' ?>>Sadmin</option>
+      </select>
 
-    <div style="margin-top:1.75rem">
-      <button class="button primary" type="submit">Créer le compte</button>
-    </div>
-  </form>
+      <div style="margin-top:1.75rem; display:flex; gap:0.75rem;">
+        <button class="button primary" type="submit">Créer le compte</button>
+        <a class="button" href="index.php?module=users">Annuler</a>
+      </div>
+    </form>
+  </div>
 </main>
 </body>
 </html>
