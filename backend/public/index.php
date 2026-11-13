@@ -57,6 +57,7 @@ try {
     if ($method === 'GET' && $path === '/api/destinations/search') DestinationController::index();
     if ($method === 'GET' && $path === '/api/categories') ReferenceController::categories();
     if ($method === 'GET' && $path === '/api/regions') ReferenceController::regions();
+    if ($method === 'GET' && $path === '/api/departements') ReferenceController::departements();
     if ($method === 'GET' && $path === '/api/districts') ReferenceController::districts();
     if ($method === 'GET' && $path === '/api/localites') ReferenceController::localites();
     if ($method === 'GET' && $path === '/api/langues') ReferenceController::languages();

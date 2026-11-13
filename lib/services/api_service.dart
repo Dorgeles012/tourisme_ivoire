@@ -50,6 +50,7 @@ class ApiService {
     String? category,
     int? regionId,
     int? districtId,
+    int? departmentId,
     int page = 1,
     int perPage = 12,
   }) async {
@@ -61,6 +62,7 @@ class ApiService {
     };
     if (regionId != null) queryParameters['region_id'] = regionId;
     if (districtId != null) queryParameters['district_id'] = districtId;
+    if (departmentId != null) queryParameters['departement_id'] = departmentId;
     final response = await _dio.get<Map<String, dynamic>>(
       'api/destinations',
       queryParameters: queryParameters,
@@ -331,8 +333,21 @@ class ApiService {
     Map<String, dynamic> settings,
   ) async => _asMap(await _put('api/settings', settings));
 
-  Future<List<dynamic>> getRegions() async =>
-      _asList(await _get('api/regions'));
+  Future<List<dynamic>> getDistricts() async =>
+      _asList(await _get('api/districts'));
+
+  Future<List<dynamic>> getRegions({int? districtId}) async =>
+      _asList(await _get('api/regions', query: districtId == null ? null : {'district_id': districtId}));
+
+  Future<List<dynamic>> getDepartements({int? regionId, int? districtId}) async {
+    if ((regionId == null) == (districtId == null)) {
+      throw ArgumentError('Fournissez exactement regionId ou districtId.');
+    }
+    return _asList(await _get('api/departements', query: {
+      if (regionId != null) 'region_id': regionId,
+      if (districtId != null) 'district_id': districtId,
+    }));
+  }
 
   Future<List<dynamic>> getCategories() async =>
       _asList(await _get('api/categories'));

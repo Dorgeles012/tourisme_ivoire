@@ -17,11 +17,15 @@ class _ExploreScreenState extends State<ExploreScreen> {
   final _search = TextEditingController();
   late Future<List<Destination>> _destinations;
   late Future<List<dynamic>> _categories;
-  late Future<List<dynamic>> _regions;
+  late Future<List<dynamic>> _districts;
 
   String? _category;
+  int? _districtId;
+  String? _districtName;
   int? _regionId;
   String? _regionName;
+  int? _departmentId;
+  String? _departmentName;
   int _categoryChipIndex = 0;
   List<String> _categoryLabels = ['Tout'];
   List<String> _categorySlugs = [''];
@@ -32,7 +36,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     super.initState();
     _destinations = widget.api.fetchDestinations();
     _categories   = widget.api.getCategories();
-    _regions      = widget.api.getRegions();
+    _districts    = widget.api.getDistricts();
 
     _categories.then((cats) {
       if (!mounted) return;
@@ -53,8 +57,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
     if (reset) {
       _search.clear();
       _category = null;
+      _districtId = null;
+      _districtName = null;
       _regionId = null;
       _regionName = null;
+      _departmentId = null;
+      _departmentName = null;
       _categoryChipIndex = 0;
     }
     setState(() {
@@ -62,6 +70,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
         search:   _search.text.isEmpty ? null : _search.text,
         category: _category,
         regionId: _regionId,
+        districtId: _districtId,
+        departmentId: _departmentId,
       );
     });
   }
@@ -77,27 +87,66 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   Future<void> _openRegionSheet() async {
-    final regions = await _regions;
+    final districts = await _districts;
     if (!mounted) return;
 
-    final result = await showModalBottomSheet<(int?, String?)>(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(kRadiusXl)),
-      ),
-      builder: (_) => _RegionBottomSheet(
-        regions: regions,
-        selectedId: _regionId,
-      ),
-    );
-
-    if (result != null) {
-      setState(() {
-        _regionId = result.$1;
-        _regionName = result.$2;
-      });
-      _query();
+    Future<(int?, String?)?> choose(List<dynamic> items, String title) {
+      return showModalBottomSheet<(int?, String?)>(
+        context: context,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(kRadiusXl)),
+        ),
+        builder: (_) => _RegionBottomSheet(regions: items, title: title),
+      );
     }
+
+    final district = await choose(districts, 'Choisir un district');
+    if (!mounted || district == null) return;
+    final districtId = district.$1;
+    final districtName = district.$2;
+    int? regionId;
+    String? regionName;
+    int? departmentId;
+    String? departmentName;
+
+    if (districtId != null) {
+      final row = districts.cast<Map>().firstWhere(
+        (item) => int.tryParse(item['id'].toString()) == districtId,
+      );
+      final isAutonomous = row['type'].toString() == 'autonome';
+      if (!isAutonomous) {
+        final regions = await widget.api.getRegions(districtId: districtId);
+        if (!mounted) return;
+        final region = await choose(regions, 'Choisir une région');
+        if (region == null) return;
+        regionId = region.$1;
+        regionName = region.$2;
+      }
+
+      final departments = (regionId != null || isAutonomous)
+          ? await widget.api.getDepartements(
+              regionId: regionId,
+              districtId: isAutonomous ? districtId : null,
+            )
+          : <dynamic>[];
+      if (!mounted) return;
+      if (departments.isNotEmpty) {
+        final department = await choose(departments, 'Choisir un département');
+        if (department == null) return;
+        departmentId = department.$1;
+        departmentName = department.$2;
+      }
+    }
+
+    setState(() {
+      _districtId = districtId;
+      _districtName = districtName;
+      _regionId = regionId;
+      _regionName = regionName;
+      _departmentId = departmentId;
+      _departmentName = departmentName;
+    });
+    _query();
   }
 
   @override
@@ -139,11 +188,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
                               height: 42,
                               padding: const EdgeInsets.symmetric(horizontal: 16),
                               decoration: BoxDecoration(
-                                color: _regionId != null
+                                color: (_regionId != null || _districtId != null)
                                     ? ivorianOrange.withValues(alpha: 0.1)
                                     : Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                                 borderRadius: BorderRadius.circular(kRadiusXl),
-                                border: _regionId != null
+                                border: (_regionId != null || _districtId != null)
                                     ? Border.all(color: ivorianOrange.withValues(alpha: 0.5), width: 1.5)
                                     : null,
                               ),
@@ -152,18 +201,18 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                   Icon(
                                     Icons.map_outlined,
                                     size: 18,
-                                    color: _regionId != null
+                                    color: (_regionId != null || _districtId != null)
                                         ? ivorianOrange
                                         : Theme.of(context).colorScheme.onSurfaceVariant,
                                   ),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
-                                      _regionName ?? 'Toutes les régions',
+                                      _departmentName ?? _regionName ?? _districtName ?? 'Toute la Côte d’Ivoire',
                                       style: TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w600,
-                                        color: _regionId != null
+                                        color: (_regionId != null || _districtId != null)
                                             ? ivorianOrange
                                             : Theme.of(context).colorScheme.onSurfaceVariant,
                                       ),
@@ -172,7 +221,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                   Icon(
                                     Icons.keyboard_arrow_down_rounded,
                                     size: 18,
-                                    color: _regionId != null
+                                    color: (_regionId != null || _districtId != null)
                                         ? ivorianOrange
                                         : Theme.of(context).colorScheme.onSurfaceVariant,
                                   ),
@@ -181,15 +230,19 @@ class _ExploreScreenState extends State<ExploreScreen> {
                             ),
                           ),
                         ),
-                        if (_regionId != null) ...[
+                        if (_regionId != null || _districtId != null) ...[
                           const SizedBox(width: 8),
                           IconButton(
-                            tooltip: 'Effacer la région',
+                            tooltip: 'Effacer le filtre géographique',
                             icon: const Icon(Icons.close_rounded, size: 18),
                             onPressed: () {
                               setState(() {
+                                _districtId = null;
+                                _districtName = null;
                                 _regionId = null;
                                 _regionName = null;
+                                _departmentId = null;
+                                _departmentName = null;
                               });
                               _query();
                             },
@@ -321,10 +374,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
 // ═══════════════════════════════════════════════════════════
 
 class _RegionBottomSheet extends StatelessWidget {
-  const _RegionBottomSheet({required this.regions, this.selectedId});
+  const _RegionBottomSheet({required this.regions, this.selectedId, this.title = 'Choisir une région'});
 
   final List<dynamic> regions;
   final int? selectedId;
+  final String title;
 
   @override
   Widget build(BuildContext context) {
@@ -350,7 +404,7 @@ class _RegionBottomSheet extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
             child: Text(
-              'Choisir une région',
+              title,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w800,
               ),
@@ -365,7 +419,7 @@ class _RegionBottomSheet extends StatelessWidget {
                 // Option "Toutes les régions"
                 ListTile(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-                  title: const Text('Toutes les régions',
+                  title: const Text('Toute la sélection',
                       style: TextStyle(fontWeight: FontWeight.w600)),
                   trailing: selectedId == null
                       ? Icon(Icons.check_rounded, color: ivorianOrange)

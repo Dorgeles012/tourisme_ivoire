@@ -2,8 +2,32 @@
 declare(strict_types=1);
 final class ReferenceController {
     public static function categories(): never { json_response(['data' => db()->query("SELECT id,nom,slug,description,icone FROM categories WHERE statut='actif' ORDER BY ordre,nom")->fetchAll()]); }
-    public static function regions(): never { json_response(['data' => db()->query("SELECT id,nom,slug,code_officiel FROM regions WHERE statut='actif' ORDER BY nom")->fetchAll()]); }
-    public static function districts(): never { json_response(['data' => db()->query("SELECT id,nom,slug,code_officiel FROM districts WHERE statut='actif' ORDER BY nom")->fetchAll()]); }
+    public static function regions(): never {
+        $sql = "SELECT id,district_id,nom,slug,code,code_officiel FROM regions WHERE statut='actif'";
+        $params = [];
+        if (isset($_GET['district_id']) && $_GET['district_id'] !== '') {
+            $id = filter_var($_GET['district_id'], FILTER_VALIDATE_INT);
+            if ($id === false || $id < 1) api_error('validation_error', 'district_id invalide.', 422);
+            $sql .= ' AND district_id=?';
+            $params[] = $id;
+        }
+        $sql .= ' ORDER BY nom';
+        $stmt = db()->prepare($sql); $stmt->execute($params);
+        json_response(['data' => $stmt->fetchAll()]);
+    }
+    public static function districts(): never { json_response(['data' => db()->query("SELECT id,nom,slug,code,type,code_officiel FROM districts WHERE statut='actif' ORDER BY nom")->fetchAll()]); }
+    public static function departements(): never {
+        $regionRaw = $_GET['region_id'] ?? null;
+        $districtRaw = $_GET['district_id'] ?? null;
+        if (($regionRaw === null || $regionRaw === '') === ($districtRaw === null || $districtRaw === '')) api_error('validation_error', 'Indiquez exactement un region_id ou un district_id.', 422);
+        $key = ($regionRaw !== null && $regionRaw !== '') ? 'region_id' : 'district_id';
+        $id = filter_var($key === 'region_id' ? $regionRaw : $districtRaw, FILTER_VALIDATE_INT);
+        if ($id === false || $id < 1) api_error('validation_error', "$key invalide.", 422);
+        $column = $key === 'region_id' ? 'region_id' : 'district_id';
+        $stmt = db()->prepare("SELECT id,region_id,district_id,nom,code,code_officiel FROM departements WHERE statut='actif' AND $column=? ORDER BY nom");
+        $stmt->execute([$id]);
+        json_response(['data' => $stmt->fetchAll()]);
+    }
     public static function languages(): never { json_response(['data' => db()->query("SELECT id,code,nom FROM langues WHERE actif=1 ORDER BY nom")->fetchAll()]); }
     public static function localites(): never {
         $where = ["l.statut='actif'"];

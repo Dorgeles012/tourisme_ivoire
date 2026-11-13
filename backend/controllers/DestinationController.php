@@ -9,7 +9,7 @@ final class DestinationController {
         if ($q !== '') { $where = ' AND (d.nom LIKE ? OR d.description LIKE ? OR l.nom LIKE ? OR c.nom LIKE ?)'; $like = '%' . $q . '%'; $params = [$like,$like,$like,$like]; }
         $category = trim((string)($_GET['categorie'] ?? ''));
         if ($category !== '') { $where .= ' AND (c.slug=? OR c.id=?)'; $params[] = $category; $params[] = ctype_digit($category) ? (int)$category : 0; }
-        foreach (['region_id' => 'dep.region_id', 'district_id' => 'dep.district_id'] as $key => $column) {
+        foreach (['district_id' => 'dep.district_id', 'region_id' => 'dep.region_id', 'departement_id' => 'dep.id'] as $key => $column) {
             if (isset($_GET[$key]) && $_GET[$key] !== '') {
                 $value = filter_var($_GET[$key], FILTER_VALIDATE_INT);
                 if (!$value || $value < 1) api_error('validation_error', "$key invalide.", 422);

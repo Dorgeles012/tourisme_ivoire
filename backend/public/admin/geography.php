@@ -33,12 +33,24 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET')==='POST') {
             $source=trim((string)($_POST['source_reference'] ?? ''));
             $scheme=strtolower((string)parse_url($source,PHP_URL_SCHEME));
             if (!$district || !$region || $district<1 || $region<1 || !filter_var($source,FILTER_VALIDATE_URL) || !in_array($scheme,['http','https'],true)) throw new InvalidArgumentException('Choisissez un district et une région et indiquez une source HTTP(S) officielle.');
-            db()->prepare('INSERT INTO districts_regions(district_id,region_id,source_reference,verified_at) VALUES(?,?,?,NOW())')->execute([$district,$region,$source]);
+            db()->beginTransaction();
+            $districtCheck=db()->prepare("SELECT type FROM districts WHERE id=? AND statut='actif'");
+            $districtCheck->execute([$district]);
+            if ($districtCheck->fetchColumn() !== 'ordinaire') throw new InvalidArgumentException('Un district autonome rattache directement ses départements, pas une région.');
+            $regionCheck=db()->prepare("SELECT id FROM regions WHERE id=? AND statut='actif'");
+            $regionCheck->execute([$region]);
+            if (!$regionCheck->fetchColumn()) throw new InvalidArgumentException('Région introuvable ou inactive.');
+            db()->prepare('UPDATE regions SET district_id=? WHERE id=?')->execute([$district,$region]);
+            db()->prepare('INSERT INTO districts_regions(district_id,region_id,source_reference,verified_at) VALUES(?,?,?,NOW()) ON DUPLICATE KEY UPDATE source_reference=VALUES(source_reference),verified_at=NOW()')->execute([$district,$region,$source]);
+            db()->commit();
         } elseif ($action==='remove_district_region') {
             $district=filter_var($_POST['district_id'] ?? null,FILTER_VALIDATE_INT);
             $region=filter_var($_POST['region_id'] ?? null,FILTER_VALIDATE_INT);
             if (!$district || !$region) throw new InvalidArgumentException('Relation invalide.');
+            db()->beginTransaction();
+            db()->prepare('UPDATE regions SET district_id=NULL WHERE district_id=? AND id=?')->execute([$district,$region]);
             db()->prepare('DELETE FROM districts_regions WHERE district_id=? AND region_id=?')->execute([$district,$region]);
+            db()->commit();
         } else {
             throw new InvalidArgumentException('Action inconnue.');
         }
@@ -46,6 +58,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET')==='POST') {
         header('Location: geography.php');
         exit;
     } catch (Throwable $e) {
+        if (db()->inTransaction()) db()->rollBack();
         error_log((string)$e);
         $error=$e instanceof InvalidArgumentException?$e->getMessage():'Enregistrement impossible; vérifiez les doublons et les rattachements.';
     }
@@ -53,7 +66,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET')==='POST') {
 $regions=db()->query('SELECT id,nom FROM regions WHERE statut="actif" ORDER BY nom')->fetchAll();
 $districts=db()->query('SELECT id,nom FROM districts WHERE statut="actif" ORDER BY nom')->fetchAll();
 $departments=db()->query('SELECT d.id,d.nom,COALESCE(r.nom,di.nom) AS parent FROM departements d LEFT JOIN regions r ON r.id=d.region_id LEFT JOIN districts di ON di.id=d.district_id ORDER BY parent,d.nom')->fetchAll();
-$relations=db()->query('SELECT d.id AS district_id,d.nom AS district,r.id AS region_id,r.nom AS region,x.source_reference FROM districts_regions x JOIN districts d ON d.id=x.district_id JOIN regions r ON r.id=x.region_id ORDER BY d.nom,r.nom')->fetchAll();
+$relations=db()->query('SELECT d.id AS district_id,d.nom AS district,r.id AS region_id,r.nom AS region,x.source_reference FROM regions r JOIN districts d ON d.id=r.district_id LEFT JOIN districts_regions x ON x.district_id=d.id AND x.region_id=r.id ORDER BY d.nom,r.nom')->fetchAll();
 $csrf=admin_csrf();
 ?>
 <!doctype html>

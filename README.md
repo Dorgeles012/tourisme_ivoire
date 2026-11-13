@@ -62,3 +62,16 @@ http://127.0.0.1:8000/admin/login.php
 
 php -S 127.0.0.1:8000 -t backend/public
 
+
+
+## Référentiel des divisions administratives
+
+Le schéma géographique est étendu sans suppression de tables ni de données. Il conserve les divisions déjà enregistrées et ajoute les codes, le type de district et les rattachements 1-N. Les 31 régions sont rattachées aux districts ordinaires; les départements des districts autonomes sont rattachés directement au district. La table historique districts_regions reste en place pour compatibilité.
+
+Après application des migrations avec php backend/migrate.php, générez un script idempotent à partir de l’API ANStat :
+
+    php backend/import_official_divisions.php database/divisions_seed.sql
+
+Le générateur vérifie les volumes publiés attendus (14 districts, dont 2 autonomes, 31 régions, 111 départements) et n’écrit aucun fichier si les résultats sont incomplets ou incompatibles. Il ne contacte pas la base et ne supprime aucune donnée. Importez ensuite database/divisions_seed.sql dans phpMyAdmin. Les codes ANStat proviennent du référentiel 2021; les volumes actuels sont recoupés avec les pages institutionnelles DGAT et SIGADT.
+
+Routes : GET /api/districts, GET /api/regions?district_id=ID, GET /api/departements?region_id=ID. Pour un district autonome, utilisez GET /api/departements?district_id=ID. Les identifiants sont validés et les requêtes filtrées utilisent PDO préparé.
