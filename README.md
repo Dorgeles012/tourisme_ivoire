@@ -5,7 +5,7 @@ Application Flutter multiplateforme, API PHP/PDO et interface d’administration
 ## Pré-requis
 
 - Flutter/Dart compatibles avec la contrainte du [`pubspec.yaml`](./pubspec.yaml)
-- PHP 8.2+ avec PDO MySQL, JSON, OpenSSL, Fileinfo et Mbstring
+- PHP 8.2+ avec PDO MySQL, JSON, OpenSSL, Fileinfo, Mbstring et `allow_url_fopen`
 - MySQL 8+ ou MariaDB compatible avec les scripts
 - Apache avec `mod_rewrite` (ou un serveur configuré pour rediriger les routes vers `backend/public/index.php`)
 
@@ -36,6 +36,12 @@ Vérifie que le fichier exporté est présent et non vide, et teste sa restaurat
 6. L’administration est accessible à `/admin/login.php` quand le VirtualHost sert `backend/public`. Après connexion dans Flutter, un compte Sadmin ouvre le back-office via un code aléatoire à usage unique, valable 60 secondes et transmis dans le fragment d’URL (jamais dans la requête HTTP); un Sadmin avec une session Flutter restaurée est redirigé de la même façon. L’application utilise seulement les rôles `Sadmin` et `Client`. Le Sadmin peut créer un compte depuis le module « Utilisateurs » et attribuer/promouvoir un autre Sadmin; les inscriptions publiques reçoivent toujours le rôle `Client`.
 
 Le back-office permet notamment de gérer les utilisateurs et leurs rôles, les destinations, les contenus patrimoniaux, les visites virtuelles, les images, les quiz, les vidéos, les catégories, les réservations et les notifications. Les visites virtuelles ne peuvent être activées que si leur destination ou patrimoine associé est publié. Les demandes de réinitialisation de mot de passe sont limitées à trois par compte et par heure; chaque nouveau code invalide les précédents.
+
+### Espace client Web
+
+L’espace client Web est servi sous `/client/` (ex. `http://127.0.0.1:8000/client/`). Il réutilise les API d’authentification et conserve le jeton Bearer côté serveur dans une session PHP `HttpOnly`; le navigateur ne reçoit pas le jeton API. L’URL d’API se déduit du VirtualHost public. Pour une topologie différente, définir `CLIENT_API_BASE_URL` dans `backend/.env` (URL de base terminée par `/`). Apache peut servir le portail et l’API sur le même VirtualHost. Avec le serveur PHP mono-processus (`php -S`), lancez deux instances pour éviter qu’un appel serveur-à-serveur ne se bloque : API sur le port 8000, puis portail sur le port 8001 avec `CLIENT_API_BASE_URL=http://127.0.0.1:8000/`; les deux doivent utiliser `backend/router.php`. Le portail fournit le profil, les réservations, favoris, historique du passeport, notifications, préférences, réinitialisation et changement de mot de passe, ainsi qu’une messagerie d’assistance reliée au back-office (`/admin/support.php`).
+
+La migration `20261117_010_customer_support.php` ajoute uniquement les tables nécessaires aux demandes et messages d’assistance; elle est appliquée par `php backend/migrate.php`. Les demandes de réservation en attente peuvent être annulées; les réservations confirmées doivent être traitées avec l’assistance. Aucun paiement en ligne ni historique de transactions n’est actuellement intégré: le portail présente les montants issus des réservations sans les qualifier de paiements ou factures.
 
 Les contrôleurs sont sous `backend/controllers`, la configuration et les services dans `backend/config` et `backend/services`. Les demandes de transport sont des réservations sans paiement intégré.
 
@@ -75,3 +81,9 @@ Après application des migrations avec php backend/migrate.php, générez un scr
 Le générateur vérifie les volumes publiés attendus (14 districts, dont 2 autonomes, 31 régions, 111 départements) et n’écrit aucun fichier si les résultats sont incomplets ou incompatibles. Il ne contacte pas la base et ne supprime aucune donnée. Importez ensuite database/divisions_seed.sql dans phpMyAdmin. Les codes ANStat proviennent du référentiel 2021; les volumes actuels sont recoupés avec les pages institutionnelles DGAT et SIGADT.
 
 Routes : GET /api/districts, GET /api/regions?district_id=ID, GET /api/departements?region_id=ID. Pour un district autonome, utilisez GET /api/departements?district_id=ID. Les identifiants sont validés et les requêtes filtrées utilisent PDO préparé.
+
+### Espace client Web
+
+L’espace client Web est servi sous `/client/` (ex. `http://127.0.0.1:8000/client/`). Il réutilise les API d’authentification et conserve le jeton Bearer côté serveur dans une session PHP `HttpOnly`; le navigateur ne reçoit pas le jeton API. L’URL d’API se déduit du VirtualHost public. Pour une topologie différente, définir `CLIENT_API_BASE_URL` dans `backend/.env` (URL de base terminée par `/`). Le portail fournit le profil, les réservations, favoris, historique du passeport, notifications, préférences, réinitialisation et changement de mot de passe, ainsi qu’une messagerie d’assistance reliée au back-office (`/admin/support.php`).
+
+La migration `20261117_010_customer_support.php` ajoute uniquement les tables nécessaires aux demandes et messages d’assistance; elle est appliquée par `php backend/migrate.php`. Les demandes de réservation en attente peuvent être annulées; les réservations confirmées doivent être traitées avec l’assistance. Aucun paiement en ligne ni historique de transactions n’est actuellement intégré: le portail présente les montants issus des réservations sans les qualifier de paiements ou factures.

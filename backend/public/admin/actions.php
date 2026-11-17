@@ -229,6 +229,25 @@ try {
         } elseif ($module === 'users' && $action !== 'actif') {
             actions_update_user_status($action, (int)$id, $user);
             $statement = null;  
+        } elseif ($module === 'reservations') {
+            $pdo = db();
+            $pdo->beginTransaction();
+            try {
+                $current = $pdo->prepare('SELECT utilisateur_id,reference,statut FROM reservations WHERE id=? FOR UPDATE');
+                $current->execute([$id]);
+                $reservation = $current->fetch();
+                if (!$reservation) throw new RuntimeException('Réservation introuvable.');
+                $pdo->prepare('UPDATE reservations SET statut=? WHERE id=?')->execute([$action, $id]);
+                $pdo->prepare('UPDATE details_reservations SET statut=? WHERE reservation_id=?')->execute([$action, $id]);
+                if ($reservation['statut'] !== $action) {
+                    $pdo->prepare('INSERT INTO notifications(utilisateur_id,titre,contenu,type,cible_url) VALUES(?,?,?,?,?)')->execute([(int)$reservation['utilisateur_id'], 'Mise à jour de votre réservation', 'La réservation ' . $reservation['reference'] . ' est maintenant au statut « ' . $action . ' ».', 'reservation', 'reservations']);
+                }
+                $pdo->commit();
+                $statement = null;
+            } catch (Throwable $e) {
+                if ($pdo->inTransaction()) $pdo->rollBack();
+                throw $e;
+            }
         } else {
              
             $statement = db()->prepare("UPDATE {$config['table']} SET {$config['column']}=? WHERE id=?");

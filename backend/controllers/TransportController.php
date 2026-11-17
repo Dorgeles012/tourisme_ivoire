@@ -55,6 +55,7 @@ final class TransportController {
             $reservationId = (int)$pdo->lastInsertId();
             $detail = $pdo->prepare("INSERT INTO details_reservations(reservation_id,itineraire_id,quantite,tarif_unitaire,devise,depart_at,statut,libelle_snapshot) VALUES(?,?,?,?,?,?,'demande',?)");
             $detail->execute([$reservationId,$itineraryId,$quantity,$route['tarif'],$route['devise'],$route['depart_at'],$route['depart_libelle'] . ' → ' . $route['arrivee_libelle']]);
+            $pdo->prepare('INSERT INTO notifications(utilisateur_id,titre,contenu,type,cible_url) VALUES(?,?,?,?,?)')->execute([$userId, 'Demande de réservation reçue', 'Votre demande ' . $reference . ' est en attente de confirmation.', 'reservation', 'reservations']);
             $pdo->commit();
             json_response(['data' => ['id' => $reservationId, 'reference' => $reference, 'statut' => 'demande', 'montant_total' => $total, 'devise' => $total === null ? null : $route['devise']]], 201);
         } catch (Throwable $e) {
@@ -67,5 +68,34 @@ final class TransportController {
         $stmt = db()->prepare('SELECT r.id,r.reference,r.statut,r.montant_total,r.devise,r.created_at,dr.libelle_snapshot,dr.quantite,dr.depart_at,dr.statut AS detail_statut FROM reservations r LEFT JOIN details_reservations dr ON dr.reservation_id=r.id WHERE r.utilisateur_id=? ORDER BY r.created_at DESC LIMIT 100');
         $stmt->execute([AuthMiddleware::userId()]);
         json_response(['data' => $stmt->fetchAll()]);
+    }
+
+    public static function reservationDetails(int $id): never {
+        $stmt = db()->prepare('SELECT r.id,r.reference,r.statut,r.montant_total,r.devise,r.created_at,r.updated_at,r.notes,dr.libelle_snapshot,dr.quantite,dr.tarif_unitaire,dr.depart_at,dr.statut AS detail_statut FROM reservations r LEFT JOIN details_reservations dr ON dr.reservation_id=r.id WHERE r.id=? AND r.utilisateur_id=? LIMIT 1');
+        $stmt->execute([$id, AuthMiddleware::requireRole(['Client'])]);
+        $reservation = $stmt->fetch();
+        if (!$reservation) api_error('not_found', 'Réservation introuvable.', 404);
+        json_response(['data' => $reservation]);
+    }
+
+    public static function cancelReservation(int $id): never {
+        $userId = AuthMiddleware::requireRole(['Client']);
+        $pdo = db();
+        $pdo->beginTransaction();
+        try {
+            $stmt = $pdo->prepare('SELECT id,reference,statut FROM reservations WHERE id=? AND utilisateur_id=? FOR UPDATE');
+            $stmt->execute([$id, $userId]);
+            $reservation = $stmt->fetch();
+            if (!$reservation) { $pdo->rollBack(); api_error('not_found', 'Réservation introuvable.', 404); }
+            if ($reservation['statut'] !== 'demande') { $pdo->rollBack(); api_error('reservation_not_cancellable', 'Seules les demandes en attente peuvent être annulées depuis votre espace.', 409); }
+            $pdo->prepare("UPDATE reservations SET statut='annulee' WHERE id=? AND utilisateur_id=? AND statut='demande'")->execute([$id, $userId]);
+            $pdo->prepare("UPDATE details_reservations SET statut='annulee' WHERE reservation_id=?")->execute([$id]);
+            $pdo->prepare('INSERT INTO notifications(utilisateur_id,titre,contenu,type,cible_url) VALUES(?,?,?,?,?)')->execute([$userId, 'Réservation annulée', 'Votre demande ' . $reservation['reference'] . ' a été annulée.', 'reservation', 'reservations']);
+            $pdo->commit();
+            json_response(['data' => ['id' => $id, 'statut' => 'annulee']]);
+        } catch (Throwable $e) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            throw $e;
+        }
     }
 }

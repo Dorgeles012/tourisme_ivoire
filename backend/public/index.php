@@ -25,6 +25,7 @@ require_once APP_ROOT . '/controllers/QuizController.php';
 require_once APP_ROOT . '/controllers/PassportController.php';
 require_once APP_ROOT . '/controllers/NotificationController.php';
 require_once APP_ROOT . '/controllers/SettingsController.php';
+require_once APP_ROOT . '/controllers/SupportController.php';
 require_once APP_ROOT . '/controllers/HeritageController.php';
 require_once APP_ROOT . '/routes/api.php';
 $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';

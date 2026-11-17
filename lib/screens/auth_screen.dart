@@ -131,236 +131,214 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   String get _title => switch (_mode) {
-    _AuthMode.login => 'Connexion',
-    _AuthMode.register => 'Créer un compte',
-    _AuthMode.forgot => 'Mot de passe oublié',
-    _AuthMode.reset => 'Réinitialiser',
-  };
+        _AuthMode.login => 'Connexion',
+        _AuthMode.register => 'Créer un compte',
+        _AuthMode.forgot => 'Mot de passe oublié',
+        _AuthMode.reset => 'Réinitialiser',
+      };
 
   String get _submitLabel => switch (_mode) {
-    _AuthMode.login => 'Se connecter',
-    _AuthMode.register => 'Créer mon compte',
-    _AuthMode.forgot => 'Envoyer le code',
-    _AuthMode.reset => 'Réinitialiser',
-  };
+        _AuthMode.login => 'Se connecter',
+        _AuthMode.register => 'Créer mon compte',
+        _AuthMode.forgot => 'Envoyer le code',
+        _AuthMode.reset => 'Réinitialiser',
+      };
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      body: Stack(
-        children: [
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: SizedBox(
-              height: 370,
-              child: Stack(
+      backgroundColor: cs.surface,
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 280,
+            pinned: true,
+            stretch: true,
+            backgroundColor: cs.surface,
+            surfaceTintColor: cs.surface,
+            elevation: 0,
+            scrolledUnderElevation: 1,
+            leading: IconButton(
+              tooltip: 'Retour',
+              icon: const Icon(Icons.arrow_back_rounded),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            flexibleSpace: FlexibleSpaceBar(
+              stretchModes: const [
+                StretchMode.zoomBackground,
+                StretchMode.blurBackground,
+              ],
+              background: Stack(
+                fit: StackFit.expand,
                 children: [
-                  Positioned(
-                    top: 55,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    child: Image.asset(
-                      'lib/images/Tourisme.jpg',
-                      fit: BoxFit.cover,
-                    ),
+                  Image.asset(
+                    'lib/images/Tourisme.jpg',
+                    fit: BoxFit.cover,
                   ),
-                  Positioned.fill(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Colors.black.withValues(alpha: 0.5),
-                          ],
-                        ),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withValues(alpha: 0.10),
+                          Colors.black.withValues(alpha: 0.55),
+                          Colors.black.withValues(alpha: 0.82),
+                        ],
+                        stops: const [0, .55, 1],
                       ),
                     ),
                   ),
                   Positioned(
                     top: -60,
                     right: -60,
-                    child: Container(
-                      width: 200,
-                      height: 200,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: 0.08),
-                      ),
+                    child: _GlowBlob(
+                      size: 220,
+                      color: Colors.white.withValues(alpha: 0.10),
                     ),
                   ),
                   Positioned(
                     top: 40,
                     left: -50,
-                    child: Container(
-                      width: 140,
-                      height: 140,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: 0.06),
-                      ),
+                    child: _GlowBlob(
+                      size: 160,
+                      color: ivorianOrange.withValues(alpha: 0.18),
                     ),
                   ),
                   Positioned(
                     bottom: -20,
                     right: 30,
-                    child: Container(
-                      width: 70,
-                      height: 70,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: 0.05),
-                      ),
+                    child: _GlowBlob(
+                      size: 80,
+                      color: Colors.white.withValues(alpha: 0.06),
                     ),
                   ),
                   SafeArea(
-                    child: Align(
-                      alignment: Alignment.topLeft,
-                      child: Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: IconButton(
-                          tooltip: 'Retour',
-                          icon: const Icon(
-                            Icons.arrow_back_rounded,
-                            color: Colors.white,
-                          ),
-                          style: IconButton.styleFrom(
-                            backgroundColor: Colors.white.withValues(
-                              alpha: 0.15,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withValues(alpha: 0.18),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.55),
+                                width: 2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: .2),
+                                  blurRadius: 18,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.travel_explore_rounded,
+                              color: Colors.white,
+                              size: 30,
                             ),
                           ),
-                          onPressed: () => Navigator.of(context).pop(),
-                        ),
+                          const SizedBox(height: 14),
+                          const Text(
+                            'Tourisme Ivoire',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 28,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -0.7,
+                              height: 1.1,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Explorez la Côte d\'Ivoire autrement',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.85),
+                              fontSize: 14.5,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 50,
-                    left: 24,
-                    right: 24,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 56,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withValues(alpha: 0.2),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.5),
-                              width: 2,
-                            ),
-                          ),
-                          child: const Icon(
-                            Icons.travel_explore_rounded,
-                            color: Colors.white,
-                            size: 28,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'Tourisme Ivoire',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 26,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -0.5,
-                            height: 1.15,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Explorez la Côte d\'Ivoire autrement',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.85),
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
                     ),
                   ),
                 ],
               ),
             ),
           ),
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(height: 215),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: cs.surface,
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(kRadiusXl),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  child: Form(
+                    child: AnimatedSwitcher(
+                      duration: kNormalAnim,
+                      switchInCurve: Curves.easeOut,
+                      switchOutCurve: Curves.easeIn,
+                      transitionBuilder: (child, anim) => FadeTransition(
+                        opacity: anim,
+                        child: SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0, 0.05),
+                            end: Offset.zero,
+                          ).animate(anim),
+                          child: child,
+                        ),
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.08),
-                          blurRadius: 24,
-                          offset: const Offset(0, -6),
-                        ),
-                      ],
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 28, 24, 32),
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 480),
-                          child: Form(
-                            child: AnimatedSwitcher(
-                              duration: kNormalAnim,
-                              switchInCurve: Curves.easeOut,
-                              switchOutCurve: Curves.easeIn,
-                              transitionBuilder: (child, anim) =>
-                                  FadeTransition(
-                                    opacity: anim,
-                                    child: SlideTransition(
-                                      position: Tween<Offset>(
-                                        begin: const Offset(0, 0.05),
-                                        end: Offset.zero,
-                                      ).animate(anim),
-                                      child: child,
-                                    ),
-                                  ),
-                              child: _FormContent(
-                                key: ValueKey(_mode),
-                                mode: _mode,
-                                title: _title,
-                                submitLabel: _submitLabel,
-                                busy: _busy,
-                                obscure: _obscure,
-                                nameCtrl: _name,
-                                firstNameCtrl: _firstName,
-                                phoneCtrl: _phone,
-                                emailCtrl: _email,
-                                passwordCtrl: _password,
-                                passwordConfirmationCtrl: _passwordConfirmation,
-                                tokenCtrl: _token,
-                                onToggleObscure: () =>
-                                    setState(() => _obscure = !_obscure),
-                                onSubmit: _submit,
-                                onModeChange: (m) => setState(() => _mode = m),
-                              ),
-                            ),
-                          ),
-                        ),
+                      child: _FormContent(
+                        key: ValueKey(_mode),
+                        mode: _mode,
+                        title: _title,
+                        submitLabel: _submitLabel,
+                        busy: _busy,
+                        obscure: _obscure,
+                        nameCtrl: _name,
+                        firstNameCtrl: _firstName,
+                        phoneCtrl: _phone,
+                        emailCtrl: _email,
+                        passwordCtrl: _password,
+                        passwordConfirmationCtrl: _passwordConfirmation,
+                        tokenCtrl: _token,
+                        onToggleObscure: () =>
+                            setState(() => _obscure = !_obscure),
+                        onSubmit: _submit,
+                        onModeChange: (m) => setState(() => _mode = m),
                       ),
                     ),
                   ),
-                ],
+                ),
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _GlowBlob extends StatelessWidget {
+  const _GlowBlob({required this.size, required this.color});
+  final double size;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          colors: [color, color.withValues(alpha: 0)],
+        ),
       ),
     );
   }
@@ -411,7 +389,7 @@ class _FormContent extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     return InputDecoration(
       labelText: label,
-      prefixIcon: Icon(icon),
+      prefixIcon: Icon(icon, size: 20),
       suffixIcon: suffix,
       filled: true,
       fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
@@ -438,6 +416,10 @@ class _FormContent extends StatelessWidget {
         borderRadius: BorderRadius.circular(kRadiusMd),
         borderSide: const BorderSide(color: ivorianTerracotta, width: 1.5),
       ),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 18,
+      ),
     );
   }
 
@@ -447,17 +429,34 @@ class _FormContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          _subtitle,
-          style: TextStyle(color: cs.onSurfaceVariant, fontSize: 14),
+        Center(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+            decoration: BoxDecoration(
+              color: ivorianOrange.withValues(alpha: .12),
+              borderRadius: BorderRadius.circular(50),
+            ),
+            child: Text(
+              _subtitle.toUpperCase(),
+              style: const TextStyle(
+                color: ivorianOrange,
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 14),
         Text(
           title,
-          style: Theme.of(context).textTheme.headlineSmall
-              ?.copyWith(fontWeight: FontWeight.w900, letterSpacing: -0.5),
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w900,
+                letterSpacing: -0.5,
+              ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 28),
         if (mode == _AuthMode.register) ...[
           TextFormField(
             controller: nameCtrl,
@@ -502,7 +501,7 @@ class _FormContent extends StatelessWidget {
             context: context,
             label: 'Adresse e-mail',
             icon: Icons.mail_outline_rounded,
-          ),
+          ).copyWith(counterText: ''),
         ),
         if (mode == _AuthMode.reset) ...[
           const SizedBox(height: 14),
@@ -533,6 +532,7 @@ class _FormContent extends StatelessWidget {
                   obscure
                       ? Icons.visibility_outlined
                       : Icons.visibility_off_outlined,
+                  size: 20,
                 ),
                 onPressed: onToggleObscure,
               ),
@@ -559,11 +559,12 @@ class _FormContent extends StatelessWidget {
             child: TextButton(
               onPressed: () => onModeChange(_AuthMode.forgot),
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
               ),
               child: const Text(
                 'Mot de passe oublié ?',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
               ),
             ),
           ),
@@ -577,7 +578,7 @@ class _FormContent extends StatelessWidget {
           loading: busy,
           onPressed: busy ? null : onSubmit,
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 22),
         Wrap(
           alignment: WrapAlignment.center,
           crossAxisAlignment: WrapCrossAlignment.center,
@@ -591,9 +592,9 @@ class _FormContent extends StatelessWidget {
               onTap: () => onModeChange(_switchMode),
               child: Text(
                 _switchLabel,
-                style: TextStyle(
+                style: const TextStyle(
                   color: ivorianOrange,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w800,
                   fontSize: 14,
                 ),
               ),
@@ -605,30 +606,30 @@ class _FormContent extends StatelessWidget {
   }
 
   String get _subtitle => switch (mode) {
-    _AuthMode.login => 'Bon retour parmi nous !',
-    _AuthMode.register => 'Rejoignez la communauté Tourisme Ivoire.',
-    _AuthMode.forgot => 'Recevez un code de réinitialisation.',
-    _AuthMode.reset => 'Choisissez un nouveau mot de passe.',
-  };
+        _AuthMode.login => 'Bon retour parmi nous !',
+        _AuthMode.register => 'Rejoignez la communauté Tourisme Ivoire.',
+        _AuthMode.forgot => 'Recevez un code de réinitialisation.',
+        _AuthMode.reset => 'Choisissez un nouveau mot de passe.',
+      };
 
   String get _switchText => switch (mode) {
-    _AuthMode.login => 'Pas encore de compte ?',
-    _AuthMode.register => 'Déjà inscrit ?',
-    _AuthMode.forgot => 'Vous vous en souvenez ?',
-    _AuthMode.reset => 'Retour à la',
-  };
+        _AuthMode.login => 'Pas encore de compte ?',
+        _AuthMode.register => 'Déjà inscrit ?',
+        _AuthMode.forgot => 'Vous vous en souvenez ?',
+        _AuthMode.reset => 'Retour à la',
+      };
 
   String get _switchLabel => switch (mode) {
-    _AuthMode.login => 'Créer un compte',
-    _AuthMode.register => 'Se connecter',
-    _AuthMode.forgot => 'Se connecter',
-    _AuthMode.reset => 'connexion',
-  };
+        _AuthMode.login => 'Créer un compte',
+        _AuthMode.register => 'Se connecter',
+        _AuthMode.forgot => 'Se connecter',
+        _AuthMode.reset => 'connexion',
+      };
 
   _AuthMode get _switchMode => switch (mode) {
-    _AuthMode.login => _AuthMode.register,
-    _AuthMode.register => _AuthMode.login,
-    _AuthMode.forgot => _AuthMode.login,
-    _AuthMode.reset => _AuthMode.login,
-  };
+        _AuthMode.login => _AuthMode.register,
+        _AuthMode.register => _AuthMode.login,
+        _AuthMode.forgot => _AuthMode.login,
+        _AuthMode.reset => _AuthMode.login,
+      };
 }

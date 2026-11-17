@@ -203,9 +203,9 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           SliverPadding(
-            padding: EdgeInsets.fromLTRB(sidePad, 24, sidePad, 8),
+            padding: EdgeInsets.fromLTRB(sidePad, 28, sidePad, 8),
             sliver: SliverToBoxAdapter(
-              child: SectionHeader(title: 'Que voulez-vous faire ?'),
+              child: const SectionHeader(title: 'Que voulez-vous faire ?'),
             ),
           ),
           SliverPadding(
@@ -220,7 +220,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           SliverPadding(
-            padding: EdgeInsets.fromLTRB(sidePad, 24, sidePad, 8),
+            padding: EdgeInsets.fromLTRB(sidePad, 28, sidePad, 8),
             sliver: SliverToBoxAdapter(
               child: SectionHeader(
                 title: 'Destinations à découvrir',
@@ -349,8 +349,18 @@ class _HeroBannerState extends State<_HeroBanner>
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final textScale = MediaQuery.textScalerOf(context).scale(14) / 14;
+    final baseHeight = screenWidth < 400
+        ? 280.0
+        : screenWidth < 480
+        ? 250.0
+        : 230.0;
+    final bannerHeight =
+        baseHeight + ((textScale - 1).clamp(0.0, 2.0) * 170).toDouble();
+
     return Container(
-      height: 200,
+      height: bannerHeight,
       decoration: BoxDecoration(
         gradient: kHeroGradient,
         borderRadius: BorderRadius.circular(kRadiusXl),
@@ -361,7 +371,9 @@ class _HeroBannerState extends State<_HeroBanner>
         children: [
           Positioned.fill(
             child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 600),
+              duration: const Duration(milliseconds: 800),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
               child: Image.asset(
                 _images[_imageIndex],
                 key: ValueKey(_images[_imageIndex]),
@@ -378,8 +390,8 @@ class _HeroBannerState extends State<_HeroBanner>
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                   colors: [
-                    Colors.black.withValues(alpha: 0.65),
-                    Colors.black.withValues(alpha: 0.08),
+                    Colors.black.withValues(alpha: 0.75),
+                    Colors.black.withValues(alpha: 0.10),
                   ],
                 ),
               ),
@@ -390,22 +402,22 @@ class _HeroBannerState extends State<_HeroBanner>
             builder: (_, _) => Stack(
               children: [
                 _circle(
-                  size: 160,
-                  top: -30 + _ctrl.value * 8,
-                  right: -30 + _ctrl.value * 6,
-                  alpha: 0.08,
+                  size: 180,
+                  top: -40 + _ctrl.value * 10,
+                  right: -40 + _ctrl.value * 8,
+                  alpha: 0.10,
                 ),
                 _circle(
-                  size: 100,
-                  bottom: -20 - _ctrl.value * 6,
-                  left: 20 - _ctrl.value * 4,
+                  size: 120,
+                  bottom: -30 - _ctrl.value * 8,
+                  left: 30 - _ctrl.value * 5,
+                  alpha: 0.07,
+                ),
+                _circle(
+                  size: 60,
+                  top: 70 + _ctrl.value * 6,
+                  left: 70 + _ctrl.value * 4,
                   alpha: 0.06,
-                ),
-                _circle(
-                  size: 50,
-                  top: 60 + _ctrl.value * 5,
-                  left: 60 + _ctrl.value * 3,
-                  alpha: 0.05,
                 ),
               ],
             ),
@@ -416,14 +428,34 @@ class _HeroBannerState extends State<_HeroBanner>
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: ivorianOrange,
+                    borderRadius: BorderRadius.circular(50),
+                  ),
+                  child: const Text(
+                    'À LA UNE',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
                 const Text(
                   'Découvrez la\nCôte d\'Ivoire',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 26,
+                    fontSize: 28,
                     fontWeight: FontWeight.w900,
-                    height: 1.15,
-                    letterSpacing: -0.5,
+                    height: 1.1,
+                    letterSpacing: -0.6,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -435,25 +467,32 @@ class _HeroBannerState extends State<_HeroBanner>
                   ),
                 ),
                 const SizedBox(height: 16),
-                OutlinedButton(
+                FilledButton(
                   onPressed: widget.onExplore,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: const BorderSide(color: Colors.white, width: 1.5),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: ivorianOrange,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 10,
+                      horizontal: 22,
+                      vertical: 12,
                     ),
-                    minimumSize: const Size(44, 40),
+                    minimumSize: const Size(44, 44),
                     textStyle: const TextStyle(
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w800,
                       fontSize: 13,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(kRadiusXl),
                     ),
                   ),
-                  child: const Text('Explorer maintenant'),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('Explorer maintenant'),
+                      SizedBox(width: 6),
+                      Icon(Icons.arrow_forward_rounded, size: 16),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -481,7 +520,12 @@ class _HeroBannerState extends State<_HeroBanner>
         height: size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Colors.white.withValues(alpha: alpha),
+          gradient: RadialGradient(
+            colors: [
+              Colors.white.withValues(alpha: alpha),
+              Colors.white.withValues(alpha: 0),
+            ],
+          ),
         ),
       ),
     );
@@ -512,7 +556,7 @@ class _FeatureShowcase extends StatelessWidget {
           crossAxisCount: 3,
           crossAxisSpacing: 10,
           mainAxisSpacing: 10,
-          childAspectRatio: 0.95,
+          childAspectRatio: 0.92,
         ),
         itemBuilder: (_, i) => FadeSlideIn(
           delay: kStaggerDelay * i,
@@ -536,12 +580,115 @@ class _FeatureShowcase extends StatelessWidget {
       ),
       itemBuilder: (_, i) => FadeSlideIn(
         delay: kStaggerDelay * i,
-        child: FeatureCard(
-          icon: features[i].icon,
-          title: features[i].title,
-          subtitle: features[i].subtitle,
-          iconColor: features[i].color,
+        child: _ModernFeatureCard(
+          data: features[i],
           onTap: () => onOpen(features[i]),
+        ),
+      ),
+    );
+  }
+}
+
+class _ModernFeatureCard extends StatefulWidget {
+  const _ModernFeatureCard({required this.data, required this.onTap});
+  final _FeatureData data;
+  final VoidCallback onTap;
+
+  @override
+  State<_ModernFeatureCard> createState() => _ModernFeatureCardState();
+}
+
+class _ModernFeatureCardState extends State<_ModernFeatureCard> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) => setState(() => _pressed = false),
+      onTapCancel: () => setState(() => _pressed = false),
+      onTap: widget.onTap,
+      child: AnimatedScale(
+        scale: _pressed ? 0.96 : 1.0,
+        duration: kFastAnim,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: scheme.surface,
+            borderRadius: BorderRadius.circular(kRadiusLg),
+            border: Border.all(
+              color: scheme.outlineVariant.withValues(alpha: 0.35),
+              width: 0.6,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: widget.data.color.withValues(alpha: 0.06),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      widget.data.color.withValues(alpha: 0.20),
+                      widget.data.color.withValues(alpha: 0.06),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  widget.data.icon,
+                  color: widget.data.color,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      widget.data.title,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: scheme.onSurface,
+                        letterSpacing: -0.1,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      widget.data.subtitle,
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: scheme.onSurface.withValues(alpha: 0.55),
+                        height: 1.3,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 20,
+                color: scheme.onSurface.withValues(alpha: 0.3),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -573,17 +720,35 @@ class _FeatureChipState extends State<_FeatureChip> {
         duration: kFastAnim,
         child: Container(
           decoration: BoxDecoration(
-            color: scheme.surfaceContainerHighest.withValues(alpha: 0.6),
+            color: scheme.surface,
             borderRadius: BorderRadius.circular(kRadiusLg),
+            border: Border.all(
+              color: scheme.outlineVariant.withValues(alpha: 0.35),
+              width: 0.6,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: widget.data.color.withValues(alpha: 0.06),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: 44,
-                height: 44,
+                width: 46,
+                height: 46,
                 decoration: BoxDecoration(
-                  color: widget.data.color.withValues(alpha: 0.14),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      widget.data.color.withValues(alpha: 0.20),
+                      widget.data.color.withValues(alpha: 0.06),
+                    ],
+                  ),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -592,7 +757,7 @@ class _FeatureChipState extends State<_FeatureChip> {
                   size: 22,
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               Text(
                 widget.data.shortLabel,
                 style: TextStyle(
@@ -600,6 +765,8 @@ class _FeatureChipState extends State<_FeatureChip> {
                   fontWeight: FontWeight.w700,
                   color: scheme.onSurface,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

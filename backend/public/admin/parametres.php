@@ -268,12 +268,14 @@ $initials = function_exists('mb_substr') ? mb_strtoupper(mb_substr($fullName, 0,
       --topbar-height: 64px;
       --text-dark: #1a1d29;
       --text-muted: #8892a6;
+      --nav-blue: #2d7ff9;
     }
     [data-theme="sombre"] {
       --bg-body: #12141c;
       --border-color: #2a2e3f;
       --text-dark: #e8eaf0;
       --text-muted: #8892a6;
+      --nav-blue: #4d94ff;
     }
     * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
     body { background: var(--bg-body); min-height: 100vh; margin: 0; transition: background 0.3s; }
@@ -324,26 +326,43 @@ $initials = function_exists('mb_substr') ? mb_strtoupper(mb_substr($fullName, 0,
       box-shadow: 0 4px 12px rgba(230,126,34,0.3);
     }
 
+    /* ===== Navigation avec barre bleue active ===== */
     .settings-nav {
       display: flex; gap: 0.35rem; flex-wrap: wrap; margin-bottom: 1.75rem;
       background: #fff; padding: 0.5rem; border-radius: 12px;
       border: 1px solid var(--border-color);
       box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+      position: sticky; top: var(--topbar-height); z-index: 50;
     }
     [data-theme="sombre"] .settings-nav { background: #1a1d29; }
     .settings-nav a {
-      padding: 0.5rem 1rem; border-radius: 8px; text-decoration: none;
+      position: relative;
+      padding: 0.5rem 1rem 0.65rem; border-radius: 8px; text-decoration: none;
       color: #4a5568; font-size: 0.85rem; font-weight: 500;
       transition: all 0.2s;
     }
+    .settings-nav a::after {
+      content: ''; position: absolute; left: 50%; bottom: 0;
+      width: 0; height: 3px; border-radius: 3px 3px 0 0;
+      background: var(--nav-blue);
+      transform: translateX(-50%);
+      transition: width 0.25s ease;
+    }
     .settings-nav a:hover { background: #f8f9fb; color: var(--text-dark); }
     [data-theme="sombre"] .settings-nav a:hover { background: #2a2e3f; color: #fff; }
+    .settings-nav a.is-active {
+      color: var(--nav-blue);
+      font-weight: 600;
+    }
+    .settings-nav a.is-active::after {
+      width: 70%;
+    }
 
     .settings-card {
       background: #fff; border-radius: 14px; padding: 1.75rem 2rem;
       border: 1px solid var(--border-color);
       box-shadow: 0 4px 16px rgba(0,0,0,0.04);
-      margin-bottom: 1.25rem; scroll-margin-top: calc(var(--topbar-height) + 1rem);
+      margin-bottom: 1.25rem; scroll-margin-top: calc(var(--topbar-height) + 60px);
     }
     [data-theme="sombre"] .settings-card { background: #1a1d29; }
     .settings-card-heading {
@@ -535,6 +554,7 @@ $initials = function_exists('mb_substr') ? mb_strtoupper(mb_substr($fullName, 0,
       .content { margin-left: 0; padding: 1.5rem 1rem; }
       .settings-card { padding: 1.5rem; }
       .settings-grid { grid-template-columns: 1fr; }
+      .settings-nav { position: static; }
     }
   </style>
 </head>
@@ -557,10 +577,10 @@ $initials = function_exists('mb_substr') ? mb_strtoupper(mb_substr($fullName, 0,
     </header>
 
     <nav class="settings-nav" aria-label="<?= $locale === 'en' ? 'Settings sections' : 'Sections des paramètres' ?>">
-      <a href="#profil"><?= $locale === 'en' ? 'Profile' : 'Profil' ?></a>
-      <a href="#photo"><?= $locale === 'en' ? 'Photo' : 'Photo' ?></a>
-      <a href="#securite"><?= $locale === 'en' ? 'Security' : 'Sécurité' ?></a>
-      <a href="#compte"><?= $locale === 'en' ? 'Account' : 'Compte' ?></a>
+      <a href="#profil" data-section="profil"><?= $locale === 'en' ? 'Profile' : 'Profil' ?></a>
+      <a href="#photo" data-section="photo"><?= $locale === 'en' ? 'Photo' : 'Photo' ?></a>
+      <a href="#securite" data-section="securite"><?= $locale === 'en' ? 'Security' : 'Sécurité' ?></a>
+      <a href="#compte" data-section="compte"><?= $locale === 'en' ? 'Account' : 'Compte' ?></a>
     </nav>
 
     <section class="settings-card" id="profil">
@@ -774,6 +794,43 @@ $initials = function_exists('mb_substr') ? mb_strtoupper(mb_substr($fullName, 0,
     passwordStrength: ['Robustesse du mot de passe', 'Faible', 'Moyenne', 'Bonne', 'Forte'],
   };
 
+  /* ===== Navigation : barre bleue sous l'onglet actif ===== */
+  const navLinks = [...document.querySelectorAll('.settings-nav a[data-section]')];
+  const sections = navLinks
+    .map((link) => document.getElementById(link.dataset.section))
+    .filter(Boolean);
+
+  const setActiveNav = (id) => {
+    navLinks.forEach((link) => {
+      link.classList.toggle('is-active', link.dataset.section === id);
+    });
+  };
+
+  if (sections.length && 'IntersectionObserver' in window) {
+    const observer = new IntersectionObserver((entries) => {
+      const visible = entries
+        .filter((entry) => entry.isIntersecting)
+        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+      if (visible) setActiveNav(visible.target.id);
+    }, {
+      rootMargin: `-${parseInt(getComputedStyle(document.documentElement).getPropertyValue('--topbar-height')) + 80}px 0px -55% 0px`,
+      threshold: [0.1, 0.25, 0.5, 0.75],
+    });
+    sections.forEach((section) => observer.observe(section));
+  }
+
+  navLinks.forEach((link) => {
+    link.addEventListener('click', () => {
+      setActiveNav(link.dataset.section);
+    });
+  });
+
+  if (sections.length) {
+    setActiveNav(
+      (location.hash || '').replace('#', '') || 'profil'
+    );
+  }
+
   const showError = (message) => Swal.fire({
     icon: 'error',
     title: text.error,
@@ -852,8 +909,6 @@ $initials = function_exists('mb_substr') ? mb_strtoupper(mb_substr($fullName, 0,
     syncPasswordToggle();
 
     button.addEventListener('click', (event) => {
-      // Le bouton est placé dans un label : empêcher son activation implicite
-      // de perturber le basculement du champ.
       event.preventDefault();
       event.stopPropagation();
       input.setAttribute('type', input.getAttribute('type') === 'password' ? 'text' : 'password');

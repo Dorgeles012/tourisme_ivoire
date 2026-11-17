@@ -10,7 +10,6 @@ import 'auth_screen.dart';
 import 'feature_screens.dart';
 import 'passport_screen.dart';
 
- 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({
     required this.api,
@@ -117,7 +116,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 }
 
- 
 class _UnauthenticatedView extends StatelessWidget {
   const _UnauthenticatedView({
     required this.api,
@@ -138,88 +136,99 @@ class _UnauthenticatedView extends StatelessWidget {
     return ListView(
       padding: EdgeInsets.zero,
       children: [
-        Container(
-          width: double.infinity,
-          height: 360,
-          decoration: const BoxDecoration(gradient: kAppBarGradient),
+        SizedBox(
+          height: 400,
           child: Stack(
+            fit: StackFit.expand,
             children: [
-              Positioned.fill(
-                child: Image.asset(
-                  'lib/images/Profile.avif',
-                  fit: BoxFit.cover,
-                ),
-              ),
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.black.withValues(alpha: .12),
-                        Colors.black.withValues(alpha: .58),
-                      ],
-                    ),
+              Image.asset('lib/images/Profile.avif', fit: BoxFit.cover),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: .10),
+                      Colors.black.withValues(alpha: .55),
+                      Colors.black.withValues(alpha: .82),
+                    ],
+                    stops: const [0, .55, 1],
                   ),
                 ),
               ),
               Positioned(
-                top: -40,
-                right: -40,
-                child: _blob(180, Colors.white.withValues(alpha: .08)),
+                top: -60,
+                right: -60,
+                child: _GlowBlob(
+                  size: 220,
+                  color: Colors.white.withValues(alpha: .10),
+                ),
               ),
               Positioned(
-                bottom: -60,
-                left: -30,
-                child: _blob(220, Colors.white.withValues(alpha: .05)),
+                bottom: -80,
+                left: -40,
+                child: _GlowBlob(
+                  size: 260,
+                  color: ivorianOrange.withValues(alpha: .18),
+                ),
               ),
               Positioned(
-                top: 80,
+                top: 120,
                 left: 40,
-                child: _blob(60, Colors.white.withValues(alpha: .04)),
+                child: _GlowBlob(
+                  size: 60,
+                  color: Colors.white.withValues(alpha: .06),
+                ),
               ),
               SafeArea(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+                  padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       Container(
-                        width: 64,
-                        height: 64,
+                        width: 72,
+                        height: 72,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Colors.white.withValues(alpha: .18),
+                          color: Colors.white.withValues(alpha: .16),
                           border: Border.all(
-                            color: Colors.white.withValues(alpha: .4),
+                            color: Colors.white.withValues(alpha: .45),
                             width: 2,
                           ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: .25),
+                              blurRadius: 24,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
                         ),
                         child: const Icon(
                           Icons.person_outline_rounded,
-                          size: 32,
+                          size: 36,
                           color: Colors.white,
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
                       const Text(
                         'Mon espace voyageur',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 24,
+                          fontSize: 30,
                           fontWeight: FontWeight.w900,
-                          letterSpacing: -0.5,
-                          height: 1.15,
+                          letterSpacing: -0.8,
+                          height: 1.1,
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 10),
                       Text(
                         'Connectez-vous pour accéder à votre profil',
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: .85),
-                          fontSize: 14,
+                          color: Colors.white.withValues(alpha: .82),
+                          fontSize: 14.5,
+                          height: 1.4,
                         ),
                       ),
                     ],
@@ -229,64 +238,46 @@ class _UnauthenticatedView extends StatelessWidget {
             ],
           ),
         ),
+
+        // ---- Bloc CTA pleine largeur (page, pas popup) ----
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: cs.surface,
-              borderRadius: BorderRadius.circular(kRadiusLg),
-              boxShadow: kShadowSoft,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  'Prêt à explorer ?',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: cs.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Retrouvez vos favoris, votre passeport et votre progression.',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: cs.onSurface.withValues(alpha: .6),
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                IvorianButton(
-                  label: 'Connexion / Inscription',
-                  icon: Icons.login_rounded,
-                  onPressed: onAuthenticate,
-                  useGradient: true,
-                  height: 50,
-                ),
-              ],
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+          child: _ModernFeatureCard(
+            icon: Icons.explore_rounded,
+            title: 'Prêt à explorer ?',
+            subtitle:
+                'Retrouvez vos favoris, votre passeport et votre progression.',
+            onTap: onAuthenticate,
+            accent: ivorianOrange,
+            trailing: IvorianButton(
+              label: 'Connexion / Inscription',
+              icon: Icons.login_rounded,
+              onPressed: onAuthenticate,
+              useGradient: true,
+              height: 50,
             ),
           ),
         ),
+
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
           child: Column(
             children: [
-              FeatureCard(
+              _ModernFeatureCard(
                 icon: Icons.favorite_rounded,
                 title: 'Favoris',
                 subtitle: 'Connectez-vous pour consulter vos lieux enregistrés',
                 onTap: onAuthenticate,
+                accent: ivorianTerracotta,
               ),
-              FeatureCard(
+              _ModernFeatureCard(
                 icon: Icons.badge_rounded,
                 title: 'Passeport numérique',
                 subtitle: 'Visites, progression et récompenses',
                 onTap: onAuthenticate,
+                accent: ivorianOrange,
               ),
-              FeatureCard(
+              _ModernFeatureCard(
                 icon: Icons.settings_rounded,
                 title: 'Paramètres',
                 subtitle: 'Apparence et accessibilité',
@@ -298,12 +289,13 @@ class _UnauthenticatedView extends StatelessWidget {
                     onAccessibilityChanged: onAccessibilityChanged,
                   ),
                 ),
+                accent: Colors.blueGrey,
               ),
             ],
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -331,15 +323,8 @@ class _UnauthenticatedView extends StatelessWidget {
       ],
     );
   }
-
-  Widget _blob(double size, Color color) => Container(
-    width: size,
-    height: size,
-    decoration: BoxDecoration(shape: BoxShape.circle, color: color),
-  );
 }
 
- 
 class _AuthenticatedView extends StatelessWidget {
   const _AuthenticatedView({
     required this.api,
@@ -360,6 +345,9 @@ class _AuthenticatedView extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final avatarUrl = user['avatar_url'];
+    final initials = _initials(user);
+    final hasAvatar = avatarUrl is String && avatarUrl.isNotEmpty;
+
     return ListView(
       padding: EdgeInsets.zero,
       children: [
@@ -373,69 +361,52 @@ class _AuthenticatedView extends StatelessWidget {
                 Positioned(
                   top: -40,
                   right: -40,
-                  child: Container(
-                    width: 180,
-                    height: 180,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withValues(alpha: .08),
-                    ),
+                  child: _GlowBlob(
+                    size: 180,
+                    color: Colors.white.withValues(alpha: .08),
                   ),
                 ),
                 Positioned(
                   bottom: -60,
                   left: -40,
-                  child: Container(
-                    width: 160,
-                    height: 160,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withValues(alpha: .05),
-                    ),
+                  child: _GlowBlob(
+                    size: 160,
+                    color: Colors.white.withValues(alpha: .05),
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 44),
                   child: Row(
                     children: [
                       Container(
-                        width: 76,
-                        height: 76,
+                        width: 84,
+                        height: 84,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Colors.white.withValues(alpha: .2),
+                          color: Colors.white.withValues(alpha: .18),
                           border: Border.all(
-                            color: Colors.white.withValues(alpha: .55),
+                            color: Colors.white.withValues(alpha: .6),
                             width: 2.5,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: .15),
-                              blurRadius: 16,
-                              offset: const Offset(0, 6),
+                              color: Colors.black.withValues(alpha: .22),
+                              blurRadius: 20,
+                              offset: const Offset(0, 8),
                             ),
                           ],
                         ),
                         child: ClipOval(
-                          child: avatarUrl is String && avatarUrl.isNotEmpty
+                          child: hasAvatar
                               ? Image.network(
                                   api.mediaUri(avatarUrl).toString(),
-                                  width: 76,
-                                  height: 76,
+                                  width: 84,
+                                  height: 84,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, _, _) => Image.asset(
-                                    'lib/images/Profile.avif',
-                                    width: 76,
-                                    height: 76,
-                                    fit: BoxFit.cover,
-                                  ),
+                                  errorBuilder: (_, _, _) =>
+                                      _InitialsAvatar(initials: initials),
                                 )
-                              : Image.asset(
-                                  'lib/images/Profile.avif',
-                                  width: 76,
-                                  height: 76,
-                                  fit: BoxFit.cover,
-                                ),
+                              : _InitialsAvatar(initials: initials),
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -447,14 +418,14 @@ class _AuthenticatedView extends StatelessWidget {
                               '${user['prenom'] ?? ''} ${user['nom']}'.trim(),
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 21,
+                                fontSize: 22,
                                 fontWeight: FontWeight.w900,
-                                letterSpacing: -0.3,
+                                letterSpacing: -0.4,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 6),
                             Row(
                               children: [
                                 Icon(
@@ -488,8 +459,9 @@ class _AuthenticatedView extends StatelessWidget {
                         style: IconButton.styleFrom(
                           backgroundColor: Colors.white.withValues(alpha: .18),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(14),
                           ),
+                          minimumSize: const Size(44, 44),
                         ),
                         icon: const Icon(
                           Icons.edit_rounded,
@@ -505,18 +477,18 @@ class _AuthenticatedView extends StatelessWidget {
           ),
         ),
         Transform.translate(
-          offset: const Offset(0, -22),
+          offset: const Offset(0, -28),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 18),
+              padding: const EdgeInsets.symmetric(vertical: 20),
               decoration: BoxDecoration(
                 color: cs.surface,
                 borderRadius: BorderRadius.circular(kRadiusLg),
                 boxShadow: kShadowSoft,
                 border: Border.all(
-                  color: cs.outlineVariant.withValues(alpha: .4),
-                  width: .5,
+                  color: cs.outlineVariant.withValues(alpha: .35),
+                  width: .6,
                 ),
               ),
               child: Row(
@@ -527,13 +499,13 @@ class _AuthenticatedView extends StatelessWidget {
                     label: 'Visites',
                     icon: Icons.place_rounded,
                   ),
-                  const _Divider(),
+                  const _GradientDivider(),
                   _StatItem(
                     value: '${user['favoris'] ?? 0}',
                     label: 'Favoris',
                     icon: Icons.favorite_rounded,
                   ),
-                  const _Divider(),
+                  const _GradientDivider(),
                   _StatItem(
                     value: '${user['points'] ?? 0}',
                     label: 'Points',
@@ -548,38 +520,43 @@ class _AuthenticatedView extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
           child: Column(
             children: [
-              FeatureCard(
+              _ModernFeatureCard(
                 icon: Icons.badge_rounded,
                 title: 'Passeport numérique',
                 subtitle: 'Visites, progression et récompenses',
                 onTap: () => navigateTo(context, PassportScreen(api: api)),
+                accent: ivorianOrange,
               ),
-              FeatureCard(
+              _ModernFeatureCard(
                 icon: Icons.favorite_rounded,
                 title: 'Mes favoris',
                 subtitle: 'Retrouvez vos destinations enregistrées',
                 onTap: () => navigateTo(context, FavoritesScreen(api: api)),
+                accent: ivorianTerracotta,
               ),
-              FeatureCard(
+              _ModernFeatureCard(
                 icon: Icons.notifications_rounded,
                 title: 'Notifications',
                 subtitle: 'Consultez et marquez les notifications comme lues',
                 onTap: () => navigateTo(context, NotificationsScreen(api: api)),
+                accent: Colors.blueAccent,
               ),
-              FeatureCard(
+              _ModernFeatureCard(
                 icon: Icons.receipt_long_rounded,
                 title: 'Réservations',
                 subtitle: 'Suivez les demandes envoyées',
                 onTap: () =>
                     navigateTo(context, ReservationHistoryScreen(api: api)),
+                accent: Colors.teal,
               ),
-              FeatureCard(
+              _ModernFeatureCard(
                 icon: Icons.quiz_rounded,
                 title: 'Résultats des quiz',
                 subtitle: 'Retrouvez votre historique',
                 onTap: () => navigateTo(context, QuizResultsScreen(api: api)),
+                accent: Colors.purpleAccent,
               ),
-              FeatureCard(
+              _ModernFeatureCard(
                 icon: Icons.settings_rounded,
                 title: 'Paramètres & accessibilité',
                 subtitle: 'Thème et préférences',
@@ -591,12 +568,13 @@ class _AuthenticatedView extends StatelessWidget {
                     onAccessibilityChanged: onAccessibilityChanged,
                   ),
                 ),
+                accent: Colors.blueGrey,
               ),
             ],
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
           child: OutlinedButton.icon(
             onPressed: onLogout,
             icon: const Icon(Icons.logout_rounded, size: 20),
@@ -604,7 +582,7 @@ class _AuthenticatedView extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               foregroundColor: ivorianTerracotta,
               side: BorderSide(color: ivorianTerracotta.withValues(alpha: .4)),
-              minimumSize: const Size(double.infinity, 50),
+              minimumSize: const Size(double.infinity, 54),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(kRadiusMd),
               ),
@@ -618,9 +596,66 @@ class _AuthenticatedView extends StatelessWidget {
       ],
     );
   }
+
+  static String _initials(Map<String, dynamic> user) {
+    final first = (user['prenom'] ?? '').toString().trim();
+    final last = (user['nom'] ?? '').toString().trim();
+    final source = first.isNotEmpty ? first : last;
+    if (source.isEmpty) return '?';
+    return source.substring(0, source.length >= 2 ? 2 : 1).toUpperCase();
+  }
 }
 
- 
+class _GlowBlob extends StatelessWidget {
+  const _GlowBlob({required this.size, required this.color});
+  final double size;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          colors: [color, color.withValues(alpha: 0)],
+        ),
+      ),
+    );
+  }
+}
+
+class _InitialsAvatar extends StatelessWidget {
+  const _InitialsAvatar({required this.initials});
+  final String initials;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 84,
+      height: 84,
+      alignment: Alignment.center,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [ivorianOrange, ivorianTerracotta],
+        ),
+      ),
+      child: Text(
+        initials,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 28,
+          fontWeight: FontWeight.w900,
+          letterSpacing: -0.5,
+        ),
+      ),
+    );
+  }
+}
+
 class _StatItem extends StatelessWidget {
   const _StatItem({
     required this.value,
@@ -638,22 +673,29 @@ class _StatItem extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 34,
-          height: 34,
+          width: 38,
+          height: 38,
           decoration: BoxDecoration(
-            color: ivorianOrange.withValues(alpha: .12),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                ivorianOrange.withValues(alpha: .18),
+                ivorianOrange.withValues(alpha: .06),
+              ],
+            ),
             shape: BoxShape.circle,
           ),
-          child: Icon(icon, size: 17, color: ivorianOrange),
+          child: Icon(icon, size: 18, color: ivorianOrange),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         Text(
           value,
           style: const TextStyle(
-            fontSize: 20,
+            fontSize: 21,
             fontWeight: FontWeight.w900,
             color: ivorianOrange,
-            letterSpacing: -0.3,
+            letterSpacing: -0.4,
           ),
         ),
         const SizedBox(height: 2),
@@ -670,21 +712,139 @@ class _StatItem extends StatelessWidget {
   }
 }
 
-class _Divider extends StatelessWidget {
-  const _Divider();
+class _GradientDivider extends StatelessWidget {
+  const _GradientDivider();
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
-      height: 40,
+      height: 48,
       width: 1,
-      color: Theme.of(context).colorScheme.outlineVariant
-          .withValues(alpha: .35),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            cs.outlineVariant.withValues(alpha: 0),
+            cs.outlineVariant.withValues(alpha: .35),
+            cs.outlineVariant.withValues(alpha: 0),
+          ],
+        ),
+      ),
     );
   }
 }
 
- 
+class _ModernFeatureCard extends StatelessWidget {
+  const _ModernFeatureCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    required this.accent,
+    this.trailing,
+  });
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  final Color accent;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final content = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    accent.withValues(alpha: .18),
+                    accent.withValues(alpha: .06),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(icon, size: 22, color: accent),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w800,
+                      color: cs.onSurface,
+                      letterSpacing: -0.1,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: cs.onSurface.withValues(alpha: .58),
+                      height: 1.35,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (trailing == null) ...[
+              const SizedBox(width: 8),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 22,
+                color: cs.onSurface.withValues(alpha: .35),
+              ),
+            ],
+          ],
+        ),
+        if (trailing != null) ...[
+          const SizedBox(height: 16),
+          trailing!,
+        ],
+      ],
+    );
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
+        color: cs.surface,
+        borderRadius: BorderRadius.circular(kRadiusLg),
+        elevation: 0,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(kRadiusLg),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(kRadiusLg),
+              border: Border.all(
+                color: cs.outlineVariant.withValues(alpha: .35),
+                width: .6,
+              ),
+            ),
+            child: content,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({required this.api, required this.user, super.key});
   final ApiService api;
@@ -778,6 +938,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(kRadiusMd),
                 ),
+                textStyle: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
               ),
               child: Text(_busy ? 'Enregistrement…' : 'Enregistrer'),
             ),
@@ -792,19 +956,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  ivorianOrange.withValues(alpha: .12),
+                  ivorianOrange.withValues(alpha: .14),
                   ivorianOrange.withValues(alpha: .04),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(kRadiusLg),
+              border: Border.all(
+                color: ivorianOrange.withValues(alpha: .15),
+              ),
             ),
             child: Row(
               children: [
                 Container(
-                  width: 56,
-                  height: 56,
+                  width: 60,
+                  height: 60,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: Colors.white,
@@ -813,7 +980,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   child: const Icon(
                     Icons.person_rounded,
                     color: ivorianOrange,
-                    size: 28,
+                    size: 30,
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -835,12 +1002,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         style: TextStyle(
                           fontSize: 12,
                           color: cs.onSurface.withValues(alpha: .6),
+                          height: 1.35,
                         ),
                       ),
+                      const SizedBox(height: 4),
                       TextButton.icon(
                         onPressed: _busy ? null : _changeAvatar,
                         icon: const Icon(Icons.add_a_photo_outlined, size: 18),
                         label: const Text('Modifier la photo'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: ivorianOrange,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 4,
+                          ),
+                          textStyle: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -848,91 +1028,34 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
           const _FieldLabel('Nom'),
           const SizedBox(height: 8),
-          TextField(
+          _ProfileTextField(
             controller: _name,
+            hintText: 'Votre nom',
+            icon: Icons.person_outline_rounded,
             textInputAction: TextInputAction.next,
-            decoration: InputDecoration(
-              hintText: 'Votre nom',
-              prefixIcon: const Icon(Icons.person_outline_rounded),
-              filled: true,
-              fillColor: cs.surfaceContainerHighest.withValues(alpha: .4),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(kRadiusMd),
-                borderSide: BorderSide.none,
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(kRadiusMd),
-                borderSide: BorderSide.none,
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(kRadiusMd),
-                borderSide: BorderSide(
-                  color: ivorianOrange.withValues(alpha: .8),
-                  width: 1.5,
-                ),
-              ),
-            ),
           ),
           const SizedBox(height: 18),
           const _FieldLabel('Prénom'),
           const SizedBox(height: 8),
-          TextField(
+          _ProfileTextField(
             controller: _firstName,
+            hintText: 'Votre prénom',
+            icon: Icons.badge_outlined,
             textInputAction: TextInputAction.next,
-            decoration: InputDecoration(
-              hintText: 'Votre prénom',
-              prefixIcon: const Icon(Icons.badge_outlined),
-              filled: true,
-              fillColor: cs.surfaceContainerHighest.withValues(alpha: .4),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(kRadiusMd),
-                borderSide: BorderSide.none,
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(kRadiusMd),
-                borderSide: BorderSide.none,
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(kRadiusMd),
-                borderSide: BorderSide(
-                  color: ivorianOrange.withValues(alpha: .8),
-                  width: 1.5,
-                ),
-              ),
-            ),
           ),
           const SizedBox(height: 18),
           const _FieldLabel('Téléphone'),
           const SizedBox(height: 8),
-          TextField(
+          _ProfileTextField(
             controller: _phone,
+            hintText: '+225 XX XX XX XX XX',
+            icon: Icons.phone_outlined,
             keyboardType: TextInputType.phone,
             textInputAction: TextInputAction.done,
             onSubmitted: (_) => _save(),
-            decoration: InputDecoration(
-              hintText: '+225 XX XX XX XX XX',
-              prefixIcon: const Icon(Icons.phone_outlined),
-              filled: true,
-              fillColor: cs.surfaceContainerHighest.withValues(alpha: .4),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(kRadiusMd),
-                borderSide: BorderSide.none,
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(kRadiusMd),
-                borderSide: BorderSide.none,
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(kRadiusMd),
-                borderSide: BorderSide(
-                  color: ivorianOrange.withValues(alpha: .8),
-                  width: 1.5,
-                ),
-              ),
-            ),
           ),
           const SizedBox(height: 32),
           IvorianButton(
@@ -940,9 +1063,63 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             icon: Icons.save_rounded,
             onPressed: _busy ? null : _save,
             useGradient: true,
-            height: 52,
+            height: 54,
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ProfileTextField extends StatelessWidget {
+  const _ProfileTextField({
+    required this.controller,
+    required this.hintText,
+    required this.icon,
+    this.keyboardType,
+    this.textInputAction,
+    this.onSubmitted,
+  });
+
+  final TextEditingController controller;
+  final String hintText;
+  final IconData icon;
+  final TextInputType? keyboardType;
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onSubmitted;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final borderRadius = BorderRadius.circular(kRadiusMd);
+
+    OutlineInputBorder border({Color? color, double width = 1.5}) =>
+        OutlineInputBorder(
+          borderRadius: borderRadius,
+          borderSide: color == null
+              ? BorderSide.none
+              : BorderSide(color: color, width: width),
+        );
+
+    return TextField(
+      controller: controller,
+      keyboardType: keyboardType,
+      textInputAction: textInputAction,
+      onSubmitted: onSubmitted,
+      decoration: InputDecoration(
+        hintText: hintText,
+        prefixIcon: Icon(icon, size: 20),
+        filled: true,
+        fillColor: cs.surfaceContainerHighest.withValues(alpha: .4),
+        border: border(),
+        enabledBorder: border(),
+        focusedBorder: border(
+          color: ivorianOrange.withValues(alpha: .8),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
       ),
     );
   }

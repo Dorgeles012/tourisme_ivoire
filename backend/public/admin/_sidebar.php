@@ -28,6 +28,7 @@ $sidebarLinks = [
  ['label'=>'Quiz','href'=>'index.php?module=quizzes','page'=>'index.php','module'=>'quizzes'],
  ['label'=>'Réservations','href'=>'index.php?module=reservations','page'=>'index.php','module'=>'reservations'],
  ['label'=>'Notifications','href'=>'notification.php','page'=>'notification.php','module'=>''],
+ ['label'=>'Assistance clients','href'=>'support.php','page'=>'support.php','module'=>''],
  ['label'=>'Paramètres','href'=>'parametres.php','page'=>'parametres.php','module'=>''],
 ];
 ?>

@@ -35,14 +35,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
   void initState() {
     super.initState();
     _destinations = widget.api.fetchDestinations();
-    _categories   = widget.api.getCategories();
-    _districts    = widget.api.getDistricts();
+    _categories = widget.api.getCategories();
+    _districts = widget.api.getDistricts();
 
     _categories.then((cats) {
       if (!mounted) return;
       setState(() {
         _categoryLabels = ['Tout', ...cats.map((c) => '${(c as Map)['nom']}')];
-        _categorySlugs  = ['', ...cats.map((c) => '${(c as Map)['slug']}')];
+        _categorySlugs = ['', ...cats.map((c) => '${(c as Map)['slug']}')];
       });
     });
   }
@@ -67,7 +67,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     }
     setState(() {
       _destinations = widget.api.fetchDestinations(
-        search:   _search.text.isEmpty ? null : _search.text,
+        search: _search.text.isEmpty ? null : _search.text,
         category: _category,
         regionId: _regionId,
         districtId: _districtId,
@@ -149,103 +149,128 @@ class _ExploreScreenState extends State<ExploreScreen> {
     _query();
   }
 
+  bool get _hasGeoFilter => _regionId != null || _districtId != null || _departmentId != null;
+
+  String get _geoLabel =>
+      _departmentName ?? _regionName ?? _districtName ?? 'Toute la Côte d’Ivoire';
+
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
-    final hPad  = horizontalPadding(width);
-    final grid  = isGridLayout(width);
+    final hPad = horizontalPadding(width);
+    final grid = isGridLayout(width);
+    final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-           
           SliverAppBar(
             floating: true,
             snap: true,
+            backgroundColor: cs.surface,
+            surfaceTintColor: cs.surface,
+            elevation: 0,
+            scrolledUnderElevation: 0.5,
             titleSpacing: hPad,
-            title: const Text('Explorer'),
+            title: const Text(
+              'Explorer',
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 22,
+                letterSpacing: -0.6,
+              ),
+            ),
             bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(116),
+              preferredSize: const Size.fromHeight(118),
               child: Padding(
-                padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 12),
+                padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 14),
                 child: Column(
                   children: [
-                     
                     SearchField(
                       controller: _search,
                       hint: 'Destination, région, activité…',
                       onSearch: _query,
                       onChanged: (_) => _query(),
                     ),
-                    const SizedBox(height: 10),
-                     
+                    const SizedBox(height: 12),
                     Row(
                       children: [
                         Expanded(
                           child: GestureDetector(
                             onTap: _openRegionSheet,
-                            child: Container(
-                              height: 42,
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              height: 46,
                               padding: const EdgeInsets.symmetric(horizontal: 16),
                               decoration: BoxDecoration(
-                                color: (_regionId != null || _districtId != null)
-                                    ? ivorianOrange.withValues(alpha: 0.1)
-                                    : Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                                color: _hasGeoFilter
+                                    ? ivorianOrange.withValues(alpha: 0.10)
+                                    : cs.surfaceContainerHighest.withValues(alpha: 0.55),
                                 borderRadius: BorderRadius.circular(kRadiusXl),
-                                border: (_regionId != null || _districtId != null)
-                                    ? Border.all(color: ivorianOrange.withValues(alpha: 0.5), width: 1.5)
-                                    : null,
+                                border: Border.all(
+                                  color: _hasGeoFilter
+                                      ? ivorianOrange.withValues(alpha: 0.55)
+                                      : cs.outlineVariant.withValues(alpha: 0.4),
+                                  width: _hasGeoFilter ? 1.5 : 0.8,
+                                ),
                               ),
                               child: Row(
                                 children: [
                                   Icon(
                                     Icons.map_outlined,
                                     size: 18,
-                                    color: (_regionId != null || _districtId != null)
+                                    color: _hasGeoFilter
                                         ? ivorianOrange
-                                        : Theme.of(context).colorScheme.onSurfaceVariant,
+                                        : cs.onSurfaceVariant,
                                   ),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
-                                      _departmentName ?? _regionName ?? _districtName ?? 'Toute la Côte d’Ivoire',
+                                      _geoLabel,
                                       style: TextStyle(
                                         fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                        color: (_regionId != null || _districtId != null)
+                                        fontWeight: FontWeight.w700,
+                                        color: _hasGeoFilter
                                             ? ivorianOrange
-                                            : Theme.of(context).colorScheme.onSurfaceVariant,
+                                            : cs.onSurfaceVariant,
+                                        letterSpacing: -0.1,
                                       ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                   Icon(
                                     Icons.keyboard_arrow_down_rounded,
-                                    size: 18,
-                                    color: (_regionId != null || _districtId != null)
+                                    size: 20,
+                                    color: _hasGeoFilter
                                         ? ivorianOrange
-                                        : Theme.of(context).colorScheme.onSurfaceVariant,
+                                        : cs.onSurfaceVariant,
                                   ),
                                 ],
                               ),
                             ),
                           ),
                         ),
-                        if (_regionId != null || _districtId != null) ...[
+                        if (_hasGeoFilter) ...[
                           const SizedBox(width: 8),
-                          IconButton(
-                            tooltip: 'Effacer le filtre géographique',
-                            icon: const Icon(Icons.close_rounded, size: 18),
-                            onPressed: () {
-                              setState(() {
-                                _districtId = null;
-                                _districtName = null;
-                                _regionId = null;
-                                _regionName = null;
-                                _departmentId = null;
-                                _departmentName = null;
-                              });
-                              _query();
-                            },
+                          Material(
+                            color: cs.surfaceContainerHighest.withValues(alpha: 0.55),
+                            shape: const CircleBorder(),
+                            child: IconButton(
+                              tooltip: 'Effacer le filtre géographique',
+                              icon: Icon(Icons.close_rounded, size: 18, color: cs.onSurfaceVariant),
+                              onPressed: () {
+                                setState(() {
+                                  _districtId = null;
+                                  _districtName = null;
+                                  _regionId = null;
+                                  _regionName = null;
+                                  _departmentId = null;
+                                  _departmentName = null;
+                                });
+                                _query();
+                              },
+                            ),
                           ),
                         ],
                       ],
@@ -256,10 +281,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
             ),
           ),
 
-           
           SliverToBoxAdapter(
             child: SizedBox(
-              height: 50,
+              height: 56,
               child: _categoryLabels.length <= 1
                   ? const SizedBox.shrink()
                   : FilterChipRow(
@@ -270,23 +294,35 @@ class _ExploreScreenState extends State<ExploreScreen> {
             ),
           ),
 
-           
           if (_total > 0)
             SliverPadding(
-              padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 0),
+              padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 4),
               sliver: SliverToBoxAdapter(
-                child: Text(
-                  '$_total destination${_total > 1 ? 's' : ''} trouvée${_total > 1 ? 's' : ''}',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w500,
-                  ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: ivorianOrange,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '$_total destination${_total > 1 ? 's' : ''} trouvée${_total > 1 ? 's' : ''}',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: cs.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: -0.1,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
 
-           
           FutureBuilder<List<Destination>>(
             future: _destinations,
             builder: (context, snapshot) {
@@ -300,9 +336,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
               }
               if (snapshot.hasError) {
                 return SliverToBoxAdapter(
-                  child: ErrorView(
-                    message: readableError(snapshot.error!),
-                    onRetry: _query,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: hPad),
+                    child: ErrorView(
+                      message: readableError(snapshot.error!),
+                      onRetry: _query,
+                    ),
                   ),
                 );
               }
@@ -315,11 +354,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
               if (items.isEmpty) {
                 return SliverToBoxAdapter(
-                  child: EmptyView(
-                    message: 'Aucune destination pour ces filtres.',
-                    icon: Icons.search_off_rounded,
-                    ctaLabel: 'Réinitialiser',
-                    onCta: () => _query(reset: true),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: hPad),
+                    child: EmptyView(
+                      message: 'Aucune destination pour ces filtres.',
+                      icon: Icons.search_off_rounded,
+                      ctaLabel: 'Réinitialiser',
+                      onCta: () => _query(reset: true),
+                    ),
                   ),
                 );
               }
@@ -330,8 +372,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   sliver: SliverGrid(
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: crossAxisCount(width),
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 14,
+                      mainAxisSpacing: 14,
                       childAspectRatio: 0.82,
                     ),
                     delegate: SliverChildBuilderDelegate(
@@ -351,11 +393,16 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 padding: EdgeInsets.fromLTRB(hPad, 16, hPad, 32),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
-                    (_, i) => DestinationTile(
-                      destination: items[i],
-                      api: widget.api,
-                      compact: false,
-                      index: i,
+                    (_, i) => Padding(
+                      padding: EdgeInsets.only(
+                        bottom: i == items.length - 1 ? 0 : 14,
+                      ),
+                      child: DestinationTile(
+                        destination: items[i],
+                        api: widget.api,
+                        compact: false,
+                        index: i,
+                      ),
                     ),
                     childCount: items.length,
                   ),
@@ -369,10 +416,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 }
 
- 
-
 class _RegionBottomSheet extends StatelessWidget {
-  const _RegionBottomSheet({required this.regions, this.title = 'Choisir une région'}) : selectedId = null;
+  const _RegionBottomSheet({
+    required this.regions,
+    this.title = 'Choisir une région',
+  }) : selectedId = null;
 
   final List<dynamic> regions;
   final int? selectedId;
@@ -389,67 +437,144 @@ class _RegionBottomSheet extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-           
           Container(
             margin: const EdgeInsets.only(top: 12),
-            width: 36,
+            width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: scheme.outlineVariant,
+              color: scheme.outlineVariant.withValues(alpha: 0.6),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
-            child: Text(
-              title,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.4,
+                    ),
+                  ),
+                ),
+                Material(
+                  color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                  shape: const CircleBorder(),
+                  child: IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 18),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ),
+              ],
             ),
           ),
-          const Divider(),
+          Divider(height: 1, color: scheme.outlineVariant.withValues(alpha: 0.4)),
           Flexible(
             child: ListView(
               shrinkWrap: true,
-              padding: const EdgeInsets.only(bottom: 24),
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
               children: [
-                 
-                ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-                  title: const Text('Toute la sélection',
-                      style: TextStyle(fontWeight: FontWeight.w600)),
-                  trailing: selectedId == null
-                      ? Icon(Icons.check_rounded, color: ivorianOrange)
-                      : null,
+                _SheetItem(
+                  label: 'Toute la sélection',
+                  selected: selectedId == null,
                   onTap: () => Navigator.of(context).pop((null, null)),
+                  leading: Icons.public_rounded,
                 ),
-                 
                 for (final r in regions)
                   Builder(builder: (context) {
                     final region = Map<String, dynamic>.from(r as Map);
                     final id = int.tryParse('${region['id']}');
                     final nom = '${region['nom']}';
                     final selected = id == selectedId;
-                    return ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-                      title: Text(
-                        nom,
-                        style: TextStyle(
-                          fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                          color: selected ? ivorianOrange : null,
-                        ),
-                      ),
-                      trailing: selected
-                          ? Icon(Icons.check_rounded, color: ivorianOrange)
-                          : null,
+                    return _SheetItem(
+                      label: nom,
+                      selected: selected,
                       onTap: () => Navigator.of(context).pop((id, nom)),
+                      leading: Icons.place_outlined,
                     );
                   }),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SheetItem extends StatelessWidget {
+  const _SheetItem({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    required this.leading,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  final IconData leading;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Material(
+        color: selected ? ivorianOrange.withValues(alpha: 0.08) : Colors.transparent,
+        borderRadius: BorderRadius.circular(kRadiusMd),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(kRadiusMd),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(kRadiusMd),
+              border: Border.all(
+                color: selected
+                    ? ivorianOrange.withValues(alpha: 0.4)
+                    : Colors.transparent,
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? ivorianOrange.withValues(alpha: 0.18)
+                        : cs.surfaceContainerHighest.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    leading,
+                    size: 18,
+                    color: selected ? ivorianOrange : cs.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 14.5,
+                      fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                      color: selected ? ivorianOrange : cs.onSurface,
+                      letterSpacing: -0.1,
+                    ),
+                  ),
+                ),
+                if (selected)
+                  const Icon(Icons.check_circle_rounded,
+                      color: ivorianOrange, size: 20),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

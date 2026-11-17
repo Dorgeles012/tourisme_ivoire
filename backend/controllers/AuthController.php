@@ -114,6 +114,30 @@ final class AuthController {
         self::me();
     }
 
+    public static function changePassword(): never {
+        $userId = AuthMiddleware::requireRole(['Client']);
+        $claims = AuthMiddleware::claims();
+        $data = request_json();
+        $current = (string)($data['mot_de_passe_actuel'] ?? '');
+        $next = (string)($data['nouveau_mot_de_passe'] ?? '');
+        if ($current === '' || strlen($next) < 10 || strlen($next) > 4096) api_error('validation_error', 'Le mot de passe actuel et un nouveau mot de passe de 10 caractères minimum sont requis.', 422);
+        $stmt = db()->prepare("SELECT mot_de_passe_hash FROM utilisateurs WHERE id=? AND `role`='Client' AND statut='actif' AND deleted_at IS NULL");
+        $stmt->execute([$userId]);
+        $hash = $stmt->fetchColumn();
+        if (!is_string($hash) || !password_verify($current, $hash)) api_error('invalid_current_password', 'Le mot de passe actuel est incorrect.', 401);
+        $pdo = db();
+        $pdo->beginTransaction();
+        try {
+            $pdo->prepare('UPDATE utilisateurs SET mot_de_passe_hash=? WHERE id=?')->execute([password_hash($next, PASSWORD_DEFAULT), $userId]);
+            $pdo->prepare('UPDATE jetons_auth SET revoque_at=NOW() WHERE utilisateur_id=? AND jti<>? AND revoque_at IS NULL')->execute([$userId, (string)$claims['jti']]);
+            $pdo->commit();
+        } catch (Throwable $e) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            throw $e;
+        }
+        json_response(['data' => ['message' => 'Mot de passe mis à jour. Les autres sessions ont été fermées.']]);
+    }
+
     public static function forgotPassword(): never {
         $data = request_json();
         $email = strtolower(trim((string)($data['email'] ?? '')));
