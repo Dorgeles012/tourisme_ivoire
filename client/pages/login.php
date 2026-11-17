@@ -40,24 +40,16 @@
           name="password"
           type="password"
           required
+          maxlength="4096"
           autocomplete="current-password"
           placeholder="••••••••••">
 
         <button
           type="button"
           class="toggle-password"
+          data-password-toggle="password"
           aria-label="Afficher le mot de passe"
           aria-pressed="false"
-          onclick="
-            const p = document.getElementById('password');
-            const visible = p.type === 'password';
-            p.type = visible ? 'text' : 'password';
-            this.classList.toggle('is-visible', visible);
-            this.setAttribute('aria-pressed', visible);
-            this.setAttribute('aria-label',
-              visible ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
-            this.textContent = visible ? 'Masquer' : 'Afficher';
-          "
         >Afficher</button>
       </div>
 

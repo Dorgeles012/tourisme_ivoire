@@ -39,7 +39,17 @@ Le back-office permet notamment de gérer les utilisateurs et leurs rôles, les 
 
 ### Espace client Web
 
-L’espace client Web est servi sous `/client/` (ex. `http://127.0.0.1:8000/client/`). Il réutilise les API d’authentification et conserve le jeton Bearer côté serveur dans une session PHP `HttpOnly`; le navigateur ne reçoit pas le jeton API. L’URL d’API se déduit du VirtualHost public. Pour une topologie différente, définir `CLIENT_API_BASE_URL` dans `backend/.env` (URL de base terminée par `/`). Apache peut servir le portail et l’API sur le même VirtualHost. Avec le serveur PHP mono-processus (`php -S`), lancez deux instances pour éviter qu’un appel serveur-à-serveur ne se bloque : API sur le port 8000, puis portail sur le port 8001 avec `CLIENT_API_BASE_URL=http://127.0.0.1:8000/`; les deux doivent utiliser `backend/router.php`. Le portail fournit le profil, les réservations, favoris, historique du passeport, notifications, préférences, réinitialisation et changement de mot de passe, ainsi qu’une messagerie d’assistance reliée au back-office (`/admin/support.php`).
+L’espace client Web est servi sous `/client/` et conserve le jeton Bearer côté serveur dans une session PHP `HttpOnly`; le navigateur ne reçoit pas le jeton API. Apache peut servir le portail et l’API sur le même VirtualHost. Avec le serveur PHP intégré, il faut deux processus distincts : le portail attend une réponse de l’API pendant sa requête, donc un seul processus PHP se bloquerait en s’appelant lui-même. Depuis la racine du projet, lancez ces commandes dans deux terminaux :
+
+```powershell
+# Terminal 1 : API et administration
+php -S 127.0.0.1:8000 -t backend/public backend/router.php
+
+# Terminal 2 : portail client (même racine publique, processus distinct)
+php -S 127.0.0.1:8001 -t backend/public backend/router.php
+```
+
+Dans `backend/.env`, configurez `CLIENT_API_BASE_URL=http://localhost:8000/`. Ouvrez ensuite le portail à `http://127.0.0.1:8001/client/` et l’administration à `http://127.0.0.1:8000/admin/login.php`. N’ouvrez pas le portail sur le port 8000 avec `php -S`, car l’appel PHP vers l’API se bloquerait. Le portail fournit le profil, les réservations, favoris, historique du passeport, notifications, préférences, réinitialisation et changement de mot de passe, ainsi qu’une messagerie d’assistance reliée au back-office (`/admin/support.php`).
 
 La migration `20261117_010_customer_support.php` ajoute uniquement les tables nécessaires aux demandes et messages d’assistance; elle est appliquée par `php backend/migrate.php`. Les demandes de réservation en attente peuvent être annulées; les réservations confirmées doivent être traitées avec l’assistance. Aucun paiement en ligne ni historique de transactions n’est actuellement intégré: le portail présente les montants issus des réservations sans les qualifier de paiements ou factures.
 
@@ -66,6 +76,8 @@ Le streaming en direct, la traduction vocale, la réalité augmentée, les notif
 
 http://127.0.0.1:8000/admin/login.php
 
+http://127.0.0.1:8001/client/
+
 php -S 127.0.0.1:8000 -t backend/public
 
 
@@ -84,6 +96,6 @@ Routes : GET /api/districts, GET /api/regions?district_id=ID, GET /api/departeme
 
 ### Espace client Web
 
-L’espace client Web est servi sous `/client/` (ex. `http://127.0.0.1:8000/client/`). Il réutilise les API d’authentification et conserve le jeton Bearer côté serveur dans une session PHP `HttpOnly`; le navigateur ne reçoit pas le jeton API. L’URL d’API se déduit du VirtualHost public. Pour une topologie différente, définir `CLIENT_API_BASE_URL` dans `backend/.env` (URL de base terminée par `/`). Le portail fournit le profil, les réservations, favoris, historique du passeport, notifications, préférences, réinitialisation et changement de mot de passe, ainsi qu’une messagerie d’assistance reliée au back-office (`/admin/support.php`).
+L’espace client Web est servi sous `/client/` (ex. `http://127.0.0.1:8001/client/` avec les deux serveurs locaux décrits plus haut). Il réutilise les API d’authentification et conserve le jeton Bearer côté serveur dans une session PHP `HttpOnly`; le navigateur ne reçoit pas le jeton API. L’URL d’API se déduit du VirtualHost public. Pour une topologie différente, définir `CLIENT_API_BASE_URL` dans `backend/.env` (URL de base terminée par `/`). Le portail fournit le profil, les réservations, favoris, historique du passeport, notifications, préférences, réinitialisation et changement de mot de passe, ainsi qu’une messagerie d’assistance reliée au back-office (`/admin/support.php`).
 
 La migration `20261117_010_customer_support.php` ajoute uniquement les tables nécessaires aux demandes et messages d’assistance; elle est appliquée par `php backend/migrate.php`. Les demandes de réservation en attente peuvent être annulées; les réservations confirmées doivent être traitées avec l’assistance. Aucun paiement en ligne ni historique de transactions n’est actuellement intégré: le portail présente les montants issus des réservations sans les qualifier de paiements ou factures.

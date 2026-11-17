@@ -28,7 +28,7 @@ final class JwtService {
             catch (JsonException) { return null; }
         };
         $header = $decode($head); $claims = $decode($body);
-        if (($header['alg'] ?? null) !== 'HS256' || !$claims || (int)($claims['exp'] ?? 0) < time()) return null;
+        if (($header['alg'] ?? null) !== 'HS256' || !$claims || (int)($claims['exp'] ?? 0) <= time()) return null;
         return $claims;
     }
 }

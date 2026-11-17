@@ -51,19 +51,8 @@
       </label>
       <div class="input-wrapper">
         <input id="password" name="password" type="password" required
-          minlength="10" autocomplete="new-password" placeholder="••••••••••">
-        <button type="button" class="toggle-password"
-          aria-label="Afficher le mot de passe" aria-pressed="false"
-          onclick="
-            const p = document.getElementById('password');
-            const visible = p.type === 'password';
-            p.type = visible ? 'text' : 'password';
-            this.classList.toggle('is-visible', visible);
-            this.setAttribute('aria-pressed', visible);
-            this.setAttribute('aria-label',
-              visible ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
-            this.textContent = visible ? 'Masquer' : 'Afficher';
-          ">Afficher</button>
+          minlength="10" maxlength="4096" autocomplete="new-password" placeholder="••••••••••">
+        <button type="button" class="toggle-password" data-password-toggle="password" aria-label="Afficher le mot de passe" aria-pressed="false">Afficher</button>
       </div>
       <div class="password-strength" aria-hidden="true">
         <div class="strength-bar"></div>

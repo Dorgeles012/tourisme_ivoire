@@ -22,5 +22,6 @@ require_once APP_ROOT . '/api/response.php';
 require_once APP_ROOT . '/config/database.php';
 require_once APP_ROOT . '/models/UserModel.php';
 require_once APP_ROOT . '/services/JwtService.php';
+require_once APP_ROOT . '/services/MailService.php';
 require_once APP_ROOT . '/services/BadgeService.php';
 require_once APP_ROOT . '/middleware/AuthMiddleware.php';

@@ -24,16 +24,29 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     $action = (string)($_POST['action'] ?? '');
     try {
         if ($action === 'login' || $action === 'register') {
-            $body = ['email' => strtolower(trim((string)($_POST['email'] ?? ''))), 'mot_de_passe' => (string)($_POST['password'] ?? '')];
+            $email = strtolower(trim((string)($_POST['email'] ?? '')));
+            $password = (string)($_POST['password'] ?? '');
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 190 || $password === '' || strlen($password) > 4096) {
+                throw new ClientApiException(422, 'Saisissez une adresse e-mail valide et un mot de passe de 4096 caractères maximum.');
+            }
+            $body = ['email' => $email, 'mot_de_passe' => $password];
             if ($action === 'register') {
                 $body += ['nom' => trim((string)($_POST['nom'] ?? '')), 'prenom' => trim((string)($_POST['prenom'] ?? '')), 'telephone' => trim((string)($_POST['telephone'] ?? ''))];
             }
             $result = client_api()->request('POST', $action === 'login' ? 'api/auth/login' : 'api/auth/register', $body);
-            if (!is_string($result['token'] ?? null)) throw new ClientApiException(502, 'La session n’a pas pu être ouverte.');
-            if (($result['data']['role'] ?? 'Client') !== 'Client') throw new ClientApiException(403, 'Cet espace est réservé aux comptes clients.');
+            $token = $result['token'] ?? null;
+            $userData = $result['data'] ?? null;
+            if (!is_string($token) || $token === '' || !is_array($userData)) {
+                throw new ClientApiException(502, 'La réponse de connexion est incomplète. Réessayez plus tard.');
+            }
+            if (($userData['role'] ?? null) !== 'Client') {
+                try { (new ClientApi($token))->request('POST', 'api/auth/logout'); }
+                catch (Throwable $e) { error_log('Rejected non-client login token could not be revoked: ' . get_class($e)); }
+                throw new ClientApiException(403, 'Cet espace est réservé aux comptes clients.');
+            }
             session_regenerate_id(true);
-            $_SESSION['client_token'] = $result['token'];
-            $_SESSION['client_user'] = is_array($result['data'] ?? null) ? $result['data'] : [];
+            $_SESSION['client_token'] = $token;
+            $_SESSION['client_user'] = $userData;
             $_SESSION['client_csrf'] = bin2hex(random_bytes(32));
             client_flash($action === 'register' ? 'Votre compte est créé. Bienvenue !' : 'Connexion réussie. Bienvenue dans votre espace.');
             client_redirect('dashboard');

@@ -8,8 +8,8 @@ final class AuthController {
         $phone = trim((string)($data['telephone'] ?? ''));
         $email = strtolower(trim((string)($data['email'] ?? '')));
         $password = (string)($data['mot_de_passe'] ?? '');
-        if ($name === '' || mb_strlen($name) > 100 || mb_strlen($firstName) > 100 || mb_strlen($phone) > 30 || !filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 190 || strlen($password) < 10) {
-            api_error('validation_error', 'Nom requis; prénom et téléphone limités respectivement à 100 et 30 caractères, courriel valide et mot de passe de 10 caractères minimum requis.', 422);
+        if ($name === '' || mb_strlen($name) > 100 || mb_strlen($firstName) > 100 || mb_strlen($phone) > 30 || !filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 190 || (strlen($password) < 10 || strlen($password) > 4096)) {
+            api_error('validation_error', 'Nom requis; prénom et téléphone limités respectivement à 100 et 30 caractères, courriel valide et mot de passe de 10 caractères minimum et 4096 caractères maximum requis.', 422);
         }
         $pdo = db();
         $stmt = $pdo->prepare('SELECT id FROM utilisateurs WHERE email = ? AND deleted_at IS NULL');
@@ -30,12 +30,16 @@ final class AuthController {
             if ($pdo->inTransaction()) $pdo->rollBack();
             throw $e;
         }
+        MailService::welcome($email, $firstName !== '' ? $firstName : $name);
         json_response(['data' => ['id' => $id, 'nom' => $name, 'prenom' => $firstName ?: null, 'telephone' => $phone ?: null, 'email' => $email, 'role' => 'Client'], 'token' => $token], 201);
     }
     public static function login(): never {
         $data = request_json();
         $email = strtolower(trim((string)($data['email'] ?? '')));
         $password = (string)($data['mot_de_passe'] ?? '');
+        if ($email === '' || mb_strlen($email) > 190 || $password === '' || strlen($password) > 4096) {
+            api_error('invalid_credentials', 'Adresse courriel ou mot de passe incorrect.', 401);
+        }
         $emailHash = hash('sha256', $email);
         $ipHash = hash('sha256', (string)($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
         $limits = db()->prepare("SELECT SUM(email_hash=? AND reussie=0) AS email_failures,SUM(ip_hash=? AND reussie=0) AS ip_failures FROM tentatives_auth WHERE created_at>=DATE_SUB(NOW(),INTERVAL 15 MINUTE)");
@@ -45,10 +49,14 @@ final class AuthController {
             api_error('too_many_attempts', 'Trop de tentatives. Réessayez plus tard.', 429);
         }
         $user = UserModel::findForLogin($email);
-        $valid = $user && $user['statut'] === 'actif' && password_verify($password, $user['mot_de_passe_hash']);
+        $passwordMatches = $user !== null
+            && is_string($user['mot_de_passe_hash'] ?? null)
+            && password_verify($password, $user['mot_de_passe_hash']);
+        $active = $passwordMatches && ($user['statut'] ?? '') === 'actif';
         $attempt = db()->prepare('INSERT INTO tentatives_auth(email_hash,ip_hash,reussie) VALUES(?,?,?)');
-        $attempt->execute([$emailHash, $ipHash, $valid ? 1 : 0]);
-        if (!$valid) api_error('invalid_credentials', 'Adresse courriel ou mot de passe incorrect.', 401);
+        $attempt->execute([$emailHash, $ipHash, $active ? 1 : 0]);
+        if (!$passwordMatches) api_error('invalid_credentials', 'Adresse courriel ou mot de passe incorrect.', 401);
+        if (!$active) api_error('account_disabled', 'Ce compte est désactivé. Contactez l’assistance.', 403);
         db()->prepare('UPDATE utilisateurs SET last_login_at=NOW() WHERE id=?')->execute([$user['id']]);
         unset($user['mot_de_passe_hash'], $user['statut']);
         $user['role'] = self::roleCode((int)$user['id']);
@@ -167,17 +175,7 @@ final class AuthController {
                 if ($pdo->inTransaction()) $pdo->rollBack();
                 throw $e;
             }
-            if ($delivery !== null) {
-                $token = $delivery['token'];
-                $from = env_value('MAIL_FROM');
-                if ($from && filter_var($from, FILTER_VALIDATE_EMAIL)) {
-                    $body = "Votre code de réinitialisation (valide une heure) :\n\n$token\n\nSaisissez ce code dans l’application Tourisme Ivoire.";
-                    $sent = mail($delivery['email'], 'Code de réinitialisation — Tourisme Ivoire', $body, "From: $from");
-                    if (!$sent) error_log('Password reset email could not be sent.');
-                } else {
-                    error_log('Password reset requested but MAIL_FROM is not configured.');
-                }
-            }
+            if ($delivery !== null) MailService::resetCode($delivery['email'], $delivery['token']);
         }
         json_response(['data' => ['message' => 'Si un compte correspond à cette adresse, un code de réinitialisation sera envoyé.']]);
     }
@@ -187,13 +185,13 @@ final class AuthController {
         $email = strtolower(trim((string)($data['email'] ?? '')));
         $token = (string)($data['token'] ?? '');
         $password = (string)($data['mot_de_passe'] ?? '');
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 190 || strlen($token) !== 64 || strlen($password) < 10) {
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 190 || strlen($token) !== 64 || strlen($password) < 10 || strlen($password) > 4096) {
             api_error('validation_error', 'Adresse, jeton ou nouveau mot de passe invalide (10 caractères minimum).', 422);
         }
         $pdo = db();
         $pdo->beginTransaction();
         try {
-            $stmt = $pdo->prepare("SELECT h.id,h.utilisateur_id FROM historique_mot_de_passe h JOIN utilisateurs u ON u.id=h.utilisateur_id WHERE u.email=? AND u.deleted_at IS NULL AND h.jeton_hash=? AND h.utilise_at IS NULL AND h.expire_at>NOW() LIMIT 1 FOR UPDATE");
+            $stmt = $pdo->prepare("SELECT h.id,h.utilisateur_id,u.email FROM historique_mot_de_passe h JOIN utilisateurs u ON u.id=h.utilisateur_id WHERE u.email=? AND u.deleted_at IS NULL AND h.jeton_hash=? AND h.utilise_at IS NULL AND h.expire_at>NOW() LIMIT 1 FOR UPDATE");
             $stmt->execute([$email,hash('sha256',$token)]);
             $reset = $stmt->fetch();
             if (!$reset) {
@@ -204,6 +202,7 @@ final class AuthController {
             $pdo->prepare('UPDATE historique_mot_de_passe SET utilise_at=NOW() WHERE utilisateur_id=? AND utilise_at IS NULL')->execute([$reset['utilisateur_id']]);
             $pdo->prepare('UPDATE jetons_auth SET revoque_at=NOW() WHERE utilisateur_id=? AND revoque_at IS NULL')->execute([$reset['utilisateur_id']]);
             $pdo->commit();
+            MailService::passwordChanged((string)$reset['email']);
             json_response(['data' => ['message' => 'Mot de passe réinitialisé. Connectez-vous avec votre nouveau mot de passe.']]);
         } catch (Throwable $e) {
             if ($pdo->inTransaction()) $pdo->rollBack();

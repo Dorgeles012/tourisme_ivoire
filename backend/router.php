@@ -18,4 +18,16 @@ if ($requestPath !== '/' && $realFile !== false
     return false;
 }
 
+// Let PHP's built-in server resolve directory URLs such as /client/ to
+// their index.php instead of sending them to the API front controller.
+if ($requestPath !== '/' && $realFile !== false && is_dir($realFile)
+    && str_starts_with($realFile, $publicRoot . DIRECTORY_SEPARATOR)) {
+    $indexFile = realpath($realFile . DIRECTORY_SEPARATOR . 'index.php');
+    if ($indexFile !== false
+        && str_starts_with($indexFile, $publicRoot . DIRECTORY_SEPARATOR)
+        && is_file($indexFile)) {
+        return false;
+    }
+}
+
 require $publicRoot . '/index.php';

@@ -47,12 +47,22 @@ try {
     if (dispatch_api_route($method, $path)) exit;
     api_error('route_not_found', 'Route API introuvable.', 404);
 } catch (Throwable $e) {
-    error_log((string)$e);
-    $error = ['code' => 'server_error', 'message' => 'Une erreur interne est survenue.'];
-     
-     
-    if (env_value('APP_ENV', 'production') === 'local') {
-        $error['details'] = $e->getMessage();
+    $detail = $e->getMessage();
+    $sensitive = [
+        (string)($_SERVER['HTTP_AUTHORIZATION'] ?? ''),
+        (string)env_value('JWT_SECRET', ''),
+        (string)env_value('DB_PASSWORD', ''),
+        (string)env_value('SMTP_PASSWORD', ''),
+    ];
+    $requestData = json_decode((string)file_get_contents('php://input'), true);
+    if (is_array($requestData)) {
+        foreach (['mot_de_passe', 'mot_de_passe_actuel', 'nouveau_mot_de_passe', 'password', 'token'] as $key) {
+            if (isset($requestData[$key]) && is_string($requestData[$key]) && $requestData[$key] !== '') $sensitive[] = $requestData[$key];
+        }
     }
-    json_response(['error' => $error], 500);
+    $sensitive = array_values(array_filter($sensitive, static fn(string $value): bool => $value !== ''));
+    $detail = str_replace($sensitive, '[redacted]', $detail);
+    $detail = preg_replace('/Bearer\s+[^\s]+/i', 'Bearer [redacted]', $detail) ?? '';
+    error_log(sprintf('API failure %s %s: %s', (string)($_SERVER['REQUEST_METHOD'] ?? 'UNKNOWN'), $path, preg_replace('/[\r\n]+/', ' ', $detail)));
+    json_response(['error' => ['code' => 'server_error', 'message' => 'Une erreur interne est survenue.']], 500);
 }

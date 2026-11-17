@@ -53,3 +53,7 @@ app.*.map.json
 
 # Local database backups contain personal data and must not be committed
 /database/backups/
+
+# Backend secrets
+/backend/.env
+/backend/vendor/

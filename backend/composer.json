@@ -1,0 +1,13 @@
+{
+  "require": {
+    "phpmailer/phpmailer": "^6.10"
+  },
+  "config": {
+    "sort-packages": true
+  },
+  "autoload": {
+    "classmap": [
+      "services/"
+    ]
+  }
+}
