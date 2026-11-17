@@ -87,6 +87,9 @@
 </section>
 
 <style>
+  /* ============================================
+     VARIABLES
+     ============================================ */
   :root {
     --auth-bg: #ffffff;
     --auth-surface: #fff8f3;
@@ -107,13 +110,28 @@
   * { box-sizing: border-box; }
 
   /* ============================================
-     CARTE — largeur augmentée : 440px
+     PAGE — centrage horizontal + vertical
+     (à appliquer sur <body class="auth-page">)
+     ============================================ */
+  body.auth-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 1rem;
+    background: #faf6f2;
+    font-family: var(--auth-font);
+  }
+
+  /* ============================================
+     CARTE
      ============================================ */
   .auth-card {
     width: 100%;
-    max-width: 440px;               /* ← ↑ avant : 360px */
-    margin: 1rem auto;
-    padding: 1.2rem 1.4rem;         /* ← padding horizontal ↑ 1.25→1.4rem */
+    max-width: 440px;
+    margin: 0;
+    padding: 1.2rem 1.4rem;
     background: var(--auth-bg);
     border: 1px solid var(--auth-border);
     border-radius: 16px;
@@ -363,9 +381,10 @@
      RESPONSIVE
      ============================================ */
   @media (max-width: 520px) {
+    body.auth-page { padding: 0.5rem; }
+
     .auth-card {
       max-width: 100%;
-      margin: 0.5rem auto;
       padding: 1rem 1rem;
     }
 

@@ -22,6 +22,7 @@ function client_layout(string $page, string $title, string $content, ?array $use
     ];
 
     $displayName = ($user['prenom'] ?? '') ?: ($user['nom'] ?? 'voyageur');
+    $isAuthPage = in_array($page, ['login', 'register', 'forgot', 'reset'], true);
     ?>
 <!doctype html>
 <html lang="fr">
@@ -31,6 +32,74 @@ function client_layout(string $page, string $title, string $content, ?array $use
     <meta name="color-scheme" content="light dark">
     <title><?= client_h($title) ?> · Tourisme Ivoire</title>
     <link rel="stylesheet" href="assets.php?file=portal.css">
+    <?php if ($isAuthPage): ?>
+    <style>
+        .auth-main {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            overflow-x: hidden;
+            overflow-y: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 4rem 1rem 1rem;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            background:
+                linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
+                url('https://images.unsplash.com/photo-1509316785289-025f5b846b35?q=80&w=1920&auto=format&fit=crop') no-repeat center center / cover;
+            background-attachment: fixed;
+        }
+        .auth-main::-webkit-scrollbar {
+            display: none;
+        }
+        @media (max-width: 520px) {
+            .auth-main {
+                padding: 2rem 0.75rem 1rem;
+            }
+        }
+        .auth-main.auth-login-main {
+            overflow: hidden;
+            padding: 1rem;
+            align-items: center;
+        }
+        .auth-login-main .auth-card {
+            margin: 0;
+            padding: 1.5rem 1.2rem 1rem;
+        }
+        .auth-login-main .auth-header {
+            margin-bottom: 0.75rem;
+        }
+        .auth-login-main .form-grid {
+            gap: 0.6rem;
+        }
+        .auth-login-main .auth-switch {
+            margin-top: 0.75rem;
+            padding-top: 0.65rem;
+        }
+        @media (max-height: 620px) {
+            .auth-main.auth-login-main {
+                padding: 0.5rem;
+            }
+            .auth-login-main .auth-card {
+                padding: 1rem;
+            }
+            .auth-login-main .auth-header {
+                margin-bottom: 0.5rem;
+            }
+            .auth-login-main .form-grid {
+                gap: 0.45rem;
+            }
+            .auth-login-main .auth-switch {
+                margin-top: 0.5rem;
+                padding-top: 0.5rem;
+            }
+        }
+    </style>
+    <?php endif; ?>
     <script defer src="assets.php?file=portal.js"></script>
 </head>
 <body class="portal">
@@ -97,7 +166,7 @@ function client_layout(string $page, string $title, string $content, ?array $use
 
     <?php else: ?>
     <!-- ─── Espace public (non connecté) ─────────── -->
-    <main class="auth-main">
+    <main class="auth-main<?= $page === 'login' ? ' auth-login-main' : '' ?>">
         <?php if ($flash): ?>
             <div class="alert alert-<?= client_h($flash['type'] ?? 'info') ?>" role="status">
                 <?= client_h($flash['message'] ?? '') ?>
