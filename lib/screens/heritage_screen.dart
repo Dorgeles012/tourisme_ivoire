@@ -3,9 +3,10 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../services/api_service.dart';
 import '../theme/design_system.dart';
+import '../widgets/app_alert.dart';
 import '../widgets/common.dart';
 
-// HERITAGE SCREEN — Culture & visites virtuelles
+ 
 class HeritageScreen extends StatefulWidget {
   const HeritageScreen({required this.api, super.key});
   final ApiService api;
@@ -40,14 +41,7 @@ class _HeritageScreenState extends State<HeritageScreen> {
         !uri.hasScheme ||
         !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Impossible d\'ouvrir ce média.'),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(kRadiusMd)),
-          ),
-        );
+        await AppAlert.error(context, 'Impossible d’ouvrir ce média.');
       }
     }
   }
@@ -58,8 +52,7 @@ class _HeritageScreenState extends State<HeritageScreen> {
       await widget.api.recordHeritageView(id);
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(readableError(error))));
+        await AppAlert.error(context, readableError(error));
       }
     }
   }
@@ -98,7 +91,7 @@ class _HeritageScreenState extends State<HeritageScreen> {
             );
           }
 
-          // Filtre catégorie
+           
           final heritage = _filter == 'Tout'
               ? allHeritage
               : allHeritage
@@ -109,7 +102,7 @@ class _HeritageScreenState extends State<HeritageScreen> {
 
           return CustomScrollView(
             slivers: [
-              // ── SliverAppBar ─────────────────────────────────────────────
+               
               SliverAppBar(
                 pinned: true,
                 title: const Text('Patrimoine & culture'),
@@ -166,12 +159,12 @@ class _HeritageScreenState extends State<HeritageScreen> {
                 ),
               ),
 
-              // ── Contenu ─────────────────────────────────────────────────
+               
               SliverPadding(
                 padding: const EdgeInsets.all(16),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
-                    // Section Patrimoine
+                     
                     if (heritage.isNotEmpty) ...[
                       SectionHeader(
                         title: 'Culture et patrimoine',
@@ -196,7 +189,7 @@ class _HeritageScreenState extends State<HeritageScreen> {
                       }),
                     ],
 
-                    // Section Visites virtuelles
+                     
                     if (virtualVisits.isNotEmpty) ...[
                       const SizedBox(height: 20),
                       SectionHeader(
@@ -220,7 +213,7 @@ class _HeritageScreenState extends State<HeritageScreen> {
                       }),
                     ],
 
-                    // Note AR
+                     
                     const SizedBox(height: 20),
                     Container(
                       padding: const EdgeInsets.all(14),
@@ -263,7 +256,7 @@ class _HeritageScreenState extends State<HeritageScreen> {
   }
 }
 
-// ─── Carte patrimoine (ExpansionTile stylisé) ─────────────────────────────────
+ 
 class _HeritageCard extends StatelessWidget {
   const _HeritageCard({required this.item, required this.onExpand});
   final Map<String, dynamic> item;
@@ -323,7 +316,6 @@ class _HeritageCard extends StatelessWidget {
   }
 }
 
-// ─── Carte visite virtuelle ───────────────────────────────────────────────────
 class _VirtualVisitCard extends StatelessWidget {
   const _VirtualVisitCard({required this.item, required this.onTap});
   final Map<String, dynamic> item;

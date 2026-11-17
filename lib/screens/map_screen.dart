@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../models/destination.dart';
 import '../services/api_service.dart';
+import '../widgets/app_alert.dart';
 import '../widgets/common.dart';
 
 class MapScreen extends StatefulWidget {
@@ -26,7 +27,7 @@ class _MapScreenState extends State<MapScreen> {
     final query = '${destination.name}, ${destination.location}, Côte d’Ivoire';
     final uri = Uri.https('www.google.com','/maps/search/',{'api':'1','query':query});
     if (!await launchUrl(uri,mode:LaunchMode.externalApplication) && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Impossible d’ouvrir l’application de cartes.')));
+      await AppAlert.error(context, 'Impossible d’ouvrir l’application de cartes.');
     }
   }
 

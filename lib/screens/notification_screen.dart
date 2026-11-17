@@ -3,9 +3,10 @@ import 'package:material_ui/material_ui.dart';
 import '../services/api_service.dart';
 import '../services/notification_service.dart';
 import '../theme/design_system.dart';
+import '../widgets/app_alert.dart';
 import '../widgets/common.dart';
 
-// ─── Couleurs de types de notification ───────────────────────────────────────
+ 
 Color _typeColor(String? type) => switch (type) {
       'success' => const Color(0xFF2E7D32),
       'warning' => ivorianOcre,
@@ -20,7 +21,7 @@ IconData _typeIcon(String? type) => switch (type) {
       _ => Icons.notifications_outlined,
     };
 
-// ─── Helpers temps relatif ────────────────────────────────────────────────────
+ 
 String _relativeTime(String? iso) {
   if (iso == null) return '';
   final dt = DateTime.tryParse(iso);
@@ -34,7 +35,7 @@ String _relativeTime(String? iso) {
   return '${dt.day}/${dt.month}/${dt.year}';
 }
 
-// ─── Écran principal ──────────────────────────────────────────────────────────
+ 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({required this.api, super.key});
   final ApiService api;
@@ -57,18 +58,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Future<void> _markRead(int id) async {
     try {
-      await NotificationService(widget.api).markRead(id);
-      if (mounted) _reload();
+      await AppAlert.runWithLoading(
+        context,
+        action: () => NotificationService(widget.api).markRead(id),
+      );
+      if (mounted) {
+        _reload();
+        await AppAlert.success(context, 'Notification marquée comme lue.');
+      }
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(readableError(error)),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(kRadiusMd)),
-          ),
-        );
+        await AppAlert.error(context, readableError(error));
       }
     }
   }
@@ -78,10 +78,30 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         .where((r) => (r as Map)['lu_at'] == null)
         .map((r) => int.parse('${(r as Map)['id']}'))
         .toList();
-    for (final id in unread) {
-      await NotificationService(widget.api).markRead(id);
+    if (unread.isEmpty) return;
+    if (!await AppAlert.confirm(
+      context,
+      title: 'Tout marquer comme lu ?',
+      message: 'Toutes vos notifications non lues seront marquées comme lues.',
+    )) {
+      return;
     }
-    if (mounted) _reload();
+    try {
+      await AppAlert.runWithLoading(
+        context,
+        action: () async {
+          for (final id in unread) {
+            await NotificationService(widget.api).markRead(id);
+          }
+        },
+      );
+      if (mounted) {
+        _reload();
+        await AppAlert.success(context, 'Notifications marquées comme lues.');
+      }
+    } catch (error) {
+      if (mounted) await AppAlert.error(context, readableError(error));
+    }
   }
 
   @override
@@ -174,7 +194,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // ── Icône type ───────────────────────────
+                                   
                                   Container(
                                     width: 42,
                                     height: 42,
@@ -187,7 +207,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                         size: 20, color: typeColor),
                                   ),
                                   const SizedBox(width: 12),
-                                  // ── Contenu ──────────────────────────────
+                                   
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment:

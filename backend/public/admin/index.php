@@ -11,7 +11,7 @@ $modules = [
     'destinations' => ['label'=>'Destinations','sql'=>"SELECT id,nom AS label,statut_publication AS statut FROM destinations WHERE deleted_at IS NULL ORDER BY created_at DESC",'values'=>['brouillon','publie','archive']],
     'heritage' => ['label'=>'Patrimoines','sql'=>"SELECT id,titre AS label,statut FROM patrimoines ORDER BY created_at DESC",'values'=>['brouillon','publie','archive']],
     'virtual_visits' => ['label'=>'Visites virtuelles','sql'=>"SELECT v.id,CONCAT(v.titre,' — ',COALESCE(p.titre,d.nom)) AS label,v.statut FROM visites_virtuelles v LEFT JOIN patrimoines p ON p.id=v.patrimoine_id LEFT JOIN destinations d ON d.id=v.destination_id ORDER BY v.titre",'values'=>['actif','inactif']],
-    'images' => ['label'=>'Images','sql'=>"SELECT i.id,CONCAT(d.nom,' — ',COALESCE(i.credit,'crédit manquant')) AS label,i.statut FROM images_destinations i JOIN destinations d ON d.id=i.destination_id ORDER BY i.created_at DESC",'values'=>['actif','inactif']],
+    'images' => ['label'=>'Médiathèque','sql'=>"SELECT id,CONCAT(nom_original,' — ',categorie) AS label,statut FROM medias ORDER BY created_at DESC",'values'=>[]],
     'videos' => ['label'=>'Vidéos','sql'=>"SELECT v.id,CONCAT(v.titre,' — ',u.nom) AS label,v.statut FROM videos v JOIN utilisateurs u ON u.id=v.utilisateur_id WHERE v.deleted_at IS NULL ORDER BY v.created_at DESC",'values'=>['en_attente','publie','rejete','archive']],
     'quizzes' => ['label'=>'Quiz','sql'=>"SELECT id,titre AS label,statut FROM quiz ORDER BY created_at DESC",'values'=>['brouillon','publie','archive']],
     'badges' => ['label'=>'Badges','sql'=>"SELECT id,nom AS label,statut FROM badges ORDER BY nom",'values'=>['actif','inactif']],
@@ -43,9 +43,10 @@ $counts = [
 $countModules = ['Utilisateurs'=>'users','Destinations publiées'=>'destinations','Patrimoines publiés'=>'heritage','Vidéos à modérer'=>'videos','Réservations à traiter'=>'reservations'];
 $counts = array_filter($counts,static fn(string $label): bool => admin_can_module($countModules[$label],false,$user),ARRAY_FILTER_USE_KEY);
 $message = admin_flash();
+$messageType = admin_flash_type();
 $csrf = admin_csrf();
 
-// Petite fonction utilitaire pour les badges de statut
+ 
 function status_badge(string $status): string {
     $map = [
         'actif' => 'success', 'publie' => 'success', 'confirmee' => 'success', 'terminee' => 'success', 'lue' => 'secondary',
@@ -70,21 +71,21 @@ function status_badge(string $status): string {
       --primary-dark: #d35400;
       --bg-body: #f4f6f9;
       --border-color: #e9ecef;
-      --sidebar-width: 260px;   /* ⚠️ À ajuster selon la largeur réelle de votre _sidebar.php */
-      --topbar-height: 64px;    /* ⚠️ À ajuster selon la hauteur réelle de votre topbar */
+      --sidebar-width: 260px;    
+      --topbar-height: 64px;     
     }
     * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
     body { background: var(--bg-body); min-height: 100vh; margin: 0; }
 
-    /* ============================================
-       LAYOUT FIXE :
-       - Sidebar fixée à gauche (gérée par _sidebar.php)
-       - Topbar fixée en haut
-       - Contenu scrollable avec les bons offsets
-       ============================================ */
+     
 
-    /* La sidebar est déjà positionnée par votre _sidebar.php.
-       On s'assure qu'elle reste bien fixée à gauche sur grand écran. */
+
+
+
+
+
+     
+
     .sidebar {
       position: fixed !important;
       top: 0 !important;
@@ -95,7 +96,7 @@ function status_badge(string $status): string {
       z-index: 1000;
     }
 
-    /* Topbar fixe en haut, décalée à droite de la sidebar */
+     
     .topbar {
       position: fixed;
       top: 0;
@@ -120,7 +121,7 @@ function status_badge(string $status): string {
       font-weight: 600; font-size: 0.85rem;
     }
 
-    /* Contenu principal : décalé à droite de la sidebar et sous la topbar */
+     
     .content {
       margin-left: var(--sidebar-width);
       padding: calc(var(--topbar-height) + 2rem) 2.5rem 2rem;
@@ -129,13 +130,16 @@ function status_badge(string $status): string {
       overflow-x: hidden;
     }
     .content h1 { font-size: 1.75rem; font-weight: 700; color: #1a1d29; margin-bottom: 0.25rem; }
+    .module-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+    .module-heading h1 { margin: 0; }
+    .module-actions { margin-left: auto; flex-shrink: 0; }
     .eyebrow {
       font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.5px;
       color: var(--primary); font-weight: 600; margin-bottom: 0.25rem;
     }
     .muted { color: #8892a6; font-size: 0.9rem; }
 
-    /* Stats cards */
+     
     .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; margin: 1.5rem 0; }
     .stat {
       background: #fff; border-radius: 14px; padding: 1.25rem 1.5rem;
@@ -148,7 +152,7 @@ function status_badge(string $status): string {
     .stat span { font-size: 0.8rem; color: #8892a6; font-weight: 500; }
     .stat b { font-size: 1.75rem; font-weight: 700; color: #1a1d29; }
 
-    /* Panels */
+     
     .panel {
       background: #fff; border-radius: 14px; padding: 1.5rem 1.75rem;
       border: 1px solid var(--border-color);
@@ -157,7 +161,7 @@ function status_badge(string $status): string {
     }
     .panel h2 { font-size: 1.05rem; font-weight: 600; color: #1a1d29; margin-bottom: 1rem; }
 
-    /* Buttons */
+     
     .button {
       display: inline-block; text-decoration: none; border-radius: 8px;
       padding: 0.55rem 1.1rem; font-size: 0.85rem; font-weight: 500;
@@ -169,7 +173,7 @@ function status_badge(string $status): string {
     .button.primary:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(230,126,34,0.35); }
     .button.small { padding: 0.35rem 0.75rem; font-size: 0.78rem; }
 
-    /* Table */
+     
     .table-wrap { background: #fff; border-radius: 14px; border: 1px solid var(--border-color); overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.03); margin-top: 1rem; }
     table { width: 100%; border-collapse: collapse; }
     thead { background: #f8f9fb; }
@@ -180,17 +184,17 @@ function status_badge(string $status): string {
     td a { color: var(--primary); text-decoration: none; font-weight: 500; font-size: 0.8rem; margin-left: 0.5rem; }
     td a:hover { text-decoration: underline; }
 
-    /* Inline forms */
+     
     .inline-form { display: inline-flex; align-items: center; gap: 0.4rem; margin: 0.15rem 0; }
     .inline-form select { border: 1px solid var(--border-color); border-radius: 6px; padding: 0.3rem 0.5rem; font-size: 0.78rem; background: #fff; color: #4a5568; }
 
-    /* Notice */
+     
     .notice { background: #e8f8f0; color: #1e8449; border-left: 4px solid #27ae60; padding: 0.9rem 1.25rem; border-radius: 8px; font-size: 0.875rem; margin-bottom: 1.25rem; font-weight: 500; }
 
-    /* ============================================
-       RESPONSIVE : la sidebar passe en haut
-       On annule les décalages fixes
-       ============================================ */
+     
+
+
+
     @media (max-width: 992px) {
       .sidebar {
         position: static !important;
@@ -222,7 +226,7 @@ function status_badge(string $status): string {
 </header>
 
 <main class="content">
-  <?php if ($message): ?><div class="notice"><?= admin_escape($message) ?></div><?php endif; ?>
+  <?php if ($message): ?><div class="notice <?= admin_escape($messageType) ?>"><?= admin_escape($message) ?></div><?php endif; ?>
   
   <?php if ($config === null): ?>
     <p class="eyebrow">ESPACE DE GESTION</p>
@@ -251,18 +255,26 @@ function status_badge(string $status): string {
 
   <?php else: ?>
     <p class="eyebrow">GESTION DE CONTENU</p>
-    <h1><?= admin_escape($config['label']) ?></h1>
-    
-    <div class="mb-3">
+    <div class="module-heading">
+      <h1><?= admin_escape($config['label']) ?></h1>
+      <?php if (in_array($module, ['users','destinations','categories','heritage','virtual_visits','images','quizzes'], true)): ?>
+      <div class="module-actions">
       <?php if ($module==='users' && $canManageRoles): ?><a class="button primary" href="create_user.php">Créer un utilisateur</a><?php endif; ?>
       <?php if ($module==='destinations' && $canManageModule): ?><a class="button primary" href="destination.php">Ajouter une destination</a><?php endif; ?>
       <?php if ($module==='heritage' && $canManageModule): ?><a class="button primary" href="heritage.php">Ajouter un patrimoine</a><?php endif; ?>
       <?php if ($module==='virtual_visits' && $canManageModule): ?><a class="button primary" href="virtual_visit.php">Ajouter une visite virtuelle</a><?php endif; ?>
-      <?php if ($module==='categories' && $canManageModule): ?><a class="button primary" href="category.php">Ajouter une catégorie</a><?php endif; ?>
+      <?php if ($module==='categories' && $canManageModule): ?><a class="button primary" href="category.php">Ajouter une catégorie</a> 
+      <?php endif; ?>
       <?php if ($module==='images' && $canManageModule): ?><a class="button primary" href="image.php">Téléverser une image</a><?php endif; ?>
       <?php if ($module==='quizzes' && $canManageModule): ?><a class="button primary" href="quiz.php">Créer un quiz</a><?php endif; ?>
-      <?php if ($module==='notifications' && $canManageModule): ?><a class="button primary" href="notification.php">Créer une notification</a><?php endif; ?>
+      </div>
+      <?php endif; ?>
     </div>
+    <?php if ($module==='notifications' && $canManageModule): ?>
+    <div class="mb-3">
+      <a class="button primary" href="notification.php">Créer une notification</a>
+    </div>
+    <?php endif; ?>
 
     <div class="table-wrap">
       <table>
@@ -284,7 +296,7 @@ function status_badge(string $status): string {
             </td>
             <td><?= status_badge((string)$row['statut']) ?></td>
             <td>
-              <?php if ($canManageModule && $module==='images'): ?><a href="image.php?id=<?= admin_escape($row['id']) ?>">Modifier les crédits</a><?php endif; ?>
+              <?php if ($canManageModule && $module==='images'): ?><a href="image.php?id=<?= admin_escape($row['id']) ?>">Détails / modifier</a><?php endif; ?>
               <?php if ($canManageModule && $module==='notifications' && $row['statut']==='non_lue'): ?>
                 <form class="inline-form" method="post" action="actions.php">
                   <input type="hidden" name="csrf" value="<?= admin_escape($csrf) ?>">
@@ -308,7 +320,7 @@ function status_badge(string $status): string {
                 </form>
               <?php endif; ?>
               <?php if ($canManageModule && $module==='destinations'): ?>
-                <form class="inline-form" method="post" action="actions.php" onsubmit="return confirm('Archiver cette destination ?')">
+                <form class="inline-form" method="post" action="actions.php" data-confirm-title="Archiver cette destination ?" data-confirm-message="Confirmez-vous l’archivage de cette destination ?">
                   <input type="hidden" name="csrf" value="<?= admin_escape($csrf) ?>">
                   <input type="hidden" name="module" value="destinations">
                   <input type="hidden" name="id" value="<?= admin_escape($row['id']) ?>">

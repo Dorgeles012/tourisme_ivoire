@@ -92,7 +92,7 @@ $csrf = admin_csrf();
     * { font-family: 'Inter', sans-serif; }
     body.admin-page { background: var(--bg-body); min-height: 100vh; margin: 0; display: flex; }
 
-    /* Topbar */
+     
     .topbar {
       background: #fff; border-bottom: 1px solid var(--border-color);
       padding: 0.85rem 1.75rem; display: flex; justify-content: space-between;
@@ -107,12 +107,12 @@ $csrf = admin_csrf();
     }
     .topbar a:hover { background: #f8f9fb; border-color: #d0d5dd; color: #1a1d29; }
 
-    /* Content */
+     
     .content { padding: 2.5rem 2rem; max-width: 780px; width: 100%; margin: 0 auto; }
     .content h1 { font-size: 1.75rem; font-weight: 700; color: #1a1d29; margin-bottom: 0.25rem; }
     .muted { color: #8892a6; font-size: 0.875rem; }
 
-    /* User header card */
+     
     .user-header {
       display: flex; align-items: center; gap: 1rem;
       background: #fff; border: 1px solid var(--border-color); border-radius: 14px;
@@ -136,7 +136,7 @@ $csrf = admin_csrf();
     .badge-suspendu { background: #fdecea; color: #c0392b; }
     .badge-en_attente { background: #fff8e5; color: #b9770e; }
 
-    /* Panel / Form card */
+     
     .panel {
       background: #fff; border-radius: 14px; padding: 2rem 2.25rem;
       border: 1px solid var(--border-color);
@@ -144,7 +144,7 @@ $csrf = admin_csrf();
     }
     .panel-intro { color: #4a5568; font-size: 0.9rem; margin-bottom: 1.5rem; }
 
-    /* Rôle cards (radio-style) */
+     
     .role-option {
       display: block; border: 2px solid var(--border-color); border-radius: 12px;
       padding: 1rem 1.25rem; cursor: pointer; transition: all 0.2s;
@@ -181,7 +181,7 @@ $csrf = admin_csrf();
     }
     .role-option .role-desc { font-size: 0.82rem; color: #8892a6; margin-top: 0.4rem; margin-left: 2rem; }
 
-    /* Buttons */
+     
     .button {
       display: inline-block; text-decoration: none; border-radius: 10px;
       padding: 0.7rem 1.4rem; font-size: 0.9rem; font-weight: 600;
@@ -194,11 +194,11 @@ $csrf = admin_csrf();
     }
     .button.primary:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(230,126,34,0.4); }
 
-    /* Notice */
+     
     .notice { padding: 1rem 1.25rem; border-radius: 10px; font-size: 0.875rem; margin-bottom: 1.5rem; font-weight: 500; }
     .notice.error { background: #fdecea; color: #c0392b; border-left: 4px solid #e74c3c; }
 
-    /* Responsive */
+     
     @media (max-width: 992px) {
       body.admin-page { flex-direction: column; }
       .topbar { margin-left: 0; }
@@ -223,7 +223,6 @@ $csrf = admin_csrf();
     <div class="notice error"><?= admin_escape($error) ?></div>
   <?php endif; ?>
 
-  <!-- Carte d'identité utilisateur -->
   <div class="user-header">
     <div class="user-avatar"><?= admin_escape(mb_strtoupper(mb_substr($target['nom'], 0, 1))) ?></div>
     <div>

@@ -4,12 +4,13 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../services/api_service.dart';
 import '../theme/design_system.dart';
+import '../widgets/app_alert.dart';
 import '../widgets/common.dart';
 import 'auth_screen.dart';
 import 'feature_screens.dart';
 import 'passport_screen.dart';
 
-// PROFILE SCREEN
+ 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({
     required this.api,
@@ -44,20 +45,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (!mounted) return;
     if (authenticated == true) {
       try {
-        final user = await widget.api.currentUser();
-        if (user['role'] == 'Sadmin') {
-          final code = await widget.api.createAdminHandoff();
-          final opened = await launchUrl(
-            widget.api.adminHandoffUri(code),
-            mode: LaunchMode.externalApplication,
-          );
-          if (!opened) throw StateError('Impossible to open admin portal.');
-        }
+        await AppAlert.runWithLoading(
+          context,
+          action: () async {
+            final user = await widget.api.currentUser();
+            if (user['role'] == 'Sadmin') {
+              final code = await widget.api.createAdminHandoff();
+              final opened = await launchUrl(
+                widget.api.adminHandoffUri(code),
+                mode: LaunchMode.externalApplication,
+              );
+              if (!opened) throw StateError('Impossible to open admin portal.');
+            }
+          },
+        );
       } catch (error) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(readableError(error))),
-          );
+          await AppAlert.error(context, readableError(error));
         }
       }
     }
@@ -94,17 +98,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
           onAccessibilityChanged: widget.onAccessibilityChanged,
           onEditProfile: () => _editProfile(user),
           onLogout: () async {
-            final messenger = ScaffoldMessenger.of(context);
             try {
-              await widget.api.logout();
+              await AppAlert.runWithLoading(
+                context,
+                action: widget.api.logout,
+              );
             } catch (error) {
               if (mounted) {
-                messenger.showSnackBar(
-                  SnackBar(
-                    content: Text(readableError(error)),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
+                await AppAlert.error(context, readableError(error));
               }
             } finally {
               if (mounted) _reload();
@@ -116,7 +117,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 }
 
-// ─── Vue non-connectée ────────────────────────────────────────────────────────
+ 
 class _UnauthenticatedView extends StatelessWidget {
   const _UnauthenticatedView({
     required this.api,
@@ -338,7 +339,7 @@ class _UnauthenticatedView extends StatelessWidget {
   );
 }
 
-// ─── Vue connectée ────────────────────────────────────────────────────────────
+ 
 class _AuthenticatedView extends StatelessWidget {
   const _AuthenticatedView({
     required this.api,
@@ -619,7 +620,7 @@ class _AuthenticatedView extends StatelessWidget {
   }
 }
 
-// ─── Widgets internes ─────────────────────────────────────────────────────────
+ 
 class _StatItem extends StatelessWidget {
   const _StatItem({
     required this.value,
@@ -683,7 +684,7 @@ class _Divider extends StatelessWidget {
   }
 }
 
-// EDIT PROFILE SCREEN
+ 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({required this.api, required this.user, super.key});
   final ApiService api;
@@ -722,15 +723,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       setState(() => _busy = true);
       await widget.api.uploadAvatar(file);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Photo de profil mise à jour.')),
-        );
+        await AppAlert.success(context, 'Photo de profil mise à jour.');
       }
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(readableError(error))),
-        );
+        await AppAlert.error(context, readableError(error));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -738,6 +735,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _save() async {
+    if (!await AppAlert.confirm(
+      context,
+      title: 'Enregistrer les modifications ?',
+      message: 'Voulez-vous enregistrer les changements de votre profil ?',
+    )) {
+      return;
+    }
     setState(() => _busy = true);
     try {
       await widget.api.updateProfile({
@@ -746,26 +750,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         'telephone': _phone.text,
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Profil mis à jour !'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: const Color(0xFF2E7D32),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(kRadiusMd),
-            ),
-          ),
-        );
+        await AppAlert.success(context, 'Profil mis à jour avec succès.');
         Navigator.of(context).pop();
       }
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(readableError(error)),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        await AppAlert.error(context, readableError(error));
       }
     } finally {
       if (mounted) setState(() => _busy = false);

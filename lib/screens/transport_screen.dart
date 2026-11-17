@@ -3,9 +3,10 @@ import 'package:material_ui/material_ui.dart';
 import '../services/api_service.dart';
 import '../services/reservation_service.dart';
 import '../theme/design_system.dart';
+import '../widgets/app_alert.dart';
 import '../widgets/common.dart';
 
-// TRANSPORT SCREEN
+ 
 class TransportScreen extends StatefulWidget {
   const TransportScreen({required this.api, super.key});
   final ApiService api;
@@ -38,14 +39,7 @@ class _TransportScreenState extends State<TransportScreen> {
 
   Future<void> _search() async {
     if (_from.text.trim().isEmpty || _to.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Indiquez le départ et l\'arrivée.'),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(kRadiusMd)),
-        ),
-      );
+      await AppAlert.warning(context, 'Indiquez le départ et l’arrivée.');
       return;
     }
     setState(() {
@@ -66,23 +60,22 @@ class _TransportScreenState extends State<TransportScreen> {
 
   Future<void> _reserve(Map<String, dynamic> route) async {
     try {
-      final result = await _service.reserve(int.parse('${route['id']}'));
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Demande envoyée : ${result['reference']}'),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: const Color(0xFF2E7D32),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(kRadiusMd)),
-        ),
+      if (!await AppAlert.confirm(
+        context,
+        title: 'Confirmer la réservation ?',
+        message: 'Voulez-vous envoyer une demande pour ce trajet ?',
+      )) {
+        return;
+      }
+      final result = await AppAlert.runWithLoading(
+        context,
+        action: () => _service.reserve(int.parse('${route['id']}')),
       );
+      if (!mounted) return;
+      await AppAlert.success(context, 'Demande envoyée : ${result['reference']}');
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(readableError(error)),
-          behavior: SnackBarBehavior.floating,
-        ));
+        await AppAlert.error(context, readableError(error));
       }
     }
   }
@@ -106,7 +99,7 @@ class _TransportScreenState extends State<TransportScreen> {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          // ── Formulaire de recherche ────────────────────────────────────
+           
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
@@ -148,7 +141,7 @@ class _TransportScreenState extends State<TransportScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                // Départ
+                 
                 TextField(
                   controller: _from,
                   textInputAction: TextInputAction.next,
@@ -170,7 +163,7 @@ class _TransportScreenState extends State<TransportScreen> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                // Arrivée
+                 
                 TextField(
                   controller: _to,
                   textInputAction: TextInputAction.search,
@@ -193,7 +186,7 @@ class _TransportScreenState extends State<TransportScreen> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                // Bouton rechercher
+                 
                 IvorianButton(
                   label: _loading ? 'Recherche…' : 'Comparer les options',
                   icon: Icons.search,
@@ -206,7 +199,7 @@ class _TransportScreenState extends State<TransportScreen> {
           ),
           const SizedBox(height: 16),
 
-          // ── Chips transporteurs disponibles ───────────────────────────
+           
           FutureBuilder<List<dynamic>>(
             future: _service.transports(),
             builder: (context, snapshot) {
@@ -234,7 +227,7 @@ class _TransportScreenState extends State<TransportScreen> {
             },
           ),
 
-          // ── État loading ──────────────────────────────────────────────
+           
           if (_loading)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 24),
@@ -248,10 +241,10 @@ class _TransportScreenState extends State<TransportScreen> {
               ),
             ),
 
-          // ── État erreur ───────────────────────────────────────────────
+           
           if (_error != null) ErrorView(message: _error!, onRetry: _search),
 
-          // ── État vide ─────────────────────────────────────────────────
+           
           if (!_loading && _searched && _error == null && _routes.isEmpty)
             const EmptyView(
               message:
@@ -259,7 +252,7 @@ class _TransportScreenState extends State<TransportScreen> {
               icon: Icons.route_outlined,
             ),
 
-          // ── Résultats ─────────────────────────────────────────────────
+           
           ...List.generate(_routes.length, (index) {
             final route =
                 Map<String, dynamic>.from(_routes[index] as Map);
@@ -286,7 +279,7 @@ class _TransportScreenState extends State<TransportScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // ── Trajet ─────────────────────────────────────
+                         
                         Row(
                           children: [
                             Expanded(
@@ -323,7 +316,7 @@ class _TransportScreenState extends State<TransportScreen> {
                         ),
                         const SizedBox(height: 10),
 
-                        // ── Infos ──────────────────────────────────────
+                         
                         Wrap(
                           spacing: 16,
                           runSpacing: 4,
@@ -348,7 +341,7 @@ class _TransportScreenState extends State<TransportScreen> {
                         ),
                         const SizedBox(height: 14),
 
-                        // ── Bouton réservation ─────────────────────────
+                         
                         SizedBox(
                           width: double.infinity,
                           child: FilledButton.icon(
@@ -379,7 +372,7 @@ class _TransportScreenState extends State<TransportScreen> {
   }
 }
 
-// ─── Chip info ────────────────────────────────────────────────────────────────
+ 
 class _InfoChip extends StatelessWidget {
   const _InfoChip({required this.icon, required this.label});
   final IconData icon;
@@ -409,7 +402,7 @@ class _InfoChip extends StatelessWidget {
   }
 }
 
-// RESERVATION HISTORY SCREEN
+ 
 class ReservationHistoryScreen extends StatelessWidget {
   const ReservationHistoryScreen({required this.api, super.key});
   final ApiService api;

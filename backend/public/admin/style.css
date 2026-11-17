@@ -39,7 +39,7 @@ label{display:block;font-weight:700;font-size:13px;margin:14px 0 6px}
 @media(max-width:760px){.layout{grid-template-columns:1fr}.sidebar{display:flex;overflow:auto;border-right:0;border-bottom:1px solid #e9e2d9}.sidebar a{white-space:nowrap}.content{padding:18px}.topbar{padding:12px 16px}.editor-grid{grid-template-columns:1fr}}
 
 
-/* Fixed back-office sidebar, without collapse control */
+ 
 .admin-page .sidebar{position:fixed;z-index:20;inset:0 auto 0 0;width:250px;display:flex;flex-direction:column;overflow-y:auto;padding:20px 14px 18px;background:#fff;border-right:1px solid #e9e2d9}
 .sidebar-brand{display:flex;align-items:center;gap:10px;padding:6px 7px 20px;color:#29231e;font-size:12px;letter-spacing:.04em;white-space:nowrap}
 .sidebar-brand:hover{text-decoration:none}
@@ -60,7 +60,7 @@ label{display:block;font-weight:700;font-size:13px;margin:14px 0 6px}
  .admin-page .layout,.admin-page main.content{margin-left:210px}
 }
   
-/* Shared frame for every back-office page */
+ 
 @media(min-width:993px){
   body.admin-page>.sidebar{position:fixed!important;top:0!important;left:0!important;width:250px!important;height:100vh!important;min-height:100vh!important;z-index:50}
   body.admin-page>header.topbar{position:sticky;top:0;z-index:40;margin-left:250px;width:calc(100% - 250px)}

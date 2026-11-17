@@ -1,4 +1,3 @@
-// lib/screens/home_screen.dart
 import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
@@ -108,6 +107,7 @@ class _HomeScreenState extends State<HomeScreen> {
   static const int _perPageMax = 12;
 
   late Future<List<Destination>> _destinations;
+  bool _destinationsInitialized = false;
   int _perPage = _perPageBase;
   int _lastCols = 0;
 
@@ -123,16 +123,19 @@ class _HomeScreenState extends State<HomeScreen> {
     final width = MediaQuery.sizeOf(context).width;
     final cols = crossAxisCount(width);
     final desired = (cols * 2).clamp(_perPageBase, _perPageMax);
-    if (desired != _perPage || cols != _lastCols) {
+    if (cols != _lastCols) {
       _lastCols = cols;
+      final shouldFetch = desired != _perPage || !_destinationsInitialized;
       _perPage = desired;
+      if (!shouldFetch) return;
+      _destinationsInitialized = true;
       _destinations = widget.api.fetchDestinations(perPage: _perPage);
     }
   }
 
   void _reload() => setState(
-        () => _destinations = widget.api.fetchDestinations(perPage: _perPage),
-      );
+    () => _destinations = widget.api.fetchDestinations(perPage: _perPage),
+  );
 
   void _open(Widget page) => navigateTo(context, page);
 
@@ -188,8 +191,7 @@ class _HomeScreenState extends State<HomeScreen> {
               IconButton(
                 tooltip: 'Notifications',
                 icon: const Icon(Icons.notifications_outlined),
-                onPressed: () =>
-                    _open(NotificationsScreen(api: widget.api)),
+                onPressed: () => _open(NotificationsScreen(api: widget.api)),
               ),
               const SizedBox(width: 8),
             ],

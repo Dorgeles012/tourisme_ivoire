@@ -6,9 +6,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/destination.dart';
 import '../services/api_service.dart';
 import '../theme/design_system.dart';
+import '../widgets/app_alert.dart';
 import '../widgets/common.dart';
 
-// SETTINGS SCREEN
+ 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({
     required this.api,
@@ -55,23 +56,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         'contraste_eleve': _highContrast,
         'texte_agrandi': _largeText,
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Paramètres enregistrés.'),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: const Color(0xFF2E7D32),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(kRadiusMd)),
-        ),
-      );
+      await AppAlert.success(context, 'Paramètres enregistrés avec succès.');
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(readableError(error)),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        await AppAlert.error(context, readableError(error));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -109,7 +97,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           return ListView(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             children: [
-              // ── Section Apparence ────────────────────────────────────────
+               
               _SectionLabel(label: 'Apparence', icon: Icons.palette_outlined),
               const SizedBox(height: 10),
               _SettingsCard(
@@ -130,7 +118,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                       ),
                     ),
-                    // SegmentedButton thème
+                     
                     Padding(
                       padding: const EdgeInsets.fromLTRB(12, 0, 12, 14),
                       child: SegmentedButton<String>(
@@ -168,7 +156,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const SizedBox(height: 20),
 
-              // ── Section Accessibilité ────────────────────────────────────
+               
               _SectionLabel(
                   label: 'Accessibilité',
                   icon: Icons.accessibility_new_outlined),
@@ -216,7 +204,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const SizedBox(height: 20),
 
-              // ── Section Contenu ──────────────────────────────────────────
+               
               _SectionLabel(
                   label: 'Contenu & données', icon: Icons.storage_outlined),
               const SizedBox(height: 10),
@@ -230,7 +218,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const SizedBox(height: 20),
 
-              // ── Section Fonctionnalités non configurées ──────────────────
+               
               _SectionLabel(
                   label: 'Fonctionnalités',
                   icon: Icons.extension_outlined),
@@ -303,7 +291,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 }
 
-// ─── Widgets internes ─────────────────────────────────────────────────────────
+ 
 class _SectionLabel extends StatelessWidget {
   const _SectionLabel({required this.label, required this.icon});
   final String label;
@@ -352,7 +340,7 @@ class _SettingsCard extends StatelessWidget {
   }
 }
 
-// OFFLINE LIBRARY SCREEN
+ 
 class OfflineLibraryScreen extends StatefulWidget {
   const OfflineLibraryScreen({required this.api, super.key});
   final ApiService api;
@@ -412,25 +400,14 @@ class _OfflineLibraryScreenState extends State<OfflineLibraryScreen> {
       await prefs.setStringList('offline_destinations', rows);
       await _loadSaved();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-                '${destinations.length} destination(s) enregistrée(s) hors ligne.'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: const Color(0xFF2E7D32),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(kRadiusMd)),
-          ),
+        await AppAlert.success(
+          context,
+          '${destinations.length} destination(s) enregistrée(s) hors ligne.',
         );
       }
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(readableError(error)),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        await AppAlert.error(context, readableError(error));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -438,9 +415,23 @@ class _OfflineLibraryScreenState extends State<OfflineLibraryScreen> {
   }
 
   Future<void> _clear() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('offline_destinations');
-    await _loadSaved();
+    if (!await AppAlert.confirm(
+      context,
+      title: 'Vider la bibliothèque hors ligne ?',
+      message: 'Toutes les destinations enregistrées localement seront supprimées.',
+    )) {
+      return;
+    }
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('offline_destinations');
+      await _loadSaved();
+      if (mounted) {
+        await AppAlert.success(context, 'Bibliothèque hors ligne vidée.');
+      }
+    } catch (error) {
+      if (mounted) await AppAlert.error(context, readableError(error));
+    }
   }
 
   @override
@@ -449,7 +440,7 @@ class _OfflineLibraryScreenState extends State<OfflineLibraryScreen> {
       appBar: AppBar(title: const Text('Bibliothèque hors ligne')),
       body: Column(
         children: [
-          // ── Info + boutons ───────────────────────────────────────────────
+           
           Container(
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.all(16),
@@ -516,7 +507,7 @@ class _OfflineLibraryScreenState extends State<OfflineLibraryScreen> {
             ),
           ),
 
-          // ── Compteur ────────────────────────────────────────────────────
+           
           if (_saved.isNotEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -534,7 +525,7 @@ class _OfflineLibraryScreenState extends State<OfflineLibraryScreen> {
               ),
             ),
 
-          // ── Liste ────────────────────────────────────────────────────────
+           
           Expanded(
             child: _saved.isEmpty
                 ? const EmptyView(

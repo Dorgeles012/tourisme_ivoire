@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../services/api_service.dart';
 import '../theme/design_system.dart';
+import '../widgets/app_alert.dart';
 import '../widgets/common.dart';
 
 class ProfilePhotoSetupScreen extends StatefulWidget {
@@ -35,8 +36,7 @@ class _ProfilePhotoSetupScreenState extends State<ProfilePhotoSetupScreen> {
       if (mounted) await _finish();
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(readableError(error))));
+        await AppAlert.error(context, readableError(error));
       }
     } finally {
       if (mounted) setState(() => _busy = false);

@@ -158,7 +158,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          // ── AppBar ──────────────────────────────────────
+           
           SliverAppBar(
             floating: true,
             snap: true,
@@ -170,7 +170,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 12),
                 child: Column(
                   children: [
-                    // Champ de recherche
+                     
                     SearchField(
                       controller: _search,
                       hint: 'Destination, région, activité…',
@@ -178,7 +178,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       onChanged: (_) => _query(),
                     ),
                     const SizedBox(height: 10),
-                    // Bouton région
+                     
                     Row(
                       children: [
                         Expanded(
@@ -256,7 +256,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
             ),
           ),
 
-          // ── Chips catégories ────────────────────────────
+           
           SliverToBoxAdapter(
             child: SizedBox(
               height: 50,
@@ -270,7 +270,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
             ),
           ),
 
-          // ── Compteur de résultats ────────────────────────
+           
           if (_total > 0)
             SliverPadding(
               padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 0),
@@ -286,7 +286,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               ),
             ),
 
-          // ── Contenu ─────────────────────────────────────
+           
           FutureBuilder<List<Destination>>(
             future: _destinations,
             builder: (context, snapshot) {
@@ -369,12 +369,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 }
 
-// ═══════════════════════════════════════════════════════════
-// 🗺️ Bottom Sheet sélection de région
-// ═══════════════════════════════════════════════════════════
+ 
 
 class _RegionBottomSheet extends StatelessWidget {
-  const _RegionBottomSheet({required this.regions, this.selectedId, this.title = 'Choisir une région'});
+  const _RegionBottomSheet({required this.regions, this.title = 'Choisir une région'}) : selectedId = null;
 
   final List<dynamic> regions;
   final int? selectedId;
@@ -391,7 +389,7 @@ class _RegionBottomSheet extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Handle
+           
           Container(
             margin: const EdgeInsets.only(top: 12),
             width: 36,
@@ -416,7 +414,7 @@ class _RegionBottomSheet extends StatelessWidget {
               shrinkWrap: true,
               padding: const EdgeInsets.only(bottom: 24),
               children: [
-                // Option "Toutes les régions"
+                 
                 ListTile(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 20),
                   title: const Text('Toute la sélection',
@@ -426,7 +424,7 @@ class _RegionBottomSheet extends StatelessWidget {
                       : null,
                   onTap: () => Navigator.of(context).pop((null, null)),
                 ),
-                // Régions
+                 
                 for (final r in regions)
                   Builder(builder: (context) {
                     final region = Map<String, dynamic>.from(r as Map);

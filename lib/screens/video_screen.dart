@@ -7,9 +7,9 @@ import 'package:video_player/video_player.dart';
 import '../services/api_service.dart';
 import '../services/video_service.dart';
 import '../theme/design_system.dart';
+import '../widgets/app_alert.dart';
 import '../widgets/common.dart';
 
-// VIDEO FEED SCREEN — TikTok-style vertical scroll
 class VideoFeedScreen extends StatefulWidget {
   const VideoFeedScreen({required this.api, super.key});
   final ApiService api;
@@ -32,8 +32,10 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
       PageRouteBuilder<bool>(
         pageBuilder: (_, anim, _) => VideoStudioScreen(api: widget.api),
         transitionsBuilder: (_, anim, _, child) => SlideTransition(
-          position: Tween(begin: const Offset(0, 1), end: Offset.zero)
-              .animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
+          position: Tween(
+            begin: const Offset(0, 1),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
           child: child,
         ),
         transitionDuration: kSlowAnim,
@@ -68,10 +70,7 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
         future: _videos,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Container(
-              color: Colors.black,
-              child: const LoadingView(),
-            );
+            return Container(color: Colors.black, child: const LoadingView());
           }
           if (snapshot.hasError) {
             return Container(
@@ -101,7 +100,6 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
   }
 }
 
-// ─── État vide stylisé ────────────────────────────────────────────────────────
 class _EmptyVideoState extends StatelessWidget {
   const _EmptyVideoState({required this.onStudio});
   final VoidCallback onStudio;
@@ -123,24 +121,30 @@ class _EmptyVideoState extends StatelessWidget {
                   color: ivorianOrange.withValues(alpha: .15),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.video_library_outlined,
-                    size: 44, color: ivorianOrange),
+                child: const Icon(
+                  Icons.video_library_outlined,
+                  size: 44,
+                  color: ivorianOrange,
+                ),
               ),
               const SizedBox(height: 20),
               const Text(
                 'Aucune vidéo publiée',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800),
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               const SizedBox(height: 10),
               Text(
                 'Les nouvelles vidéos sont vérifiées avant publication.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                    color: Colors.white.withValues(alpha: .65), fontSize: 14),
+                  color: Colors.white.withValues(alpha: .65),
+                  fontSize: 14,
+                ),
               ),
               const SizedBox(height: 28),
               FilledButton.icon(
@@ -151,7 +155,8 @@ class _EmptyVideoState extends StatelessWidget {
                   backgroundColor: ivorianOrange,
                   minimumSize: const Size(220, 48),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(kRadiusLg)),
+                    borderRadius: BorderRadius.circular(kRadiusLg),
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
@@ -159,7 +164,9 @@ class _EmptyVideoState extends StatelessWidget {
                 'Les directs nécessitent un fournisseur de streaming configuré.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                    color: Colors.white.withValues(alpha: .4), fontSize: 12),
+                  color: Colors.white.withValues(alpha: .4),
+                  fontSize: 12,
+                ),
               ),
             ],
           ),
@@ -169,7 +176,6 @@ class _EmptyVideoState extends StatelessWidget {
   }
 }
 
-// _VIDEO CARD — carte fullscreen TikTok
 class _VideoCard extends StatefulWidget {
   const _VideoCard({required this.api, required this.video});
   final ApiService api;
@@ -191,14 +197,17 @@ class _VideoCardState extends State<_VideoCard>
   void initState() {
     super.initState();
     _heartAnim = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 300));
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
     _initialize();
   }
 
   Future<void> _initialize() async {
     try {
       final controller = VideoPlayerController.networkUrl(
-          widget.api.mediaUri('${widget.video['media_url']}'));
+        widget.api.mediaUri('${widget.video['media_url']}'),
+      );
       await controller.initialize();
       if (!mounted) {
         await controller.dispose();
@@ -223,15 +232,13 @@ class _VideoCardState extends State<_VideoCard>
     setState(() => _busy = true);
     _heartAnim.forward(from: 0);
     try {
-      final liked =
-          await widget.api.toggleVideoLike(int.parse('${widget.video['id']}'));
+      final liked = await widget.api.toggleVideoLike(
+        int.parse('${widget.video['id']}'),
+      );
       if (mounted) setState(() => _liked = liked);
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(readableError(error)),
-          behavior: SnackBarBehavior.floating,
-        ));
+        await AppAlert.error(context, readableError(error));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -250,9 +257,10 @@ class _VideoCardState extends State<_VideoCard>
         pageBuilder: (_, anim, _) =>
             VideoDetailScreen(api: widget.api, video: widget.video),
         transitionsBuilder: (_, anim, _, child) => SlideTransition(
-          position: Tween(begin: const Offset(0, 1), end: Offset.zero)
-              .animate(
-                  CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
+          position: Tween(
+            begin: const Offset(0, 1),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
           child: child,
         ),
         transitionDuration: kNormalAnim,
@@ -266,7 +274,6 @@ class _VideoCardState extends State<_VideoCard>
     return Stack(
       fit: StackFit.expand,
       children: [
-        // ── Vidéo / placeholder ──────────────────────────────────────────────
         ColoredBox(
           color: Colors.black,
           child: GestureDetector(
@@ -276,32 +283,37 @@ class _VideoCardState extends State<_VideoCard>
                   ? Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.videocam_off_outlined,
-                            color: Colors.white54, size: 54),
+                        const Icon(
+                          Icons.videocam_off_outlined,
+                          color: Colors.white54,
+                          size: 54,
+                        ),
                         const SizedBox(height: 8),
                         Text(
                           'Lecture impossible',
                           style: TextStyle(
-                              color: Colors.white.withValues(alpha: .5)),
+                            color: Colors.white.withValues(alpha: .5),
+                          ),
                         ),
                       ],
                     )
                   : controller == null
-                      ? const SizedBox(
-                          width: 36,
-                          height: 36,
-                          child: CircularProgressIndicator(
-                              color: ivorianOrange, strokeWidth: 2.5),
-                        )
-                      : AspectRatio(
-                          aspectRatio: controller.value.aspectRatio,
-                          child: VideoPlayer(controller),
-                        ),
+                  ? const SizedBox(
+                      width: 36,
+                      height: 36,
+                      child: CircularProgressIndicator(
+                        color: ivorianOrange,
+                        strokeWidth: 2.5,
+                      ),
+                    )
+                  : AspectRatio(
+                      aspectRatio: controller.value.aspectRatio,
+                      child: VideoPlayer(controller),
+                    ),
             ),
           ),
         ),
 
-        // ── Gradient overlay bas ─────────────────────────────────────────────
         const Positioned(
           left: 0,
           right: 0,
@@ -318,7 +330,6 @@ class _VideoCardState extends State<_VideoCard>
           ),
         ),
 
-        // ── Infos vidéo (bas-gauche) ─────────────────────────────────────────
         Positioned(
           left: 18,
           right: 76,
@@ -330,10 +341,11 @@ class _VideoCardState extends State<_VideoCard>
               Text(
                 '${widget.video['titre']}',
                 style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 18,
-                    shadows: [Shadow(blurRadius: 6)]),
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 18,
+                  shadows: [Shadow(blurRadius: 6)],
+                ),
               ),
               const SizedBox(height: 5),
               Text(
@@ -346,8 +358,7 @@ class _VideoCardState extends State<_VideoCard>
                   '${widget.video['description']}',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style:
-                      TextStyle(color: Colors.white.withValues(alpha: .85)),
+                  style: TextStyle(color: Colors.white.withValues(alpha: .85)),
                 ),
               ],
               const SizedBox(height: 8),
@@ -366,13 +377,11 @@ class _VideoCardState extends State<_VideoCard>
           ),
         ),
 
-        // ── Actions côté droit ───────────────────────────────────────────────
         Positioned(
           right: 10,
           bottom: 48,
           child: Column(
             children: [
-              // Like animé
               ScaleTransition(
                 scale: Tween(begin: 1.0, end: 1.3).animate(
                   CurvedAnimation(parent: _heartAnim, curve: Curves.elasticOut),
@@ -392,12 +401,15 @@ class _VideoCardState extends State<_VideoCard>
                 style: const TextStyle(color: Colors.white, fontSize: 12),
               ),
               const SizedBox(height: 20),
-              // Commentaires
+
               IconButton(
                 tooltip: 'Commentaires',
                 onPressed: _openComments,
-                icon: const Icon(Icons.comment_outlined,
-                    color: Colors.white, size: 28),
+                icon: const Icon(
+                  Icons.comment_outlined,
+                  color: Colors.white,
+                  size: 28,
+                ),
               ),
               Text(
                 '${widget.video['commentaires'] ?? 0}',
@@ -407,7 +419,6 @@ class _VideoCardState extends State<_VideoCard>
           ),
         ),
 
-        // ── Indicateur pause ─────────────────────────────────────────────────
         if (controller != null && !controller.value.isPlaying)
           Center(
             child: Container(
@@ -417,8 +428,11 @@ class _VideoCardState extends State<_VideoCard>
                 color: Colors.black.withValues(alpha: .5),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.play_arrow_rounded,
-                  color: Colors.white, size: 36),
+              child: const Icon(
+                Icons.play_arrow_rounded,
+                color: Colors.white,
+                size: 36,
+              ),
             ),
           ),
       ],
@@ -426,7 +440,6 @@ class _VideoCardState extends State<_VideoCard>
   }
 }
 
-// VIDEO STUDIO SCREEN — publication d'une vidéo
 class VideoStudioScreen extends StatefulWidget {
   const VideoStudioScreen({required this.api, super.key});
   final ApiService api;
@@ -469,14 +482,17 @@ class _VideoStudioScreenState extends State<VideoStudioScreen> {
 
   Future<void> _publish() async {
     if (_title.text.trim().isEmpty || _file == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Ajoutez un titre et sélectionnez une vidéo.'),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(kRadiusMd)),
-        ),
+      await AppAlert.warning(
+        context,
+        'Ajoutez un titre et sélectionnez une vidéo.',
       );
+      return;
+    }
+    if (!await AppAlert.confirm(
+      context,
+      title: 'Envoyer la vidéo ?',
+      message: 'La vidéo sera transmise à la modération.',
+    )) {
       return;
     }
     setState(() => _busy = true);
@@ -488,26 +504,15 @@ class _VideoStudioScreenState extends State<VideoStudioScreen> {
         rightsConfirmed: _rightsConfirmed,
       );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                const Text('Vidéo reçue et envoyée en modération.'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: const Color(0xFF2E7D32),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(kRadiusMd)),
-          ),
+        await AppAlert.success(
+          context,
+          'Vidéo reçue et envoyée en modération.',
         );
         Navigator.of(context).pop(true);
       }
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(readableError(error)),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        await AppAlert.error(context, readableError(error));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -522,7 +527,6 @@ class _VideoStudioScreenState extends State<VideoStudioScreen> {
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          // ── En-tête décoratif ──────────────────────────────────────────────
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -545,8 +549,11 @@ class _VideoStudioScreenState extends State<VideoStudioScreen> {
                     color: ivorianOrange.withValues(alpha: .15),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.movie_creation_outlined,
-                      color: ivorianOrange, size: 26),
+                  child: const Icon(
+                    Icons.movie_creation_outlined,
+                    color: ivorianOrange,
+                    size: 26,
+                  ),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -556,16 +563,18 @@ class _VideoStudioScreenState extends State<VideoStudioScreen> {
                       Text(
                         'Partager votre expérience',
                         style: TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 16,
-                            color: cs.onSurface),
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                          color: cs.onSurface,
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         'Vidéo modérée avant publication',
                         style: TextStyle(
-                            fontSize: 12,
-                            color: cs.onSurface.withValues(alpha: .55)),
+                          fontSize: 12,
+                          color: cs.onSurface.withValues(alpha: .55),
+                        ),
                       ),
                     ],
                   ),
@@ -575,7 +584,6 @@ class _VideoStudioScreenState extends State<VideoStudioScreen> {
           ),
           const SizedBox(height: 24),
 
-          // ── Titre ──────────────────────────────────────────────────────────
           TextField(
             controller: _title,
             maxLength: 180,
@@ -583,12 +591,12 @@ class _VideoStudioScreenState extends State<VideoStudioScreen> {
               labelText: 'Titre de la vidéo',
               prefixIcon: const Icon(Icons.title),
               border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(kRadiusMd)),
+                borderRadius: BorderRadius.circular(kRadiusMd),
+              ),
             ),
           ),
           const SizedBox(height: 14),
 
-          // ── Description ────────────────────────────────────────────────────
           TextField(
             controller: _description,
             maxLines: 4,
@@ -596,12 +604,12 @@ class _VideoStudioScreenState extends State<VideoStudioScreen> {
               labelText: 'Description (facultatif)',
               alignLabelWithHint: true,
               border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(kRadiusMd)),
+                borderRadius: BorderRadius.circular(kRadiusMd),
+              ),
             ),
           ),
           const SizedBox(height: 16),
 
-          // ── Sélecteur fichier ──────────────────────────────────────────────
           AnimatedContainer(
             duration: kNormalAnim,
             decoration: BoxDecoration(
@@ -616,20 +624,19 @@ class _VideoStudioScreenState extends State<VideoStudioScreen> {
               ),
             ),
             child: ListTile(
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 8,
+              ),
               leading: Icon(
-                _file != null
-                    ? Icons.video_file
-                    : Icons.video_file_outlined,
+                _file != null ? Icons.video_file : Icons.video_file_outlined,
                 color: _file != null ? ivorianForest : cs.onSurfaceVariant,
                 size: 28,
               ),
               title: Text(
                 _file?.name ?? 'Choisir une vidéo (MP4, WebM ou MOV)',
                 style: TextStyle(
-                  fontWeight:
-                      _file != null ? FontWeight.w700 : FontWeight.w400,
+                  fontWeight: _file != null ? FontWeight.w700 : FontWeight.w400,
                   color: _file != null
                       ? ivorianForest
                       : cs.onSurface.withValues(alpha: .6),
@@ -645,7 +652,8 @@ class _VideoStudioScreenState extends State<VideoStudioScreen> {
                 onPressed: _busy ? null : _chooseFile,
                 style: OutlinedButton.styleFrom(
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(kRadiusMd)),
+                    borderRadius: BorderRadius.circular(kRadiusMd),
+                  ),
                 ),
                 child: Text(_file != null ? 'Changer' : 'Parcourir'),
               ),
@@ -655,36 +663,39 @@ class _VideoStudioScreenState extends State<VideoStudioScreen> {
           Text(
             'Taille maximale : 100 Mo. La vidéo sera modérée avant publication.',
             style: TextStyle(
-                fontSize: 12, color: cs.onSurface.withValues(alpha: .5)),
+              fontSize: 12,
+              color: cs.onSurface.withValues(alpha: .5),
+            ),
           ),
           const SizedBox(height: 16),
 
-          // ── Droits ────────────────────────────────────────────────────────
           Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(kRadiusMd),
               border: Border.all(color: cs.outlineVariant),
             ),
             child: CheckboxListTile(
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 2,
+              ),
               value: _rightsConfirmed,
               activeColor: ivorianOrange,
               onChanged: _busy
                   ? null
                   : (value) =>
-                      setState(() => _rightsConfirmed = value ?? false),
+                        setState(() => _rightsConfirmed = value ?? false),
               title: const Text(
                 'Je confirme détenir les droits de diffusion de cette vidéo.',
                 style: TextStyle(fontSize: 13),
               ),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(kRadiusMd)),
+                borderRadius: BorderRadius.circular(kRadiusMd),
+              ),
             ),
           ),
           const SizedBox(height: 28),
 
-          // ── Bouton envoi ──────────────────────────────────────────────────
           IvorianButton(
             label: _busy ? 'Envoi…' : 'Envoyer pour modération',
             icon: _busy ? null : Icons.send_outlined,
@@ -699,10 +710,8 @@ class _VideoStudioScreenState extends State<VideoStudioScreen> {
   }
 }
 
-// VIDEO DETAIL SCREEN — commentaires
 class VideoDetailScreen extends StatefulWidget {
-  const VideoDetailScreen(
-      {required this.api, required this.video, super.key});
+  const VideoDetailScreen({required this.api, required this.video, super.key});
   final ApiService api;
   final Map<String, dynamic> video;
 
@@ -718,8 +727,7 @@ class _VideoDetailScreenState extends State<VideoDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _comments =
-        widget.api.getComments(int.parse('${widget.video['id']}'));
+    _comments = widget.api.getComments(int.parse('${widget.video['id']}'));
   }
 
   @override
@@ -732,21 +740,22 @@ class _VideoDetailScreenState extends State<VideoDetailScreen> {
     if (_comment.text.trim().isEmpty) return;
     setState(() => _sending = true);
     try {
-      await widget.api
-          .addComment(int.parse('${widget.video['id']}'), _comment.text.trim());
+      await widget.api.addComment(
+        int.parse('${widget.video['id']}'),
+        _comment.text.trim(),
+      );
       _comment.clear();
       if (mounted) {
-        setState(() =>
-            _comments = widget.api.getComments(int.parse('${widget.video['id']}')));
+        setState(
+          () => _comments = widget.api.getComments(
+            int.parse('${widget.video['id']}'),
+          ),
+        );
+        await AppAlert.success(context, 'Commentaire envoyé.');
       }
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(readableError(error)),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        await AppAlert.error(context, readableError(error));
       }
     } finally {
       if (mounted) setState(() => _sending = false);
@@ -767,7 +776,6 @@ class _VideoDetailScreenState extends State<VideoDetailScreen> {
       ),
       body: Column(
         children: [
-          // ── Liste commentaires ───────────────────────────────────────────
           Expanded(
             child: FutureBuilder<List<dynamic>>(
               future: _comments,
@@ -778,9 +786,11 @@ class _VideoDetailScreenState extends State<VideoDetailScreen> {
                 if (snapshot.hasError) {
                   return ErrorView(
                     message: readableError(snapshot.error!),
-                    onRetry: () => setState(() => _comments =
-                        widget.api.getComments(
-                            int.parse('${widget.video['id']}'))),
+                    onRetry: () => setState(
+                      () => _comments = widget.api.getComments(
+                        int.parse('${widget.video['id']}'),
+                      ),
+                    ),
                   );
                 }
                 if (snapshot.data!.isEmpty) {
@@ -791,15 +801,18 @@ class _VideoDetailScreenState extends State<VideoDetailScreen> {
                 }
                 return ListView.builder(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 12),
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   itemCount: snapshot.data!.length,
                   itemBuilder: (context, index) {
                     final comment = Map<String, dynamic>.from(
-                        snapshot.data![index] as Map);
+                      snapshot.data![index] as Map,
+                    );
                     return FadeSlideIn(
                       delay: Duration(
-                          milliseconds:
-                              index * kStaggerDelay.inMilliseconds),
+                        milliseconds: index * kStaggerDelay.inMilliseconds,
+                      ),
                       child: Padding(
                         padding: const EdgeInsets.only(bottom: 10),
                         child: Row(
@@ -807,15 +820,17 @@ class _VideoDetailScreenState extends State<VideoDetailScreen> {
                           children: [
                             CircleAvatar(
                               radius: 18,
-                              backgroundColor:
-                                  ivorianOrange.withValues(alpha: .15),
+                              backgroundColor: ivorianOrange.withValues(
+                                alpha: .15,
+                              ),
                               child: Text(
                                 ('${comment['auteur']}').isNotEmpty
                                     ? '${comment['auteur']}'[0].toUpperCase()
                                     : '?',
                                 style: const TextStyle(
-                                    color: ivorianOrange,
-                                    fontWeight: FontWeight.w800),
+                                  color: ivorianOrange,
+                                  fontWeight: FontWeight.w800,
+                                ),
                               ),
                             ),
                             const SizedBox(width: 10),
@@ -831,20 +846,22 @@ class _VideoDetailScreenState extends State<VideoDetailScreen> {
                                   ),
                                 ),
                                 child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
                                       '${comment['auteur']}',
                                       style: const TextStyle(
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 13),
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 13,
+                                      ),
                                     ),
                                     const SizedBox(height: 3),
                                     Text(
                                       '${comment['contenu']}',
                                       style: const TextStyle(
-                                          fontSize: 14, height: 1.4),
+                                        fontSize: 14,
+                                        height: 1.4,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -860,16 +877,16 @@ class _VideoDetailScreenState extends State<VideoDetailScreen> {
             ),
           ),
 
-          // ── Saisie commentaire ──────────────────────────────────────────
           SafeArea(
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
                 color: cs.surface,
                 border: Border(
-                    top: BorderSide(
-                        color: cs.outlineVariant.withValues(alpha: .4))),
+                  top: BorderSide(
+                    color: cs.outlineVariant.withValues(alpha: .4),
+                  ),
+                ),
               ),
               child: Row(
                 children: [
@@ -883,13 +900,15 @@ class _VideoDetailScreenState extends State<VideoDetailScreen> {
                         hintText: 'Écrire un commentaire…',
                         counterText: '',
                         filled: true,
-                        fillColor:
-                            cs.surfaceContainerHighest.withValues(alpha: .6),
+                        fillColor: cs.surfaceContainerHighest.withValues(
+                          alpha: .6,
+                        ),
                         contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 10),
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
                         border: OutlineInputBorder(
-                          borderRadius:
-                              BorderRadius.circular(kRadiusXl),
+                          borderRadius: BorderRadius.circular(kRadiusXl),
                           borderSide: BorderSide.none,
                         ),
                       ),
@@ -911,7 +930,9 @@ class _VideoDetailScreenState extends State<VideoDetailScreen> {
                               width: 18,
                               height: 18,
                               child: CircularProgressIndicator(
-                                  color: Colors.white, strokeWidth: 2),
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
                             )
                           : const Icon(Icons.send, color: Colors.white),
                     ),

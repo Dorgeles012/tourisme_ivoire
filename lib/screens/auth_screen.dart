@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../services/api_service.dart';
 import '../theme/design_system.dart';
+import '../widgets/app_alert.dart';
 import '../widgets/common.dart';
 import 'profile_photo_setup_screen.dart';
 
@@ -16,7 +17,6 @@ class AuthScreen extends StatefulWidget {
 }
 
 class _AuthScreenState extends State<AuthScreen> {
-  final _form = GlobalKey<FormState>();
   final _name = TextEditingController();
   final _firstName = TextEditingController();
   final _phone = TextEditingController();
@@ -27,6 +27,33 @@ class _AuthScreenState extends State<AuthScreen> {
   _AuthMode _mode = _AuthMode.login;
   bool _busy = false;
   bool _obscure = true;
+
+  String? _validationError() {
+    if (_mode == _AuthMode.register) {
+      if (_name.text.trim().isEmpty || _name.text.trim().length > 100) {
+        return 'Saisissez un nom de 100 caractères maximum.';
+      }
+      if (_firstName.text.length > 100) return '100 caractères maximum.';
+      if (_phone.text.length > 30) return '30 caractères maximum.';
+    }
+    if (!_email.text.contains('@')) return 'E-mail invalide.';
+    if (_mode == _AuthMode.reset && _token.text.trim().isEmpty) {
+      return 'Saisissez le code reçu.';
+    }
+    if (_mode != _AuthMode.forgot) {
+      if (_mode == _AuthMode.login && _password.text.isEmpty) {
+        return 'Saisissez votre mot de passe.';
+      }
+      if (_mode != _AuthMode.login && _password.text.length < 10) {
+        return 'Minimum 10 caractères.';
+      }
+    }
+    if (_mode == _AuthMode.register &&
+        _passwordConfirmation.text != _password.text) {
+      return 'Les mots de passe ne correspondent pas.';
+    }
+    return null;
+  }
 
   @override
   void dispose() {
@@ -41,7 +68,11 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Future<void> _submit() async {
-    if (!_form.currentState!.validate()) return;
+    final validationError = _validationError();
+    if (validationError != null) {
+      await AppAlert.warning(context, validationError);
+      return;
+    }
     setState(() => _busy = true);
     try {
       switch (_mode) {
@@ -68,12 +99,9 @@ class _AuthScreenState extends State<AuthScreen> {
         case _AuthMode.forgot:
           await widget.api.forgotPassword(_email.text);
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                  'Si le compte existe, un code sera envoyé à cette adresse.',
-                ),
-              ),
+            await AppAlert.info(
+              context,
+              'Si le compte existe, un code sera envoyé à cette adresse.',
             );
             setState(() => _mode = _AuthMode.reset);
           }
@@ -85,10 +113,9 @@ class _AuthScreenState extends State<AuthScreen> {
             password: _password.text,
           );
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Mot de passe réinitialisé. Connectez-vous.'),
-              ),
+            await AppAlert.success(
+              context,
+              'Mot de passe réinitialisé. Connectez-vous.',
             );
             setState(() => _mode = _AuthMode.login);
           }
@@ -96,8 +123,7 @@ class _AuthScreenState extends State<AuthScreen> {
       }
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(readableError(error))));
+        await AppAlert.error(context, readableError(error));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -290,7 +316,6 @@ class _AuthScreenState extends State<AuthScreen> {
                         child: ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 480),
                           child: Form(
-                            key: _form,
                             child: AnimatedSwitcher(
                               duration: kNormalAnim,
                               switchInCurve: Curves.easeOut,
@@ -443,10 +468,6 @@ class _FormContent extends StatelessWidget {
               label: 'Nom',
               icon: Icons.person_outline_rounded,
             ),
-            validator: (v) =>
-                v == null || v.trim().isEmpty || v.trim().length > 100
-                ? 'Saisissez un nom de 100 caractères maximum.'
-                : null,
           ),
           const SizedBox(height: 14),
           TextFormField(
@@ -458,8 +479,6 @@ class _FormContent extends StatelessWidget {
               label: 'Prénom (facultatif)',
               icon: Icons.person_outline_rounded,
             ),
-            validator: (v) =>
-                v != null && v.length > 100 ? '100 caractères maximum.' : null,
           ),
           const SizedBox(height: 14),
           TextFormField(
@@ -471,8 +490,6 @@ class _FormContent extends StatelessWidget {
               label: 'Téléphone (facultatif)',
               icon: Icons.phone_outlined,
             ),
-            validator: (v) =>
-                v != null && v.length > 30 ? '30 caractères maximum.' : null,
           ),
           const SizedBox(height: 14),
         ],
@@ -486,8 +503,6 @@ class _FormContent extends StatelessWidget {
             label: 'Adresse e-mail',
             icon: Icons.mail_outline_rounded,
           ),
-          validator: (v) =>
-              v == null || !v.contains('@') ? 'E-mail invalide.' : null,
         ),
         if (mode == _AuthMode.reset) ...[
           const SizedBox(height: 14),
@@ -499,9 +514,6 @@ class _FormContent extends StatelessWidget {
               label: 'Code de réinitialisation',
               icon: Icons.key_rounded,
             ),
-            validator: (v) => v == null || v.trim().isEmpty
-                ? 'Saisissez le code reçu.'
-                : null,
           ),
         ],
         if (mode != _AuthMode.forgot) ...[
@@ -525,16 +537,6 @@ class _FormContent extends StatelessWidget {
                 onPressed: onToggleObscure,
               ),
             ),
-            validator: (v) {
-              if (mode == _AuthMode.login) {
-                return v == null || v.isEmpty
-                    ? 'Saisissez votre mot de passe.'
-                    : null;
-              }
-              return v == null || v.length < 10
-                  ? 'Minimum 10 caractères.'
-                  : null;
-            },
           ),
           if (mode == _AuthMode.register) ...[
             const SizedBox(height: 14),
@@ -548,9 +550,6 @@ class _FormContent extends StatelessWidget {
                 label: 'Confirmer le mot de passe',
                 icon: Icons.lock_outline_rounded,
               ),
-              validator: (value) => value != passwordCtrl.text
-                  ? 'Les mots de passe ne correspondent pas.'
-                  : null,
             ),
           ],
         ],

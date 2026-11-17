@@ -18,8 +18,9 @@ function env_value(string $key, ?string $default = null): ?string {
     }
     return $_ENV[$key] ?? getenv($key) ?: ($values[$key] ?? $default);
 }
-require_once APP_ROOT . '/utils/response.php';
+require_once APP_ROOT . '/api/response.php';
 require_once APP_ROOT . '/config/database.php';
+require_once APP_ROOT . '/models/UserModel.php';
 require_once APP_ROOT . '/services/JwtService.php';
 require_once APP_ROOT . '/services/BadgeService.php';
 require_once APP_ROOT . '/middleware/AuthMiddleware.php';

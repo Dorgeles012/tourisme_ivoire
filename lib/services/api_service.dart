@@ -4,6 +4,15 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../models/destination.dart';
 
+String _normalizeApiBaseUrl(String value) {
+  final uri = Uri.tryParse(value.trim());
+  if (uri == null || !uri.hasAuthority || !{'http', 'https'}.contains(uri.scheme)) {
+    throw ArgumentError.value(value, 'API_BASE_URL', 'Une URL HTTP(S) absolue est requise.');
+  }
+  final path = uri.path.endsWith('/') ? uri.path : '${uri.path}/';
+  return uri.replace(path: path).toString();
+}
+
 class ApiService {
   ApiService({Dio? dio, TokenStore? tokenStore})
     : _tokenStore = tokenStore ?? SecureTokenStore(),
@@ -11,9 +20,11 @@ class ApiService {
           dio ??
           Dio(
             BaseOptions(
-              baseUrl: const String.fromEnvironment(
-                'API_BASE_URL',
-                defaultValue: 'http://10.0.2.2/tourisme_ivoire/backend/public/',
+              baseUrl: _normalizeApiBaseUrl(
+                const String.fromEnvironment(
+                  'API_BASE_URL',
+                  defaultValue: 'http://10.0.2.2:8000/',
+                ),
               ),
               connectTimeout: const Duration(seconds: 12),
               receiveTimeout: const Duration(seconds: 30),
@@ -344,8 +355,8 @@ class ApiService {
       throw ArgumentError('Fournissez exactement regionId ou districtId.');
     }
     return _asList(await _get('api/departements', query: {
-      if (regionId != null) 'region_id': regionId,
-      if (districtId != null) 'district_id': districtId,
+      'region_id': ?regionId,
+      'district_id': ?districtId,
     }));
   }
 

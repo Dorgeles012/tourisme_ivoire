@@ -3,9 +3,10 @@ import 'package:material_ui/material_ui.dart';
 import '../models/destination.dart';
 import '../services/api_service.dart';
 import '../theme/design_system.dart';
+import '../widgets/app_alert.dart';
 import '../widgets/common.dart';
 
-// PASSPORT SCREEN — Passeport numérique du voyageur
+ 
 class PassportScreen extends StatelessWidget {
   const PassportScreen({required this.api, super.key});
   final ApiService api;
@@ -46,7 +47,7 @@ class PassportScreen extends StatelessWidget {
   }
 }
 
-// ─── Corps du passeport ───────────────────────────────────────────────────────
+ 
 class _PassportBody extends StatelessWidget {
   const _PassportBody({
     required this.passport,
@@ -68,7 +69,7 @@ class _PassportBody extends StatelessWidget {
 
     return CustomScrollView(
       slivers: [
-        // ── SliverAppBar decoratif ────────────────────────────────────────
+         
         SliverAppBar(
           expandedHeight: 240,
           pinned: true,
@@ -77,11 +78,11 @@ class _PassportBody extends StatelessWidget {
             background: Stack(
               fit: StackFit.expand,
               children: [
-                // Gradient
+                 
                 const DecoratedBox(
                   decoration: BoxDecoration(gradient: kAppBarGradient),
                 ),
-                // Cercles décoratifs
+                 
                 Positioned(
                   top: -30,
                   right: -40,
@@ -106,7 +107,7 @@ class _PassportBody extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Contenu passeport
+                 
                 Positioned(
                   left: 20,
                   right: 20,
@@ -143,7 +144,7 @@ class _PassportBody extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 14),
-                      // Stats row
+                       
                       Row(
                         children: [
                           _PassportStat(
@@ -167,12 +168,12 @@ class _PassportBody extends StatelessWidget {
           ),
         ),
 
-        // ── Contenu ──────────────────────────────────────────────────────
+         
         SliverPadding(
           padding: const EdgeInsets.all(16),
           sliver: SliverList(
             delegate: SliverChildListDelegate([
-              // ── Section Badges ─────────────────────────────────────
+               
               if (badges.isNotEmpty) ...[
                 SectionHeader(title: 'Badges', onTapAll: null),
                 const SizedBox(height: 10),
@@ -201,7 +202,7 @@ class _PassportBody extends StatelessWidget {
                 const SizedBox(height: 24),
               ],
 
-              // ── Section Visites ────────────────────────────────────
+               
               SectionHeader(title: 'Historique des visites', onTapAll: null),
               const SizedBox(height: 10),
 
@@ -267,7 +268,7 @@ class _PassportBody extends StatelessWidget {
   }
 }
 
-// ─── Stat dans le header ──────────────────────────────────────────────────────
+ 
 class _PassportStat extends StatelessWidget {
   const _PassportStat({required this.value, required this.label});
   final String value;
@@ -295,7 +296,7 @@ class _PassportStat extends StatelessWidget {
   }
 }
 
-// ─── Carte badge ──────────────────────────────────────────────────────────────
+ 
 class _BadgeCard extends StatelessWidget {
   const _BadgeCard({required this.badge, required this.obtained});
   final Map<String, dynamic> badge;
@@ -368,7 +369,7 @@ class _BadgeCard extends StatelessWidget {
   }
 }
 
-// FAVORITES SCREEN
+ 
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({required this.api, super.key});
   final ApiService api;
@@ -388,18 +389,17 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
   Future<void> _remove(int id) async {
     try {
-      await widget.api.removeFavorite(id);
+      await AppAlert.runWithLoading(
+        context,
+        action: () => widget.api.removeFavorite(id),
+      );
       if (mounted) {
         setState(() => _favorites = widget.api.getFavorites());
+        await AppAlert.success(context, 'Favori retiré avec succès.');
       }
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(readableError(error)),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        await AppAlert.error(context, readableError(error));
       }
     }
   }
@@ -446,6 +446,11 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                 child: Dismissible(
                   key: ValueKey(item['favori_id']),
                   direction: DismissDirection.endToStart,
+                  confirmDismiss: (_) => AppAlert.confirm(
+                    context,
+                    title: 'Retirer ce favori ?',
+                    message: 'Cette destination sera supprimée de vos favoris.',
+                  ),
                   onDismissed: (_) =>
                       _remove(int.parse('${item['favori_id']}')),
                   background: Container(

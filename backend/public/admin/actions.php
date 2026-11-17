@@ -4,19 +4,19 @@ require_once dirname(__DIR__, 2) . '/admin/bootstrap.php';
 
 $user = admin_require_login();
 
-// --- Méthode & CSRF ---
+ 
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
     http_response_code(405);
     exit('Méthode non autorisée.');
 }
 admin_check_csrf();
 
-// --- Entrées ---
+ 
 $module = (string)($_POST['module'] ?? '');
 $id     = filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT);
 $action = (string)($_POST['action'] ?? '');
 
-// --- Configuration des modules gérables via changement de statut ---
+ 
 $configuration = [
     'users'          => ['table'=>'utilisateurs',        'column'=>'statut',             'values'=>['actif','suspendu','en_attente'],        'module'=>'users'],
     'regions'        => ['table'=>'regions',             'column'=>'statut',             'values'=>['actif','inactif'],                       'module'=>'geography'],
@@ -26,7 +26,7 @@ $configuration = [
     'destinations'   => ['table'=>'destinations',        'column'=>'statut_publication', 'values'=>['brouillon','publie','archive'],           'module'=>'destinations'],
     'heritage'       => ['table'=>'patrimoines',         'column'=>'statut',             'values'=>['brouillon','publie','archive'],           'module'=>'heritage'],
     'virtual_visits' => ['table'=>'visites_virtuelles',  'column'=>'statut',             'values'=>['actif','inactif'],                       'module'=>'virtual_visits'],
-    'images'         => ['table'=>'images_destinations', 'column'=>'statut',             'values'=>['actif','inactif'],                       'module'=>'images'],
+    'images'         => ['table'=>'medias',             'column'=>'statut',             'values'=>['actif','inactif'],                       'module'=>'images'],
     'videos'         => ['table'=>'videos',              'column'=>'statut',             'values'=>['en_attente','publie','rejete','archive'], 'module'=>'videos'],
     'quizzes'        => ['table'=>'quiz',                'column'=>'statut',             'values'=>['brouillon','publie','archive'],           'module'=>'quizzes'],
     'badges'         => ['table'=>'badges',              'column'=>'statut',             'values'=>['actif','inactif'],                       'module'=>'badges'],
@@ -36,15 +36,15 @@ $configuration = [
 
 $successMessage = 'Modification enregistrée.';
 
-/**
- * Vérifie les prérequis métier avant de changer le statut d'un élément.
- * Lève une exception en cas de blocage.
- */
+ 
+
+
+
 function actions_validate_transition(string $module, string $action, int $id, array $user): void
 {
     $pdo = db();
 
-    // --- Utilisateurs : règles Sadmin ---
+     
     if ($module === 'users') {
         $targetRoleQuery = $pdo->prepare('SELECT `role` FROM utilisateurs WHERE id=? AND deleted_at IS NULL');
         $targetRoleQuery->execute([$id]);
@@ -60,7 +60,7 @@ function actions_validate_transition(string $module, string $action, int $id, ar
         }
     }
 
-    // --- Destinations : source HTTP(S) vérifiable requise pour publication ---
+     
     if ($module === 'destinations' && $action === 'publie') {
         $source = $pdo->prepare('SELECT source_reference FROM destinations WHERE id=? AND deleted_at IS NULL');
         $source->execute([$id]);
@@ -71,7 +71,7 @@ function actions_validate_transition(string $module, string $action, int $id, ar
         }
     }
 
-    // --- Vidéos : autorisation de diffusion requise ---
+     
     if ($module === 'videos' && $action === 'publie') {
         $rights = $pdo->prepare('SELECT autorisation_diffusion FROM videos WHERE id=? AND deleted_at IS NULL');
         $rights->execute([$id]);
@@ -80,7 +80,7 @@ function actions_validate_transition(string $module, string $action, int $id, ar
         }
     }
 
-    // --- Quiz : 10 questions, 4 propositions, 1 bonne réponse ---
+     
     if ($module === 'quizzes' && $action === 'publie') {
         $valid = $pdo->prepare(
             "SELECT COUNT(*) AS questions, SUM(answer_count=4 AND correct_count=1) AS valid_questions
@@ -101,7 +101,7 @@ function actions_validate_transition(string $module, string $action, int $id, ar
         }
     }
 
-    // --- Visites virtuelles : contenu associé publié requis ---
+     
     if ($module === 'virtual_visits' && $action === 'actif') {
         $publication = $pdo->prepare(
             "SELECT CASE WHEN v.patrimoine_id IS NOT NULL THEN p.statut ELSE d.statut_publication END
@@ -117,9 +117,9 @@ function actions_validate_transition(string $module, string $action, int $id, ar
     }
 }
 
-/**
- * Traite le changement de statut d'un utilisateur (transaction + verrous).
- */
+ 
+
+
 function actions_update_user_status(string $action, int $id, array $user): void
 {
     $pdo = db();
@@ -154,9 +154,47 @@ function actions_update_user_status(string $action, int $id, array $user): void
     }
 }
 
-// --- Traitement ---
+function actions_update_media_status(string $status, int $id): void
+{
+    $pdo = db();
+    $pdo->beginTransaction();
+    try {
+        $query = $pdo->prepare('SELECT destination_id,profil_utilisateur_id,chemin_fichier,est_principale FROM medias WHERE id=? FOR UPDATE');
+        $query->execute([$id]);
+        $media = $query->fetch();
+        if (!$media) throw new RuntimeException('Média introuvable.');
+
+        $relative = ltrim(str_replace('\\','/',(string)$media['chemin_fichier']),'/');
+        if (!str_starts_with($relative,'uploads/')) throw new RuntimeException('Chemin du média invalide.');
+        $script = str_replace('\\','/',(string)($_SERVER['SCRIPT_NAME'] ?? '/admin/actions.php'));
+        $base = dirname(dirname($script));
+        $base = $base === '/' || $base === '.' ? '' : rtrim($base,'/');
+        $url = $base . '/' . $relative;
+        $urls = array_values(array_unique([$url,'/'.$relative,$relative]));
+        $placeholders = implode(',',array_fill(0,count($urls),'?'));
+
+        $pdo->prepare('UPDATE medias SET statut=?,est_principale=IF(?=\'actif\',est_principale,0) WHERE id=?')->execute([$status,$status,$id]);
+        if ($status === 'inactif') {
+            $pdo->prepare('UPDATE destinations SET image_principale=NULL WHERE image_principale IN (' . $placeholders . ')')->execute($urls);
+            if ($media['profil_utilisateur_id']!==null) {
+                $avatarPaths=[$relative,'/'.$relative];$avatarMarks=implode(',',array_fill(0,count($avatarPaths),'?'));
+                $pdo->prepare('UPDATE utilisateurs SET avatar_url=NULL WHERE id=? AND avatar_url IN (' . $avatarMarks . ')')->execute(array_merge([(int)$media['profil_utilisateur_id']],$avatarPaths));
+            }
+        } elseif ($media['destination_id'] !== null && !empty($media['est_principale'])) {
+            $destinationId = (int)$media['destination_id'];
+            $pdo->prepare('UPDATE medias SET est_principale=0 WHERE destination_id=? AND id<>?')->execute([$destinationId,$id]);
+            $pdo->prepare('UPDATE destinations SET image_principale=? WHERE id=?')->execute([$url,$destinationId]);
+        }
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        throw $e;
+    }
+}
+
+ 
 try {
-    // Action spéciale : marquer une notification comme lue
+     
     if ($action === 'read_notification') {
         admin_require_module('notifications', true);
         if (!$id || $id < 1) {
@@ -164,7 +202,7 @@ try {
         }
         db()->prepare('UPDATE notifications SET lu_at=COALESCE(lu_at,NOW()) WHERE id=?')->execute([$id]);
     }
-    // Action spéciale : archivage (soft delete) d'une destination
+     
     elseif ($action === 'delete_destination') {
         admin_require_module('destinations', true);
         if (!$id || $id < 1) {
@@ -172,7 +210,7 @@ try {
         }
         db()->prepare("UPDATE destinations SET deleted_at=NOW() WHERE id=? AND deleted_at IS NULL")->execute([$id]);
     }
-    // Changement de statut standard
+     
     else {
         $config = $configuration[$module] ?? null;
         if (!$config || !in_array($action, $config['values'], true) || !$id || $id < 1) {
@@ -181,15 +219,18 @@ try {
 
         admin_require_module($config['module'], true);
 
-        // Validations métier
+         
         actions_validate_transition($module, $action, (int)$id, $user);
 
-        // Mise à jour (cas spécial utilisateurs avec transaction)
-        if ($module === 'users' && $action !== 'actif') {
+         
+        if ($module === 'images') {
+            actions_update_media_status($action, (int)$id);
+            $statement = null;
+        } elseif ($module === 'users' && $action !== 'actif') {
             actions_update_user_status($action, (int)$id, $user);
-            $statement = null; // pas de rowCount vérifiable ici
+            $statement = null;  
         } else {
-            // Table et colonne contrôlées par la whitelist $configuration
+             
             $statement = db()->prepare("UPDATE {$config['table']} SET {$config['column']}=? WHERE id=?");
             $statement->execute([$action, $id]);
         }
@@ -199,13 +240,16 @@ try {
         }
     }
 
-    admin_flash($successMessage);
+    admin_flash(
+        $successMessage,
+        str_starts_with($successMessage, 'Aucun changement') ? 'info' : 'success'
+    );
 } catch (Throwable $e) {
     error_log(sprintf(
         '[actions.php] module=%s action=%s id=%s user=%s error=%s',
         $module, $action, $id ?: 'null', $user['id'] ?? 'unknown', $e->getMessage()
     ));
-    admin_flash('Échec de la modification. Vérifiez les données et vos permissions.');
+    admin_flash('Échec de la modification. Vérifiez les données et vos permissions.', 'error');
 }
 
 header('Location: index.php?module=' . rawurlencode($module));

@@ -11,28 +11,37 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     admin_check_csrf();
     $email = strtolower(trim((string)($_POST['email'] ?? '')));
     $password = (string)($_POST['password'] ?? '');
-    $emailHash = hash('sha256',$email);
-    $ipHash = hash('sha256',(string)($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
-    $limits = db()->prepare("SELECT SUM(email_hash=? AND reussie=0) AS email_failures,SUM(ip_hash=? AND reussie=0) AS ip_failures FROM tentatives_auth WHERE created_at>=DATE_SUB(NOW(),INTERVAL 15 MINUTE)");
-    $limits->execute([$emailHash,$ipHash]);
-    $counts = $limits->fetch() ?: ['email_failures'=>0,'ip_failures'=>0];
-    if ((int)$counts['email_failures'] >= 5 || (int)$counts['ip_failures'] >= 30) {
-        $error = 'Trop de tentatives. Réessayez plus tard.';
-    } else {
-        $stmt = db()->prepare("SELECT u.id,u.nom,u.email,u.mot_de_passe_hash FROM utilisateurs u WHERE u.email=? AND u.statut='actif' AND u.deleted_at IS NULL AND u.`role`='Sadmin' LIMIT 1");
-        $stmt->execute([$email]);
-        $user = $stmt->fetch();
-        $valid = $user && password_verify($password,$user['mot_de_passe_hash']);
-        db()->prepare('INSERT INTO tentatives_auth(email_hash,ip_hash,reussie) VALUES(?,?,?)')->execute([$emailHash,$ipHash,$valid ? 1 : 0]);
-        if ($valid) {
-            session_regenerate_id(true);
-            unset($user['mot_de_passe_hash']);
-            $_SESSION['admin_user'] = $user;
-            $_SESSION['admin_csrf'] = bin2hex(random_bytes(32));
-            header('Location: index.php');
-            exit;
+    try {
+        $emailHash = hash('sha256', $email);
+        $ipHash = hash('sha256', (string)($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
+        $pdo = db();
+        $limits = $pdo->prepare("SELECT SUM(email_hash=? AND reussie=0) AS email_failures,SUM(ip_hash=? AND reussie=0) AS ip_failures FROM tentatives_auth WHERE created_at>=DATE_SUB(NOW(),INTERVAL 15 MINUTE)");
+        $limits->execute([$emailHash, $ipHash]);
+        $counts = $limits->fetch() ?: ['email_failures' => 0, 'ip_failures' => 0];
+        if ((int)$counts['email_failures'] >= 5 || (int)$counts['ip_failures'] >= 30) {
+            $error = 'Trop de tentatives. Réessayez plus tard.';
+        } else {
+            $stmt = $pdo->prepare("SELECT u.id,u.nom,u.email,u.mot_de_passe_hash FROM utilisateurs u WHERE u.email=? AND u.statut='actif' AND u.deleted_at IS NULL AND u.`role`='Sadmin' LIMIT 1");
+            $stmt->execute([$email]);
+            $user = $stmt->fetch();
+            $valid = $user && password_verify($password, $user['mot_de_passe_hash']);
+            $pdo->prepare('INSERT INTO tentatives_auth(email_hash,ip_hash,reussie) VALUES(?,?,?)')->execute([$emailHash, $ipHash, $valid ? 1 : 0]);
+            if ($valid) {
+                session_regenerate_id(true);
+                unset($user['mot_de_passe_hash']);
+                $_SESSION['admin_user'] = $user;
+                $_SESSION['admin_csrf'] = bin2hex(random_bytes(32));
+                header('Location: index.php');
+                exit;
+            }
+            $error = 'Adresse e-mail ou mot de passe incorrect.';
         }
-        $error = 'Adresse e-mail ou mot de passe incorrect.';
+    } catch (PDOException $exception) {
+        // Keep infrastructure details out of the login response while making
+        // the real failure visible in the PHP server log.
+        error_log('Admin login database failure: ' . $exception->getMessage());
+        http_response_code(503);
+        $error = 'Le service de connexion est temporairement indisponible. Réessayez plus tard.';
     }
 }
 $csrf = admin_csrf();
@@ -43,13 +52,14 @@ $csrf = admin_csrf();
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Connexion administration — Tourisme Ivoire</title>
-  <!-- Bootstrap 5 CSS -->
+   
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Google Fonts -->
+   
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     :root {
-      --primary-color: #e67e22; /* Orange chaud, rappelant le désert */
+      --primary-color: #e67e22;  
       --primary-hover: #d35400;
       --glass-bg: rgba(255, 255, 255, 0.92);
       --glass-border: rgba(255, 255, 255, 0.4);
@@ -62,7 +72,7 @@ $csrf = admin_csrf();
       display: flex;
       align-items: center;
       justify-content: center;
-      /* Image de fond avec un overlay sombre pour la lisibilité */
+       
       background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), 
                   url('https://images.unsplash.com/photo-1509316785289-025f5b846b35?q=80&w=1920&auto=format&fit=crop') no-repeat center center/cover;
       background-attachment: fixed;
@@ -180,7 +190,7 @@ $csrf = admin_csrf();
       font-weight: 500;
     }
 
-    /* Ajustement responsive */
+     
     @media (max-width: 480px) {
       .login-card {
         padding: 2rem 1.5rem;
@@ -216,5 +226,6 @@ $csrf = admin_csrf();
       <button class="button primary full" type="submit">Se connecter</button>
     </form>
   </main>
+  <script src="feedback.js"></script>
 </body>
 </html>

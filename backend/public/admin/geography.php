@@ -83,13 +83,13 @@ $csrf=admin_csrf();
       --primary-dark: #d35400;
       --bg-body: #f4f6f9;
       --border-color: #e9ecef;
-      --sidebar-width: 260px;   /* ⚠️ À ajuster selon la largeur réelle de votre _sidebar.php */
-      --topbar-height: 64px;    /* ⚠️ À ajuster selon la hauteur réelle de votre topbar */
+      --sidebar-width: 260px;    
+      --topbar-height: 64px;     
     }
     * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
     body { background: var(--bg-body); min-height: 100vh; margin: 0; }
 
-    /* ===== LAYOUT FIXE ===== */
+     
     .sidebar {
       position: fixed !important;
       top: 0 !important;
@@ -122,7 +122,7 @@ $csrf=admin_csrf();
     }
     .topbar a:hover { background: #f8f9fb; border-color: #d0d5dd; color: #1a1d29; }
 
-    /* Contenu */
+     
     .content {
       margin-left: var(--sidebar-width);
       padding: calc(var(--topbar-height) + 2rem) 2.5rem 2rem;
@@ -132,7 +132,7 @@ $csrf=admin_csrf();
     .content h2 { font-size: 1.05rem; font-weight: 600; color: #1a1d29; margin: 2rem 0 1rem; }
     .muted { color: #8892a6; font-size: 0.9rem; margin-bottom: 1.5rem; }
 
-    /* Grille des formulaires */
+     
     .editor-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -140,7 +140,7 @@ $csrf=admin_csrf();
       margin-bottom: 1.5rem;
     }
 
-    /* Panels / Form cards */
+     
     .panel {
       background: #fff; border-radius: 14px; padding: 1.5rem 1.75rem;
       border: 1px solid var(--border-color);
@@ -167,7 +167,7 @@ $csrf=admin_csrf();
     }
     .panel .row-2 label { margin-top: 0.9rem; }
 
-    /* Buttons */
+     
     .button {
       display: inline-block; text-decoration: none; border-radius: 8px;
       padding: 0.55rem 1.1rem; font-size: 0.85rem; font-weight: 500;
@@ -181,7 +181,7 @@ $csrf=admin_csrf();
     .button.danger { background: #fff; color: #c0392b; border: 1px solid #f5b7b1; }
     .button.danger:hover { background: #fdecea; border-color: #e74c3c; }
 
-    /* Table */
+     
     .table-wrap { background: #fff; border-radius: 14px; border: 1px solid var(--border-color); overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
     table { width: 100%; border-collapse: collapse; }
     thead { background: #f8f9fb; }
@@ -192,11 +192,11 @@ $csrf=admin_csrf();
     td a { color: var(--primary); text-decoration: none; font-weight: 500; }
     td a:hover { text-decoration: underline; }
 
-    /* Notice */
+     
     .notice { padding: 1rem 1.25rem; border-radius: 10px; font-size: 0.875rem; margin-bottom: 1.5rem; font-weight: 500; }
     .notice.error { background: #fdecea; color: #c0392b; border-left: 4px solid #e74c3c; }
 
-    /* Responsive */
+     
     @media (max-width: 992px) {
       .sidebar { position: static !important; height: auto !important; width: 100% !important; }
       .topbar { position: static; left: 0; height: auto; padding: 0.85rem 1rem; }
@@ -222,7 +222,7 @@ $csrf=admin_csrf();
   <?php endif; ?>
 
   <div class="editor-grid">
-    <!-- Formulaire : département -->
+     
     <form class="panel" method="post">
       <h2>Ajouter un département</h2>
       <input type="hidden" name="csrf" value="<?= admin_escape($csrf) ?>">
@@ -248,7 +248,7 @@ $csrf=admin_csrf();
       <p class="mt-3 mb-0"><button class="button primary" type="submit">Ajouter</button></p>
     </form>
 
-    <!-- Formulaire : localité -->
+     
     <form class="panel" method="post">
       <h2>Ajouter une localité</h2>
       <input type="hidden" name="csrf" value="<?= admin_escape($csrf) ?>">
@@ -281,7 +281,7 @@ $csrf=admin_csrf();
       <p class="mt-3 mb-0"><button class="button primary" type="submit">Ajouter</button></p>
     </form>
 
-    <!-- Formulaire : relation district-région -->
+     
     <form class="panel" method="post">
       <h2>Documenter une relation district-région</h2>
       <input type="hidden" name="csrf" value="<?= admin_escape($csrf) ?>">

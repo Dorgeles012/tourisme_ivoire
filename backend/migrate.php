@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-/** Applique le schéma SQL puis les migrations PHP versionnées de ../database/migrations. */
+ 
 require_once __DIR__ . '/config/bootstrap.php';
 
 $host = env_value('DB_HOST', '127.0.0.1');
@@ -78,7 +78,7 @@ if (!$databaseDir || !$files) {
 }
 natsort($files);
 $files = array_values($files);
-// Installation vide : seules la structure, les index et les vues sont appliqués.
+ 
 $structureFiles = ['01_create_database.sql','02_create_tables.sql','14_indexes.sql','15_views.sql'];
 $files = array_values(array_filter($files, static fn(string $file): bool => in_array(basename($file),$structureFiles,true)));
 if (!$files) {
@@ -148,7 +148,7 @@ if (in_array('--status', $argv ?? [], true)) {
 }
 
 try {
-    // 01 crée la base et la sélectionne; le registre conserve l'état des scripts suivants.
+     
     $pdo->exec((string) file_get_contents(array_shift($files)));
     $pdo->exec('USE tourisme_ivoire');
     $pdo->exec('CREATE TABLE IF NOT EXISTS schema_migrations (migration VARCHAR(255) PRIMARY KEY, applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP) ENGINE=InnoDB');

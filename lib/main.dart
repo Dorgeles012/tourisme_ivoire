@@ -1,5 +1,5 @@
-// lib/main.dart
-// Point d'entrée — Tourisme Ivoire
+ 
+ 
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -87,7 +87,7 @@ class _TourismeIvoireAppState extends State<TourismeIvoireApp> {
     home: FutureBuilder<SharedPreferences>(
       future: _preferences,
       builder: (context, snapshot) {
-        // Splash stylisé pendant le chargement
+         
         if (!snapshot.hasData) return const _SplashScreen();
 
         final prefs = snapshot.data!;
@@ -124,7 +124,7 @@ class _TourismeIvoireAppState extends State<TourismeIvoireApp> {
   );
 }
 
-// 🌅 Splash Screen stylisé
+ 
 
 class _SplashScreen extends StatefulWidget {
   const _SplashScreen();
@@ -165,7 +165,7 @@ class _SplashScreenState extends State<_SplashScreen>
       backgroundColor: ivorianOrange,
       body: Stack(
         children: [
-          // Cercles décoratifs
+           
           Positioned(
             top: -60,
             right: -60,
@@ -202,7 +202,7 @@ class _SplashScreenState extends State<_SplashScreen>
               ),
             ),
           ),
-          // Contenu centré
+           
           Center(
             child: FadeTransition(
               opacity: _fadeIn,
@@ -211,7 +211,7 @@ class _SplashScreenState extends State<_SplashScreen>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Logo
+                     
                     Container(
                       width: 100,
                       height: 100,

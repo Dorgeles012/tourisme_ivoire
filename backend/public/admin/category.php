@@ -60,13 +60,13 @@ $csrf = admin_csrf();
       --primary-dark: #d35400;
       --bg-body: #f4f6f9;
       --border-color: #e9ecef;
-      --sidebar-width: 260px;   /* ⚠️ À ajuster selon la largeur réelle de votre _sidebar.php */
-      --topbar-height: 64px;    /* ⚠️ À ajuster selon la hauteur réelle de votre topbar */
+      --sidebar-width: 260px;   
+      --topbar-height: 64px;  
     }
     * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
     body { background: var(--bg-body); min-height: 100vh; margin: 0; }
 
-    /* ===== LAYOUT FIXE ===== */
+     
     .sidebar {
       position: fixed !important;
       top: 0 !important; left: 0 !important; bottom: 0 !important;
@@ -88,7 +88,7 @@ $csrf = admin_csrf();
     }
     .topbar a:hover { background: #f8f9fb; border-color: #d0d5dd; color: #1a1d29; }
 
-    /* Contenu */
+     
     .content {
       margin-left: var(--sidebar-width);
       padding: calc(var(--topbar-height) + 2.5rem) 2rem 2.5rem;
@@ -98,7 +98,7 @@ $csrf = admin_csrf();
     .content h1 { font-size: 1.75rem; font-weight: 700; color: #1a1d29; margin-bottom: 0.25rem; }
     .muted { color: #8892a6; font-size: 0.9rem; margin-bottom: 1.5rem; }
 
-    /* Panel / Form card */
+     
     .panel {
       background: #fff; border-radius: 14px; padding: 2rem 2.25rem;
       border: 1px solid var(--border-color);
@@ -119,7 +119,7 @@ $csrf = admin_csrf();
     }
     .panel textarea { resize: vertical; min-height: 90px; line-height: 1.55; }
 
-    /* Grille de formulaire */
+     
     .form-grid {
       display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem 1.25rem;
     }
@@ -128,10 +128,10 @@ $csrf = admin_csrf();
       .form-grid { grid-template-columns: 1fr; }
     }
 
-    /* Hint sous champ */
+     
     .hint { font-size: 0.75rem; color: #8892a6; margin-top: 0.3rem; }
 
-    /* Boutons */
+     
     .button {
       display: inline-block; text-decoration: none; border-radius: 10px;
       padding: 0.7rem 1.5rem; font-size: 0.9rem; font-weight: 600;
@@ -145,11 +145,11 @@ $csrf = admin_csrf();
     }
     .button.primary:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(230,126,34,0.4); }
 
-    /* Notice */
+     
     .notice { padding: 1rem 1.25rem; border-radius: 10px; font-size: 0.875rem; margin-bottom: 1.5rem; font-weight: 500; }
     .notice.error { background: #fdecea; color: #c0392b; border-left: 4px solid #e74c3c; }
 
-    /* Responsive */
+     
     @media (max-width: 992px) {
       .sidebar { position: static !important; height: auto !important; width: 100% !important; }
       .topbar { position: static; left: 0; height: auto; padding: 0.85rem 1rem; }
@@ -179,33 +179,30 @@ $csrf = admin_csrf();
       <input type="hidden" name="csrf" value="<?= admin_escape($csrf) ?>">
 
       <div class="form-grid">
-        <!-- Nom (pleine largeur) -->
         <div class="full">
           <label for="nom">Nom</label>
           <input id="nom" name="nom" maxlength="100" required value="<?= admin_escape($category['nom']) ?>" placeholder="Ex : Plages et lagunes">
         </div>
 
-        <!-- Slug -->
         <div>
           <label for="slug">Slug</label>
           <input id="slug" name="slug" required value="<?= admin_escape($category['slug']) ?>" placeholder="plages-et-lagunes">
           <div class="hint">Lettres minuscules, chiffres et tirets uniquement.</div>
         </div>
 
-        <!-- Icône -->
         <div>
           <label for="icone">Icône</label>
           <input id="icone" name="icone" maxlength="80" value="<?= admin_escape($category['icone']) ?>" placeholder="Ex : bi-umbrella">
           <div class="hint">Nom d'icône (facultatif).</div>
         </div>
 
-        <!-- Description (pleine largeur) -->
+         
         <div class="full">
           <label for="description">Description</label>
           <textarea id="description" name="description" rows="3" placeholder="Description courte de la catégorie…"><?= admin_escape($category['description']) ?></textarea>
         </div>
 
-        <!-- Parent -->
+         
         <div>
           <label for="parent_id">Catégorie parente</label>
           <select id="parent_id" name="parent_id">
@@ -218,14 +215,13 @@ $csrf = admin_csrf();
           </select>
         </div>
 
-        <!-- Ordre -->
+         
         <div>
           <label for="ordre">Ordre d'affichage</label>
           <input id="ordre" name="ordre" type="number" min="0" max="65535" value="<?= admin_escape($category['ordre']) ?>">
           <div class="hint">Plus petit = affiché en premier.</div>
         </div>
 
-        <!-- Statut -->
         <div>
           <label for="statut">État</label>
           <select id="statut" name="statut">

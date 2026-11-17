@@ -60,13 +60,13 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       backgroundColor: slide.bgColor,
       body: Stack(
         children: [
-          // Cercles décoratifs
+           
           _Circles(color: slide.bgColor),
 
           SafeArea(
             child: Column(
               children: [
-                // Bouton Passer
+                 
                 Align(
                   alignment: Alignment.centerRight,
                   child: Padding(
@@ -82,7 +82,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                   ),
                 ),
 
-                // Pages
+                 
                 Expanded(
                   child: PageView.builder(
                     controller: _ctrl,
@@ -92,12 +92,12 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                   ),
                 ),
 
-                // Dots + Bouton
+                 
                 Padding(
                   padding: const EdgeInsets.fromLTRB(32, 8, 32, 32),
                   child: Column(
                     children: [
-                      // Indicateurs de page
+                       
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: List.generate(
@@ -118,7 +118,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                         ),
                       ),
                       const SizedBox(height: 28),
-                      // Bouton Suivant / Commencer
+                       
                       SizedBox(
                         width: double.infinity,
                         height: 54,
@@ -153,7 +153,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   }
 }
 
-// 🎨 Cercles décoratifs de fond
+ 
 
 class _Circles extends StatelessWidget {
   const _Circles({required this.color});
@@ -201,7 +201,7 @@ class _Circles extends StatelessWidget {
   }
 }
 
-// 📄 Contenu d'un slide
+ 
 
 class _SlideContent extends StatelessWidget {
   const _SlideContent({required this.slide});
@@ -214,7 +214,7 @@ class _SlideContent extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Icône dans cercle
+           
           Container(
             width: 140,
             height: 140,

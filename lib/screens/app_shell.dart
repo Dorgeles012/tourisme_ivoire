@@ -1,10 +1,12 @@
-// lib/screens/app_shell.dart
-// Navigation principale — responsive bottom nav / rail latéral
+ 
+ 
 import 'package:material_ui/material_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../services/api_service.dart';
 import '../theme/design_system.dart';
+import '../widgets/app_alert.dart';
+import '../widgets/common.dart';
 import 'explore_screen.dart';
 import 'home_screen.dart';
 import 'profile_screen.dart';
@@ -47,20 +49,23 @@ class _AppShellState extends State<AppShell> {
   Future<void> _routeExistingAdmin() async {
     if (!await _api.hasSession || !mounted) return;
     try {
-      final user = await _api.currentUser();
-      if (!mounted || user['role'] != 'Sadmin') return;
-      final code = await _api.createAdminHandoff();
-      final opened = await launchUrl(
-        _api.adminHandoffUri(code),
-        mode: LaunchMode.externalApplication,
+      final opened = await AppAlert.runWithLoading(
+        context,
+        action: () async {
+          final user = await _api.currentUser();
+          if (user['role'] != 'Sadmin') return false;
+          final code = await _api.createAdminHandoff();
+          return launchUrl(
+            _api.adminHandoffUri(code),
+            mode: LaunchMode.externalApplication,
+          );
+        },
       );
       if (!opened && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Impossible d’ouvrir le back-office.')),
-        );
+        await AppAlert.error(context, 'Impossible d’ouvrir le back-office.');
       }
-    } catch (_) {
-      // An expired token or offline start leaves the public app available.
+    } catch (error) {
+      if (mounted) await AppAlert.error(context, readableError(error));
     }
   }
 
@@ -103,7 +108,7 @@ class _AppShellState extends State<AppShell> {
   }
 }
 
-// 📱 Layout Mobile/Tablette — NavigationBar bottom
+ 
 
 class _MobileLayout extends StatelessWidget {
   const _MobileLayout({
@@ -158,7 +163,7 @@ class _MobileLayout extends StatelessWidget {
   }
 }
 
-// 🖥️ Layout Desktop — NavigationRail latéral
+ 
 
 class _DesktopLayout extends StatelessWidget {
   const _DesktopLayout({
@@ -180,7 +185,7 @@ class _DesktopLayout extends StatelessWidget {
       body: SafeArea(
         child: Row(
           children: [
-            // Rail latéral
+             
             NavigationRail(
               selectedIndex: index,
               onDestinationSelected: onIndexChanged,
@@ -188,7 +193,7 @@ class _DesktopLayout extends StatelessWidget {
               extended: true,
               minExtendedWidth: 200,
               indicatorColor: ivorianOrange.withValues(alpha: 0.14),
-              // Header avec logo
+               
               leading: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 24, 16, 20),
                 child: Row(
@@ -228,13 +233,13 @@ class _DesktopLayout extends StatelessWidget {
                   ),
               ],
             ),
-            // Séparateur
+             
             VerticalDivider(
               width: 1,
               thickness: 1,
               color: scheme.outlineVariant.withValues(alpha: 0.4),
             ),
-            // Contenu principal
+             
             Expanded(
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 200),

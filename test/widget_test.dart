@@ -10,8 +10,16 @@ import 'package:tourisme_ivoire/screens/auth_screen.dart';
 import 'package:tourisme_ivoire/screens/profile_photo_setup_screen.dart';
 import 'package:tourisme_ivoire/services/api_service.dart';
 import 'package:tourisme_ivoire/screens/profile_screen.dart';
+import 'package:tourisme_ivoire/widgets/common.dart';
 
 void main() {
+  test('API paths resolve correctly from a configurable base URL', () {
+    final api = ApiService(tokenStore: _MemoryTokenStore());
+
+    expect(api.adminHandoffUri('test-code').path, endsWith('/admin/handoff.php'));
+    expect(api.mediaUri('uploads/test.webp').path, endsWith('/uploads/test.webp'));
+  });
+
   testWidgets('shows the Tourisme photo in the orange auth header', (
     WidgetTester tester,
   ) async {
@@ -36,6 +44,37 @@ void main() {
       ),
       findsOneWidget,
     );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('ErrorView stays usable inside a small constrained panel', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 220,
+              height: 120,
+              child: ErrorView(
+                message: 'Erreur réseau détaillée qui occupe plusieurs lignes.',
+                onRetry: () {},
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Contenu indisponible'), findsOneWidget);
+    expect(find.text('Réessayer'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -149,6 +188,17 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Minimum 10 caractères.'), findsOneWidget);
+      expect(find.text('Les mots de passe ne correspondent pas.'), findsNothing);
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(fields.at(4), 'Voyageur2026!');
+      await tester.enterText(fields.at(5), 'different');
+      await tester.ensureVisible(submitButton);
+      await tester.pumpAndSettle();
+      await tester.tap(submitButton);
+      await tester.pumpAndSettle();
+
       expect(
         find.text('Les mots de passe ne correspondent pas.'),
         findsOneWidget,

@@ -3,7 +3,7 @@ declare(strict_types=1);
 $currentPage = basename((string)($_SERVER['SCRIPT_NAME'] ?? 'index.php'));
 $currentModule = (string)($_GET['module'] ?? '');
 $pageModule = [
-    // Pages de création / modification : garder la rubrique parente active.
+     
     'create_user.php' => 'users',
     'user_roles.php' => 'users',
     'destination.php' => 'destinations',
@@ -12,7 +12,7 @@ $pageModule = [
     'virtual_visit.php' => 'virtual_visits',
     'image.php' => 'images',
     'quiz.php' => 'quizzes',
-    // Pages admin accessibles directement depuis leur rubrique.
+     
     'geography.php' => 'geography',
     'notification.php' => 'notifications',
 ];
@@ -28,11 +28,11 @@ $sidebarLinks = [
  ['label'=>'Quiz','href'=>'index.php?module=quizzes','page'=>'index.php','module'=>'quizzes'],
  ['label'=>'Réservations','href'=>'index.php?module=reservations','page'=>'index.php','module'=>'reservations'],
  ['label'=>'Notifications','href'=>'notification.php','page'=>'notification.php','module'=>''],
- ['label'=>'Rôles système','href'=>'roles.php','page'=>'roles.php','module'=>''],
+ ['label'=>'Paramètres','href'=>'parametres.php','page'=>'parametres.php','module'=>''],
 ];
 ?>
 <style>
-  /* ===== Sidebar moderne sans icônes — à inclure une seule fois ===== */
+   
   :root {
     --sb-primary: #e67e22;
     --sb-primary-dark: #d35400;
@@ -62,7 +62,7 @@ $sidebarLinks = [
   .sidebar::-webkit-scrollbar-thumb { background: #3a3f54; border-radius: 4px; }
   .sidebar::-webkit-scrollbar-track { background: transparent; }
 
-  /* Brand */
+   
   .sidebar-brand {
     display: flex; align-items: center; gap: 0.75rem;
     padding: 0.5rem 0.75rem 1.5rem;
@@ -84,7 +84,7 @@ $sidebarLinks = [
     letter-spacing: 1px; line-height: 1.3;
   }
 
-  /* Caption */
+   
   .sidebar-caption {
     color: var(--sb-text-light);
     font-size: 0.68rem; text-transform: uppercase;
@@ -92,7 +92,7 @@ $sidebarLinks = [
     padding: 0 0.85rem 0.6rem;
   }
 
-  /* Nav */
+   
   .sidebar nav { flex: 1; display: flex; flex-direction: column; gap: 2px; }
   .sidebar nav a {
     display: block;
@@ -116,7 +116,7 @@ $sidebarLinks = [
     box-shadow: 0 4px 14px rgba(230,126,34,0.35);
   }
 
-  /* Logout */
+   
   .sidebar-logout {
     margin-top: 1rem; padding-top: 1rem;
     border-top: 1px solid rgba(255,255,255,0.06);
@@ -142,7 +142,7 @@ $sidebarLinks = [
     padding-left: 1.1rem;
   }
 
-  /* Responsive */
+   
   @media (max-width: 992px) {
     .sidebar {
       width: 100%; height: auto; min-height: auto;
@@ -194,3 +194,5 @@ $sidebarLinks = [
     <button type="submit">Déconnexion</button>
   </form>
 </aside>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="feedback.js"></script>

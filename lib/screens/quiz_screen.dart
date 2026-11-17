@@ -3,9 +3,10 @@ import 'package:material_ui/material_ui.dart';
 import '../services/api_service.dart';
 import '../services/quiz_service.dart';
 import '../theme/design_system.dart';
+import '../widgets/app_alert.dart';
 import '../widgets/common.dart';
 
-// ─── Couleur difficulté ───────────────────────────────────────────────────────
+ 
 Color _diffColor(String? diff) => switch ('$diff'.toLowerCase()) {
   'facile' => const Color(0xFF2E7D32),
   'difficile' => ivorianTerracotta,
@@ -18,9 +19,9 @@ IconData _diffIcon(String? diff) => switch ('$diff'.toLowerCase()) {
   _ => Icons.sentiment_neutral_outlined,
 };
 
-//
-// QUIZ LIST SCREEN
-//
+ 
+ 
+ 
 class QuizListScreen extends StatefulWidget {
   const QuizListScreen({required this.api, super.key});
   final ApiService api;
@@ -137,7 +138,7 @@ class _QuizListScreenState extends State<QuizListScreen> {
   }
 }
 
-// ─── Carte quiz ───────────────────────────────────────────────────────────────
+ 
 class _QuizCard extends StatelessWidget {
   const _QuizCard({required this.quiz, required this.onTap});
   final Map<String, dynamic> quiz;
@@ -171,7 +172,7 @@ class _QuizCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Badge difficulté ─────────────────────────────────────
+                 
                 Row(
                   children: [
                     Container(
@@ -209,7 +210,7 @@ class _QuizCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 10),
-                // ── Titre ────────────────────────────────────────────────
+                 
                 Text(
                   '${quiz['titre']}',
                   maxLines: 2,
@@ -220,7 +221,7 @@ class _QuizCard extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                // ── Infos bas ────────────────────────────────────────────
+                 
                 Row(
                   children: [
                     Icon(
@@ -275,9 +276,9 @@ class _QuizCard extends StatelessWidget {
   }
 }
 
-//
-// QUIZ PLAY SCREEN
-//
+ 
+ 
+ 
 class QuizPlayScreen extends StatefulWidget {
   const QuizPlayScreen({required this.api, required this.quizId, super.key});
   final ApiService api;
@@ -342,12 +343,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
       );
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(readableError(error)),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        await AppAlert.error(context, readableError(error));
       }
     } finally {
       if (mounted) setState(() => _sending = false);
@@ -381,7 +377,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
           final selected = _answers[questionId];
           final isLast = _index == questions.length - 1;
 
-          // Animate progress on first build
+           
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _progressAnim.animateTo((_index + 1) / questions.length);
           });
@@ -392,7 +388,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // ── En-tête quiz ─────────────────────────────────────
+                   
                   Text(
                     '${quiz['titre']}',
                     style: Theme.of(context).textTheme.titleMedium
@@ -400,7 +396,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
                   ),
                   const SizedBox(height: 10),
 
-                  // ── Barre de progression animée ──────────────────────
+                   
                   AnimatedBuilder(
                     animation: _progressAnim,
                     builder: (context, _) => ClipRRect(
@@ -424,7 +420,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
                   ),
                   const SizedBox(height: 20),
 
-                  // ── Énoncé ───────────────────────────────────────────
+                   
                   AnimatedSwitcher(
                     duration: kNormalAnim,
                     child: Text(
@@ -436,7 +432,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
                   ),
                   const SizedBox(height: 20),
 
-                  // ── Réponses ─────────────────────────────────────────
+                   
                   Expanded(
                     child: AnimatedSwitcher(
                       duration: kNormalAnim,
@@ -476,7 +472,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
                                 ),
                                 child: RadioListTile<int>(
                                   value: id,
-                                  // ignore: deprecated_member_use
+                                   
                                   groupValue: selected,
                                   activeColor: ivorianOrange,
                                   shape: RoundedRectangleBorder(
@@ -492,7 +488,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
                                           : FontWeight.w400,
                                     ),
                                   ),
-                                  // ignore: deprecated_member_use
+                                   
                                   onChanged: (value) {
                                     if (value != null) {
                                       setState(
@@ -509,7 +505,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
                     ),
                   ),
 
-                  // ── Bouton suivant/terminer ───────────────────────────
+                   
                   AnimatedScale(
                     scale: selected != null ? 1.0 : 0.95,
                     duration: kFastAnim,
@@ -541,9 +537,9 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
   }
 }
 
-//
-// QUIZ RESULT SCREEN
-//
+ 
+ 
+ 
 class QuizResultScreen extends StatelessWidget {
   const QuizResultScreen({required this.result, super.key});
   final Map<String, dynamic> result;
@@ -567,7 +563,7 @@ class QuizResultScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          // ── Score hero ─────────────────────────────────────────────────
+           
           FadeSlideIn(
             delay: Duration.zero,
             child: Container(
@@ -616,7 +612,7 @@ class QuizResultScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          // ── Corrections ────────────────────────────────────────────────
+           
           if (corrections.isNotEmpty) ...[
             const Text(
               'Corrections',
@@ -722,9 +718,9 @@ class QuizResultScreen extends StatelessWidget {
   }
 }
 
-//
-// QUIZ RESULTS HISTORY
-//
+ 
+ 
+ 
 class QuizResultsScreen extends StatelessWidget {
   const QuizResultsScreen({required this.api, super.key});
   final ApiService api;

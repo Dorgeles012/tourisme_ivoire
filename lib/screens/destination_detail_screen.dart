@@ -4,11 +4,12 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/destination.dart';
 import '../services/api_service.dart';
 import '../theme/design_system.dart';
+import '../widgets/app_alert.dart';
 import '../widgets/common.dart';
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// DESTINATION DETAIL SCREEN
-// ═══════════════════════════════════════════════════════════════════════════════
+ 
+ 
+ 
 class DestinationDetailScreen extends StatefulWidget {
   const DestinationDetailScreen(
       {required this.api, required this.destinationId, super.key});
@@ -36,25 +37,10 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
     try {
       await action();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(success),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: const Color(0xFF2E7D32),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(kRadiusMd)),
-        ),
-      );
+      await AppAlert.success(context, success);
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(readableError(error)),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(kRadiusMd)),
-        ),
-      );
+      await AppAlert.error(context, readableError(error));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -67,12 +53,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
         'www.google.com', '/maps/search/', {'api': '1', 'query': query});
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication) &&
         mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Impossible d\'ouvrir l\'application de cartes.'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      await AppAlert.error(context, 'Impossible d’ouvrir l’application de cartes.');
     }
   }
 
@@ -121,7 +102,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
   }
 }
 
-// ─── Corps détail ─────────────────────────────────────────────────────────────
+ 
 class _DetailBody extends StatelessWidget {
   const _DetailBody({
     required this.destination,
@@ -146,7 +127,7 @@ class _DetailBody extends StatelessWidget {
 
     return CustomScrollView(
       slivers: [
-        // ── SliverAppBar avec image hero ─────────────────────────────────────
+         
         SliverAppBar(
           expandedHeight: 300,
           pinned: true,
@@ -159,7 +140,7 @@ class _DetailBody extends StatelessWidget {
             background: Stack(
               fit: StackFit.expand,
               children: [
-                // Image
+                 
                 destination.imageUrl == null || destination.imageUrl!.isEmpty
                     ? DecoratedBox(
                         decoration: BoxDecoration(
@@ -183,11 +164,11 @@ class _DetailBody extends StatelessWidget {
                               size: 80, color: Colors.white38),
                         ),
                       ),
-                // Gradient bas
+                 
                 const DecoratedBox(
                   decoration: BoxDecoration(gradient: kImageOverlayGradient),
                 ),
-                // Titre en bas de la hero
+                 
                 Positioned(
                   left: 20,
                   right: 80,
@@ -196,7 +177,7 @@ class _DetailBody extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Badge catégorie
+                       
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 4),
@@ -245,7 +226,7 @@ class _DetailBody extends StatelessWidget {
               ],
             ),
           ),
-          // Bouton favori flottant
+           
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 10),
@@ -267,12 +248,12 @@ class _DetailBody extends StatelessWidget {
           ],
         ),
 
-        // ── Contenu ──────────────────────────────────────────────────────────
+         
         SliverPadding(
           padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 24),
           sliver: SliverList(
             delegate: SliverChildListDelegate([
-              // Description
+               
               FadeSlideIn(
                 delay: const Duration(milliseconds: 50),
                 child: Text(
@@ -281,7 +262,7 @@ class _DetailBody extends StatelessWidget {
                 ),
               ),
 
-              // Histoire
+               
               if (destination.story != null &&
                   destination.story!.isNotEmpty) ...[
                 const SizedBox(height: 24),
@@ -295,7 +276,7 @@ class _DetailBody extends StatelessWidget {
                 ),
               ],
 
-              // Adresse
+               
               if (destination.address != null &&
                   destination.address!.isNotEmpty) ...[
                 const SizedBox(height: 20),
@@ -318,7 +299,7 @@ class _DetailBody extends StatelessWidget {
                 ),
               ],
 
-              // GPS disclaimer
+               
               if (destination.latitude == null ||
                   destination.longitude == null) ...[
                 const SizedBox(height: 8),
@@ -350,7 +331,7 @@ class _DetailBody extends StatelessWidget {
                 ),
               ],
 
-              // Actions
+               
               const SizedBox(height: 32),
               FadeSlideIn(
                 delay: const Duration(milliseconds: 200),
@@ -371,7 +352,7 @@ class _DetailBody extends StatelessWidget {
   }
 }
 
-// ─── Bloc section (titre + texte) ─────────────────────────────────────────────
+ 
 class _SectionBlock extends StatelessWidget {
   const _SectionBlock(
       {required this.icon, required this.title, required this.content});
@@ -420,7 +401,7 @@ class _SectionBlock extends StatelessWidget {
   }
 }
 
-// ─── Boutons d'action ─────────────────────────────────────────────────────────
+ 
 class _ActionButtons extends StatelessWidget {
   const _ActionButtons({
     required this.busy,
@@ -440,7 +421,7 @@ class _ActionButtons extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Ajouter aux favoris
+         
         AnimatedScale(
           scale: busy ? 0.97 : 1.0,
           duration: kFastAnim,
@@ -457,7 +438,7 @@ class _ActionButtons extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        // Enregistrer visite
+         
         OutlinedButton.icon(
           onPressed: busy ? null : onRecordVisit,
           icon: const Icon(Icons.check_circle_outline),
@@ -471,7 +452,7 @@ class _ActionButtons extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        // Carte
+         
         OutlinedButton.icon(
           onPressed: onOpenMap,
           icon: const Icon(Icons.map_outlined),

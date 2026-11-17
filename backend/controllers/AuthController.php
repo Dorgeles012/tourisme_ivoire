@@ -44,8 +44,7 @@ final class AuthController {
         if ((int)$counts['email_failures'] >= 5 || (int)$counts['ip_failures'] >= 30) {
             api_error('too_many_attempts', 'Trop de tentatives. Réessayez plus tard.', 429);
         }
-        $stmt = db()->prepare('SELECT id,nom,prenom,email,mot_de_passe_hash,statut FROM utilisateurs WHERE email=? AND deleted_at IS NULL LIMIT 1');
-        $stmt->execute([$email]); $user = $stmt->fetch();
+        $user = UserModel::findForLogin($email);
         $valid = $user && $user['statut'] === 'actif' && password_verify($password, $user['mot_de_passe_hash']);
         $attempt = db()->prepare('INSERT INTO tentatives_auth(email_hash,ip_hash,reussie) VALUES(?,?,?)');
         $attempt->execute([$emailHash, $ipHash, $valid ? 1 : 0]);
@@ -57,8 +56,7 @@ final class AuthController {
     }
     public static function me(): never {
         $id = AuthMiddleware::userId();
-        $stmt = db()->prepare('SELECT id,nom,prenom,email,telephone,avatar_url,created_at FROM utilisateurs WHERE id=? AND deleted_at IS NULL');
-        $stmt->execute([$id]); $user = $stmt->fetch();
+        $user = UserModel::findActiveProfile($id);
         if (!$user) api_error('not_found', 'Compte introuvable.', 404);
         $user['role'] = self::roleCode($id);
         json_response(['data' => $user]);

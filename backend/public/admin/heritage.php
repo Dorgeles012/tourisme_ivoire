@@ -71,13 +71,13 @@ $csrf = admin_csrf();
       --primary-dark: #d35400;
       --bg-body: #f4f6f9;
       --border-color: #e9ecef;
-      --sidebar-width: 260px;   /* ⚠️ À ajuster selon la largeur réelle de votre _sidebar.php */
-      --topbar-height: 64px;    /* ⚠️ À ajuster selon la hauteur réelle de votre topbar */
+      --sidebar-width: 260px;    
+      --topbar-height: 64px;     
     }
     * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
     body { background: var(--bg-body); min-height: 100vh; margin: 0; }
 
-    /* ===== LAYOUT FIXE ===== */
+     
     .sidebar {
       position: fixed !important;
       top: 0 !important; left: 0 !important; bottom: 0 !important;
@@ -99,7 +99,7 @@ $csrf = admin_csrf();
     }
     .topbar a:hover { background: #f8f9fb; border-color: #d0d5dd; color: #1a1d29; }
 
-    /* Contenu */
+     
     .content {
       margin-left: var(--sidebar-width);
       padding: calc(var(--topbar-height) + 2rem) 2.5rem 2rem;
@@ -108,7 +108,7 @@ $csrf = admin_csrf();
     .content h1 { font-size: 1.75rem; font-weight: 700; color: #1a1d29; margin-bottom: 0.25rem; }
     .muted { color: #8892a6; font-size: 0.9rem; margin-bottom: 1.5rem; }
 
-    /* Panel / Form card */
+     
     .panel {
       background: #fff; border-radius: 14px; padding: 2rem 2.25rem;
       border: 1px solid var(--border-color);
@@ -129,7 +129,7 @@ $csrf = admin_csrf();
     }
     .panel textarea { resize: vertical; min-height: 180px; line-height: 1.6; }
 
-    /* Grille de formulaire */
+     
     .editor-grid {
       display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem 1.25rem;
     }
@@ -138,10 +138,10 @@ $csrf = admin_csrf();
       .editor-grid { grid-template-columns: 1fr; }
     }
 
-    /* Hint */
+     
     .hint { font-size: 0.75rem; color: #8892a6; margin-top: 0.3rem; }
 
-    /* Buttons */
+     
     .button {
       display: inline-block; text-decoration: none; border-radius: 10px;
       padding: 0.7rem 1.5rem; font-size: 0.9rem; font-weight: 600;
@@ -154,11 +154,11 @@ $csrf = admin_csrf();
     }
     .button.primary:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(230,126,34,0.4); }
 
-    /* Notice */
+     
     .notice { padding: 1rem 1.25rem; border-radius: 10px; font-size: 0.875rem; margin-bottom: 1.5rem; font-weight: 500; }
     .notice.error { background: #fdecea; color: #c0392b; border-left: 4px solid #e74c3c; }
 
-    /* Responsive */
+     
     @media (max-width: 992px) {
       .sidebar { position: static !important; height: auto !important; width: 100% !important; }
       .topbar { position: static; left: 0; height: auto; padding: 0.85rem 1rem; }

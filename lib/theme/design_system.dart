@@ -1,38 +1,38 @@
-// lib/theme/design_system.dart
-// Système de design centralisé — Tourisme Ivoire
-// Identité visuelle africaine contemporaine, chaleureuse, Material 3
+ 
+ 
+ 
 import 'package:material_ui/material_ui.dart';
 
 
-// 🎨 PALETTE DE COULEURS
+ 
 
 
-/// Orange ivoirien — accent principal
+ 
 const Color ivorianOrange = Color(0xFFF77F00);
 
-/// Encre — couleur texte principale (texte sur fond clair)
+ 
 const Color ivorianInk = Color(0xFF1A1A1A);
 
-/// Ocre — secondaire chaud
+ 
 const Color ivorianOcre = Color(0xFFE36414);
 
-/// Terre cuite — accent fort
+ 
 const Color ivorianTerracotta = Color(0xFF9A031E);
 
-/// Vert forêt — accent nature
+ 
 const Color ivorianForest = Color(0xFF0F4C5C);
 
-/// Vert — succès / nature (hérité)
+ 
 const Color ivorianGreen = Color(0xFF009E60);
 
-/// Or ivoirien — badges, récompenses
+ 
 const Color ivorianGold = Color(0xFFD4AF37);
 
-/// Papier — fond clair chaud
+ 
 const Color ivorianPaper = Color(0xFFFAF7F2);
 
 
-// ⏱️ CONSTANTES D'ANIMATION
+ 
 
 
 const Duration kFastAnim   = Duration(milliseconds: 150);
@@ -41,7 +41,7 @@ const Duration kSlowAnim   = Duration(milliseconds: 400);
 const Duration kStaggerDelay = Duration(milliseconds: 55);
 
 
-// 📐 CONSTANTES DE FORME
+ 
 
 
 const double kRadiusSm = 10.0;
@@ -56,7 +56,7 @@ BorderRadius get kBrXl  => BorderRadius.circular(kRadiusXl);
 BorderRadius get kBrPill => const BorderRadius.all(Radius.circular(100));
 
 
-// 🌑 CONSTANTES D'OMBRE
+ 
 
 
 List<BoxShadow> get kShadowSoft => [
@@ -84,10 +84,10 @@ List<BoxShadow> kShadowColored(Color color) => [
 ];
 
 
-// 🌈 GRADIENTS
+ 
 
 
-/// Gradient Hero — orange clair → ivorianOrange → ocre
+ 
 const LinearGradient kHeroGradient = LinearGradient(
   begin: Alignment.topLeft,
   end: Alignment.bottomRight,
@@ -95,7 +95,7 @@ const LinearGradient kHeroGradient = LinearGradient(
   stops: [0.0, 0.5, 1.0],
 );
 
-/// Gradient sombre pour overlay image
+ 
 const LinearGradient kImageOverlayGradient = LinearGradient(
   begin: Alignment.topCenter,
   end: Alignment.bottomCenter,
@@ -103,7 +103,7 @@ const LinearGradient kImageOverlayGradient = LinearGradient(
   stops: [0.4, 1.0],
 );
 
-/// Gradient discret pour SliverAppBar
+ 
 const LinearGradient kAppBarGradient = LinearGradient(
   begin: Alignment.topCenter,
   end: Alignment.bottomCenter,
@@ -111,7 +111,7 @@ const LinearGradient kAppBarGradient = LinearGradient(
 );
 
 
-// 📱 RESPONSIVE HELPERS
+ 
 
 
 double horizontalPadding(double width) {
@@ -133,7 +133,7 @@ bool isTablet(double width) => width >= 600 && width < 900;
 bool isMobile(double width) => width < 600;
 
 
-// 🎨 THÈME FLUTTER
+ 
 
 
 ThemeData buildLightTheme({bool highContrast = false}) {
@@ -190,7 +190,7 @@ ThemeData _buildTheme(ColorScheme colors, Color background, Color foreground) {
     colorScheme: colors,
     scaffoldBackgroundColor: background,
 
-    // AppBar
+     
     appBarTheme: AppBarTheme(
       backgroundColor: background,
       foregroundColor: foreground,
@@ -205,7 +205,7 @@ ThemeData _buildTheme(ColorScheme colors, Color background, Color foreground) {
       ),
     ),
 
-    // NavigationBar
+     
     navigationBarTheme: NavigationBarThemeData(
       backgroundColor: background,
       indicatorColor: primary.withValues(alpha: 0.14),
@@ -226,7 +226,7 @@ ThemeData _buildTheme(ColorScheme colors, Color background, Color foreground) {
       }),
     ),
 
-    // NavigationRail
+     
     navigationRailTheme: NavigationRailThemeData(
       backgroundColor: background,
       selectedIconTheme: IconThemeData(color: primary),
@@ -235,7 +235,7 @@ ThemeData _buildTheme(ColorScheme colors, Color background, Color foreground) {
       indicatorColor: primary.withValues(alpha: 0.14),
     ),
 
-    // Card
+     
     cardTheme: CardThemeData(
       color: colors.surface,
       elevation: 0,
@@ -243,7 +243,7 @@ ThemeData _buildTheme(ColorScheme colors, Color background, Color foreground) {
       shadowColor: Colors.black.withValues(alpha: 0.08),
     ),
 
-    // Input
+     
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: colors.surfaceContainerHighest.withValues(alpha: 0.5),
@@ -270,7 +270,7 @@ ThemeData _buildTheme(ColorScheme colors, Color background, Color foreground) {
       ),
     ),
 
-    // FilledButton
+     
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
         backgroundColor: primary,
@@ -288,7 +288,7 @@ ThemeData _buildTheme(ColorScheme colors, Color background, Color foreground) {
       ),
     ),
 
-    // OutlinedButton
+     
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         foregroundColor: primary,
@@ -302,7 +302,7 @@ ThemeData _buildTheme(ColorScheme colors, Color background, Color foreground) {
       ),
     ),
 
-    // TextButton
+     
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         foregroundColor: primary,
@@ -311,7 +311,7 @@ ThemeData _buildTheme(ColorScheme colors, Color background, Color foreground) {
       ),
     ),
 
-    // Chip
+     
     chipTheme: ChipThemeData(
       backgroundColor: colors.surfaceContainerHighest.withValues(alpha: 0.6),
       selectedColor: primary.withValues(alpha: 0.15),
@@ -325,7 +325,7 @@ ThemeData _buildTheme(ColorScheme colors, Color background, Color foreground) {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
     ),
 
-    // SnackBar
+     
     snackBarTheme: SnackBarThemeData(
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kRadiusMd)),
@@ -336,14 +336,14 @@ ThemeData _buildTheme(ColorScheme colors, Color background, Color foreground) {
       ),
     ),
 
-    // Divider
+     
     dividerTheme: DividerThemeData(
       color: colors.outlineVariant.withValues(alpha: 0.5),
       thickness: 1,
       space: 1,
     ),
 
-    // ProgressIndicator
+     
     progressIndicatorTheme: ProgressIndicatorThemeData(
       color: primary,
       linearTrackColor: primary.withValues(alpha: 0.15),

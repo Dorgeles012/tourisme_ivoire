@@ -4,9 +4,9 @@ final class AuthMiddleware {
     public static function userId(): int {
         $claims = self::claims();
         $id = (int)$claims['sub'];
-        $stmt = db()->prepare("SELECT t.id FROM jetons_auth t JOIN utilisateurs u ON u.id=t.utilisateur_id WHERE t.utilisateur_id=? AND t.jti=? AND t.revoque_at IS NULL AND t.expire_at>NOW() AND u.statut='actif' AND u.deleted_at IS NULL LIMIT 1");
-        $stmt->execute([$id, $claims['jti']]);
-        if (!$stmt->fetchColumn()) api_error('invalid_token', 'Jeton révoqué ou expiré.', 401);
+        if (!UserModel::hasActiveApiToken($id, (string)$claims['jti'])) {
+            api_error('invalid_token', 'Jeton révoqué ou expiré.', 401);
+        }
         return $id;
     }
 

@@ -1,5 +1,5 @@
 <?php
-header("Content-Security-Policy: default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'");
+header("Content-Security-Policy: default-src 'none'; script-src 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'");
 header('Cache-Control: no-store, max-age=0');
 header('Referrer-Policy: no-referrer');
 header('X-Content-Type-Options: nosniff');
@@ -11,6 +11,7 @@ header('X-Content-Type-Options: nosniff');
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <title>Ouverture du back-office — Tourisme Ivoire</title>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <style>body{font:16px system-ui,sans-serif;max-width:36rem;margin:15vh auto;padding:1rem;color:#24313d}h1{color:#c45b32}#status{padding:1rem;background:#f5f2ec;border-radius:.75rem}</style>
 </head>
 <body>
@@ -21,8 +22,28 @@ header('X-Content-Type-Options: nosniff');
   const code = window.location.hash.slice(1);
   history.replaceState(null, '', window.location.pathname + window.location.search);
   if (!/^[a-f0-9]{64}$/.test(code)) {
-    status.textContent = 'Lien invalide ou expiré. Revenez dans l’application et réessayez.';
+    const message = 'Lien invalide ou expiré. Revenez dans l’application et réessayez.';
+    if (window.Swal) {
+      status.hidden = true;
+      Swal.fire({
+        icon: 'error',
+        title: 'Lien invalide ou expiré',
+        text: 'Revenez dans l’application et réessayez.',
+        confirmButtonColor: '#e67e22'
+      });
+    } else {
+      status.textContent = message;
+    }
     return;
+  }
+  if (window.Swal) {
+    status.hidden = true;
+    Swal.fire({
+      title: 'Ouverture sécurisée du back-office…',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      didOpen: () => Swal.showLoading()
+    });
   }
   fetch('../api/admin/handoff/consume', {
     method: 'POST',
@@ -34,7 +55,18 @@ header('X-Content-Type-Options: nosniff');
     if (!response.ok || !payload.data || !payload.data.redirect) throw new Error('handoff');
     window.location.replace(payload.data.redirect);
   }).catch(() => {
-    status.textContent = 'La session administrateur n’a pas pu être ouverte. Revenez dans l’application et réessayez.';
+    const message = 'La session administrateur n’a pas pu être ouverte. Revenez dans l’application et réessayez.';
+    if (window.Swal) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Ouverture impossible',
+        text: message,
+        confirmButtonColor: '#e67e22'
+      });
+    } else {
+      status.hidden = false;
+      status.textContent = message;
+    }
   });
 })();
 </script>

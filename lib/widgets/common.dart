@@ -1,22 +1,21 @@
-// lib/widgets/common.dart
-// Composants réutilisables — Design System Tourisme Ivoire
 import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart' show PlatformException;
 import 'package:material_ui/material_ui.dart';
 
+import 'app_alert.dart';
 import '../models/destination.dart';
 import '../services/api_service.dart';
 import '../screens/destination_detail_screen.dart';
 import '../theme/design_system.dart';
 
-// 🛠️ UTILITAIRES
-
 String readableError(Object error) {
   if (error is DioException) {
     final body = error.response?.data;
-    if (body is Map && body['error'] is Map && body['error']['message'] is String) {
+    if (body is Map &&
+        body['error'] is Map &&
+        body['error']['message'] is String) {
       final message = body['error']['message'] as String;
       final details = body['error']['details'];
       return details is String && details.isNotEmpty
@@ -33,12 +32,15 @@ String readableError(Object error) {
     final status = error.response?.statusCode;
     if (status != null) {
       return switch (status) {
-        404 => 'Adresse introuvable (404). '
-            'Vérifiez que le projet est dans htdocs/tourisme_ivoire et que Apache autorise mod_rewrite.',
+        404 =>
+          'Route API introuvable (404) : ${error.requestOptions.uri}. '
+              'Vérifiez API_BASE_URL et que le serveur redirige les routes /api/* vers backend/public/index.php.',
         413 => 'La requête est trop volumineuse (413).',
         429 => 'Trop de tentatives. Réessayez plus tard.',
-        >= 500 => 'Erreur du serveur PHP ($status). Consultez le journal PHP/Apache de XAMPP.',
-        _ => 'La requête a échoué (HTTP $status). ${error.message ?? ''}'.trim(),
+        >= 500 =>
+          'Erreur du serveur PHP ($status). Consultez le journal PHP/Apache de XAMPP.',
+        _ =>
+          'La requête a échoué (HTTP $status). ${error.message ?? ''}'.trim(),
       };
     }
     return 'Erreur de communication avec l\'API : ${error.message ?? error.type.name}';
@@ -52,7 +54,6 @@ String readableError(Object error) {
   return 'Une erreur est survenue. Veuillez réessayer.';
 }
 
-/// Navigation avec transition fade + slide-up
 Future<T?> navigateTo<T>(BuildContext context, Widget page) {
   return Navigator.of(context).push<T>(
     PageRouteBuilder<T>(
@@ -63,10 +64,16 @@ Future<T?> navigateTo<T>(BuildContext context, Widget page) {
         return FadeTransition(
           opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
           child: SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 0.04),
-              end: Offset.zero,
-            ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
+            position:
+                Tween<Offset>(
+                  begin: const Offset(0, 0.04),
+                  end: Offset.zero,
+                ).animate(
+                  CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOutCubic,
+                  ),
+                ),
             child: child,
           ),
         );
@@ -74,8 +81,6 @@ Future<T?> navigateTo<T>(BuildContext context, Widget page) {
     ),
   );
 }
-
-// ✨ _FadeSlideIn — Animation d'entrée stagger
 
 class FadeSlideIn extends StatelessWidget {
   const FadeSlideIn({
@@ -99,20 +104,18 @@ class FadeSlideIn extends StatelessWidget {
         1.0,
         curve: Curves.easeOutCubic,
       ),
-      // ignore: no_leading_underscores_for_local_identifiers
-      builder: (_, value, _child) => Opacity(
+
+      builder: (_, value, child) => Opacity(
         opacity: value,
         child: Transform.translate(
           offset: Offset(0, (1 - value) * 20),
-          child: _child,
+          child: child,
         ),
       ),
       child: child,
     );
   }
 }
-
-// 💀 SkeletonBox — Rectangle shimmer animé
 
 class SkeletonBox extends StatefulWidget {
   const SkeletonBox({
@@ -182,14 +185,8 @@ class _SkeletonBoxState extends State<SkeletonBox>
   }
 }
 
-// ⏳ LoadingView — Skeleton shimmer adaptatif
-
 class LoadingView extends StatelessWidget {
-  const LoadingView({
-    this.isGrid = false,
-    this.itemCount = 4,
-    super.key,
-  });
+  const LoadingView({this.isGrid = false, this.itemCount = 4, super.key});
 
   final bool isGrid;
   final int itemCount;
@@ -212,7 +209,8 @@ class LoadingView extends StatelessWidget {
             mainAxisSpacing: 12,
             childAspectRatio: 0.82,
           ),
-          itemBuilder: (_, _) => const SkeletonBox(height: double.infinity, borderRadius: 18),
+          itemBuilder: (_, _) =>
+              const SkeletonBox(height: double.infinity, borderRadius: 18),
         ),
       );
     }
@@ -232,13 +230,28 @@ class LoadingView extends StatelessWidget {
   }
 }
 
-// ❌ ErrorView — Vue d'erreur
-
-class ErrorView extends StatelessWidget {
+class ErrorView extends StatefulWidget {
   const ErrorView({required this.message, this.onRetry, super.key});
 
   final String message;
   final VoidCallback? onRetry;
+
+  @override
+  State<ErrorView> createState() => _ErrorViewState();
+}
+
+class _ErrorViewState extends State<ErrorView> {
+  bool _alertShown = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_alertShown) return;
+    _alertShown = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) unawaited(AppAlert.error(context, widget.message));
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -246,9 +259,10 @@ class ErrorView extends StatelessWidget {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(28),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
             Container(
               width: 80,
               height: 80,
@@ -264,7 +278,7 @@ class ErrorView extends StatelessWidget {
             ),
             const SizedBox(height: 18),
             Text(
-              'Oups, une erreur !',
+              'Contenu indisponible',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w800,
                 color: scheme.onSurface,
@@ -272,7 +286,7 @@ class ErrorView extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              message,
+              'Le détail de l’erreur est affiché dans la fenêtre. Réessayez.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: scheme.onSurfaceVariant,
@@ -280,22 +294,21 @@ class ErrorView extends StatelessWidget {
                 fontSize: 14,
               ),
             ),
-            if (onRetry != null) ...[
+            if (widget.onRetry != null) ...[
               const SizedBox(height: 22),
               FilledButton.icon(
-                onPressed: onRetry,
+                onPressed: widget.onRetry,
                 icon: const Icon(Icons.refresh_rounded, size: 18),
                 label: const Text('Réessayer'),
               ),
             ],
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
-
-// 📭 EmptyView — Vue vide
 
 class EmptyView extends StatelessWidget {
   const EmptyView({
@@ -333,17 +346,12 @@ class EmptyView extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: scheme.onSurfaceVariant,
-                height: 1.5,
-              ),
+              style: Theme.of(context).textTheme.bodyLarge
+                  ?.copyWith(color: scheme.onSurfaceVariant, height: 1.5),
             ),
             if (onCta != null && ctaLabel != null) ...[
               const SizedBox(height: 20),
-              FilledButton(
-                onPressed: onCta,
-                child: Text(ctaLabel!),
-              ),
+              FilledButton(onPressed: onCta, child: Text(ctaLabel!)),
             ],
           ],
         ),
@@ -351,8 +359,6 @@ class EmptyView extends StatelessWidget {
     );
   }
 }
-
-// 📌 PageHeading — Entête de page
 
 class PageHeading extends StatelessWidget {
   const PageHeading({
@@ -392,10 +398,8 @@ class PageHeading extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     subtitle!,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                      height: 1.4,
-                    ),
+                    style: Theme.of(context).textTheme.bodyMedium
+                        ?.copyWith(color: scheme.onSurfaceVariant, height: 1.4),
                   ),
                 ],
               ],
@@ -407,8 +411,6 @@ class PageHeading extends StatelessWidget {
     );
   }
 }
-
-// 📋 SectionHeader — Titre de section + CTA "Tout voir"
 
 class SectionHeader extends StatelessWidget {
   const SectionHeader({
@@ -435,10 +437,8 @@ class SectionHeader extends StatelessWidget {
         Expanded(
           child: Text(
             title,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.3,
-            ),
+            style: Theme.of(context).textTheme.titleLarge
+                ?.copyWith(fontWeight: FontWeight.w800, letterSpacing: -0.3),
           ),
         ),
         if (effectiveOnAction != null && effectiveActionLabel != null)
@@ -450,18 +450,13 @@ class SectionHeader extends StatelessWidget {
             ),
             child: Text(
               effectiveActionLabel,
-              style: const TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
             ),
           ),
       ],
     );
   }
 }
-
-// 🃏 DestinationTile — Carte destination (liste & grille)
 
 class DestinationTile extends StatelessWidget {
   const DestinationTile({
@@ -482,7 +477,9 @@ class DestinationTile extends StatelessWidget {
     return RepaintBoundary(
       child: FadeSlideIn(
         delay: kStaggerDelay * index,
-        child: compact ? _CompactTile(destination: destination, api: api) : _ListTile(destination: destination, api: api),
+        child: compact
+            ? _CompactTile(destination: destination, api: api)
+            : _ListTile(destination: destination, api: api),
       ),
     );
   }
@@ -514,7 +511,6 @@ class _ListTile extends StatelessWidget {
           ),
           child: Row(
             children: [
-              // Image
               ClipRRect(
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(kRadiusLg),
@@ -526,16 +522,18 @@ class _ListTile extends StatelessWidget {
                   child: _DestinationImage(imageUrl: destination.imageUrl),
                 ),
               ),
-              // Contenu
+
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.all(14),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Badge catégorie
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
                         decoration: BoxDecoration(
                           color: ivorianOrange.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(100),
@@ -568,7 +566,9 @@ class _ListTile extends StatelessWidget {
                             Icon(
                               Icons.place_outlined,
                               size: 13,
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
                             ),
                             const SizedBox(width: 3),
                             Expanded(
@@ -578,7 +578,9 @@ class _ListTile extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
                                 ),
                               ),
                             ),
@@ -593,7 +595,8 @@ class _ListTile extends StatelessWidget {
                 padding: const EdgeInsets.only(right: 10),
                 child: Icon(
                   Icons.chevron_right_rounded,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant
+                      .withValues(alpha: 0.5),
                 ),
               ),
             ],
@@ -630,13 +633,12 @@ class _CompactTile extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                // Image fond
                 _DestinationImage(imageUrl: destination.imageUrl),
-                // Gradient overlay
+
                 const DecoratedBox(
                   decoration: BoxDecoration(gradient: kImageOverlayGradient),
                 ),
-                // Contenu texte en bas
+
                 Positioned(
                   bottom: 12,
                   left: 12,
@@ -646,7 +648,10 @@ class _CompactTile extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: ivorianOrange.withValues(alpha: 0.85),
                           borderRadius: BorderRadius.circular(100),
@@ -677,7 +682,11 @@ class _CompactTile extends StatelessWidget {
                         const SizedBox(height: 3),
                         Row(
                           children: [
-                            const Icon(Icons.place_outlined, size: 11, color: Colors.white70),
+                            const Icon(
+                              Icons.place_outlined,
+                              size: 11,
+                              color: Colors.white70,
+                            ),
                             const SizedBox(width: 2),
                             Expanded(
                               child: Text(
@@ -714,7 +723,11 @@ class _DestinationImage extends StatelessWidget {
     if (imageUrl == null || imageUrl!.isEmpty) {
       return Container(
         color: ivorianForest.withValues(alpha: 0.1),
-        child: const Icon(Icons.landscape_rounded, size: 36, color: ivorianForest),
+        child: const Icon(
+          Icons.landscape_rounded,
+          size: 36,
+          color: ivorianForest,
+        ),
       );
     }
     return Image.network(
@@ -722,7 +735,11 @@ class _DestinationImage extends StatelessWidget {
       fit: BoxFit.cover,
       errorBuilder: (_, _, _) => Container(
         color: ivorianForest.withValues(alpha: 0.1),
-        child: const Icon(Icons.landscape_rounded, size: 36, color: ivorianForest),
+        child: const Icon(
+          Icons.landscape_rounded,
+          size: 36,
+          color: ivorianForest,
+        ),
       ),
       loadingBuilder: (_, child, loadingProgress) {
         if (loadingProgress == null) return child;
@@ -731,8 +748,6 @@ class _DestinationImage extends StatelessWidget {
     );
   }
 }
-
-// 🃏 FeatureCard — Carte fonctionnalité
 
 class FeatureCard extends StatefulWidget {
   const FeatureCard({
@@ -830,8 +845,6 @@ class _FeatureCardState extends State<FeatureCard> {
   }
 }
 
-// 🏷️ FilterChipRow — Rangée de chips filtrables
-
 class FilterChipRow extends StatelessWidget {
   const FilterChipRow({
     required this.items,
@@ -908,8 +921,6 @@ class _AnimatedChipState extends State<_AnimatedChip> {
     );
   }
 }
-
-// 🔍 SearchField — Champ de recherche stylisé avec debounce
 
 class SearchField extends StatefulWidget {
   const SearchField({
@@ -996,7 +1007,7 @@ class _SearchFieldState extends State<SearchField> {
               ),
             ),
           ),
-          // Bouton clear animé
+
           ScaleTransition(
             scale: _hasText
                 ? const AlwaysStoppedAnimation(1.0)
@@ -1015,7 +1026,7 @@ class _SearchFieldState extends State<SearchField> {
               ),
             ),
           ),
-          // Bouton recherche
+
           if (widget.onSearch != null)
             Padding(
               padding: const EdgeInsets.only(right: 6),
@@ -1031,8 +1042,6 @@ class _SearchFieldState extends State<SearchField> {
     );
   }
 }
-
-// ⭐ RatingBadge — Badge note étoilée
 
 class RatingBadge extends StatelessWidget {
   const RatingBadge({required this.rating, super.key});
@@ -1064,8 +1073,6 @@ class RatingBadge extends StatelessWidget {
     );
   }
 }
-
-// 🔵 IvorianButton — Bouton primaire avec gradient optionnel
 
 class IvorianButton extends StatefulWidget {
   const IvorianButton({
@@ -1114,7 +1121,10 @@ class _IvorianButtonState extends State<IvorianButton> {
                         ? const SizedBox(
                             width: 18,
                             height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
                           )
                         : Icon(widget.icon, size: 18),
                     label: Text(widget.label),
@@ -1128,7 +1138,10 @@ class _IvorianButtonState extends State<IvorianButton> {
                         ? const SizedBox(
                             width: 18,
                             height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
                           )
                         : Text(widget.label),
                   ),
@@ -1137,7 +1150,6 @@ class _IvorianButtonState extends State<IvorianButton> {
       );
     }
 
-    // Version avec gradient
     return GestureDetector(
       onTapDown: (_) => setState(() => _pressed = true),
       onTapUp: (_) => setState(() => _pressed = false),
@@ -1162,7 +1174,10 @@ class _IvorianButtonState extends State<IvorianButton> {
                 ? const SizedBox(
                     width: 22,
                     height: 22,
-                    child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      color: Colors.white,
+                    ),
                   )
                 : Row(
                     mainAxisSize: MainAxisSize.min,
