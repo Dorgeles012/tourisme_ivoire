@@ -65,31 +65,33 @@ $images = is_array($destination['images'] ?? null) ? $destination['images'] : []
     </section>
   <?php endif; ?>
 
-  <?php if (isset($destination['latitude'], $destination['longitude'])): ?>
-    <div class="dest-map">
-      <a class="dest-map-link"
-         target="_blank"
-         rel="noopener noreferrer"
-         href="https://www.google.com/maps/search/?api=1&amp;query=<?= rawurlencode((string)$destination['latitude'] . ',' . (string)$destination['longitude']) ?>">
-        📍 Ouvrir l’itinéraire sur la carte
-      </a>
-    </div>
-  <?php endif; ?>
+  <div class="dest-map">
+    <a class="dest-map-link"
+       target="_blank"
+       rel="noopener noreferrer"
+       href="https://www.google.com/maps/search/?api=1&amp;query=<?= rawurlencode((string)($destination['nom'] ?? '') . ', ' . (string)($destination['localite'] ?? '') . ', Côte d’Ivoire') ?>">
+      📍 Ouvrir l’itinéraire sur la carte
+    </a>
+  </div>
 
   <div class="dest-actions">
-    <form method="post" class="dest-form">
-      <?= client_csrf_field() ?>
-      <input type="hidden" name="action" value="favorite_add">
-      <input type="hidden" name="destination_id" value="<?= (int)$destination['id'] ?>">
-      <button class="btn-primary" type="submit">Ajouter aux favoris</button>
-    </form>
+    <?php if ($user): ?>
+      <form method="post" class="dest-form">
+        <?= client_csrf_field() ?>
+        <input type="hidden" name="action" value="favorite_add">
+        <input type="hidden" name="destination_id" value="<?= (int)$destination['id'] ?>">
+        <button class="btn-primary" type="submit">Ajouter aux favoris</button>
+      </form>
 
-    <form method="post" class="dest-form">
-      <?= client_csrf_field() ?>
-      <input type="hidden" name="action" value="visit_record">
-      <input type="hidden" name="destination_id" value="<?= (int)$destination['id'] ?>">
-      <button class="btn-secondary" type="submit">J’ai visité ce lieu</button>
-    </form>
+      <form method="post" class="dest-form">
+        <?= client_csrf_field() ?>
+        <input type="hidden" name="action" value="visit_record">
+        <input type="hidden" name="destination_id" value="<?= (int)$destination['id'] ?>">
+        <button class="btn-secondary" type="submit">J’ai visité ce lieu</button>
+      </form>
+    <?php else: ?>
+      <a class="btn-primary" href="?page=login">Connectez-vous pour enregistrer vos favoris et visites</a>
+    <?php endif; ?>
   </div>
 
 </article>

@@ -10,7 +10,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     $type = (string)($_POST['type'] ?? 'information');
     $all = ($_POST['tous'] ?? '') === '1';
     $userId = filter_var($_POST['utilisateur_id'] ?? null,FILTER_VALIDATE_INT);
-    if ($title==='' || mb_strlen($title)>180 || $content==='' || !in_array($type,['information','reservation','quiz','communaute'],true) || (!$all && (!$userId || $userId<1))) {
+    if ($title==='' || mb_strlen($title)>180 || $content==='' || !in_array($type,['information','reservation','communaute'],true) || (!$all && (!$userId || $userId<1))) {
         $error = 'Titre, contenu, type et destinataire valides requis.';
     } else {
         if ($all) {
@@ -180,7 +180,6 @@ $csrf = admin_csrf();
       <select id="type" name="type">
         <option value="information">Information</option>
         <option value="reservation">Réservation</option>
-        <option value="quiz">Quiz</option>
         <option value="communaute">Communauté</option>
       </select>
 

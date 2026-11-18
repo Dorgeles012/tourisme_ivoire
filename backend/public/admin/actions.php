@@ -28,7 +28,6 @@ $configuration = [
     'virtual_visits' => ['table'=>'visites_virtuelles',  'column'=>'statut',             'values'=>['actif','inactif'],                       'module'=>'virtual_visits'],
     'images'         => ['table'=>'medias',             'column'=>'statut',             'values'=>['actif','inactif'],                       'module'=>'images'],
     'videos'         => ['table'=>'videos',              'column'=>'statut',             'values'=>['en_attente','publie','rejete','archive'], 'module'=>'videos'],
-    'quizzes'        => ['table'=>'quiz',                'column'=>'statut',             'values'=>['brouillon','publie','archive'],           'module'=>'quizzes'],
     'badges'         => ['table'=>'badges',              'column'=>'statut',             'values'=>['actif','inactif'],                       'module'=>'badges'],
     'reservations'   => ['table'=>'reservations',        'column'=>'statut',             'values'=>['demande','confirmee','annulee','terminee'],'module'=>'reservations'],
     'reviews'        => ['table'=>'avis',                'column'=>'statut',             'values'=>['en_attente','publie','rejete'],           'module'=>'reviews'],
@@ -77,27 +76,6 @@ function actions_validate_transition(string $module, string $action, int $id, ar
         $rights->execute([$id]);
         if (!$rights->fetchColumn()) {
             throw new RuntimeException('La publication est bloquée : autorisation de diffusion absente.');
-        }
-    }
-
-     
-    if ($module === 'quizzes' && $action === 'publie') {
-        $valid = $pdo->prepare(
-            "SELECT COUNT(*) AS questions, SUM(answer_count=4 AND correct_count=1) AS valid_questions
-             FROM (
-                 SELECT question.id,
-                        COUNT(answer.id) AS answer_count,
-                        SUM(answer.est_correcte=1) AS correct_count
-                 FROM questions question
-                 LEFT JOIN reponses answer ON answer.question_id=question.id
-                 WHERE question.quiz_id=? AND question.statut='actif'
-                 GROUP BY question.id
-             ) checks"
-        );
-        $valid->execute([$id]);
-        $counts = $valid->fetch();
-        if (!$counts || (int)$counts['questions'] !== 10 || (int)$counts['valid_questions'] !== 10) {
-            throw new RuntimeException('La publication est bloquée : le quiz doit avoir 10 questions avec 4 propositions et une seule bonne réponse.');
         }
     }
 

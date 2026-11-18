@@ -550,13 +550,6 @@ class _AuthenticatedView extends StatelessWidget {
                 accent: Colors.teal,
               ),
               _ModernFeatureCard(
-                icon: Icons.quiz_rounded,
-                title: 'Résultats des quiz',
-                subtitle: 'Retrouvez votre historique',
-                onTap: () => navigateTo(context, QuizResultsScreen(api: api)),
-                accent: Colors.purpleAccent,
-              ),
-              _ModernFeatureCard(
                 icon: Icons.settings_rounded,
                 title: 'Paramètres & accessibilité',
                 subtitle: 'Thème et préférences',

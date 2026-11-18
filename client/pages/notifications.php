@@ -1,11 +1,19 @@
 <?php
-$payload = ClientApi::data($api->request('GET', 'api/notifications?page=1&per_page=50'));
+$payload = ClientApi::data($api->request('GET', 'api/notifications?page=1'));
 $rows = is_array($payload['items'] ?? null) ? $payload['items'] : [];
+$hasUnread = (bool)array_filter($rows, static fn($n) => empty($n['lu_at']));
 ?>
 
 <section class="panel notif-panel">
   <header class="panel-head">
     <h2 class="section-title">Toutes vos notifications</h2>
+    <?php if ($hasUnread): ?>
+      <form method="post" data-confirm="Tout marquer comme lu ? Toutes vos notifications non lues seront marquées comme lues.">
+        <?= client_csrf_field() ?>
+        <input type="hidden" name="action" value="notification_read_all">
+        <button class="btn-read-all" type="submit">Tout marquer comme lu</button>
+      </form>
+    <?php endif; ?>
   </header>
 
   <?php if (!$rows): ?>
@@ -68,6 +76,20 @@ $rows = is_array($payload['items'] ?? null) ? $payload['items'] : [];
     margin-bottom: 0.9rem;
     padding-bottom: 0.65rem;
     border-bottom: 1px solid #f3ebe4;
+  }
+
+  .notif-panel .panel-head form { margin: 0; }
+
+  .btn-read-all {
+    padding: 0.4rem 0.7rem;
+    border: 1px solid #f97316;
+    border-radius: 8px;
+    background: transparent;
+    color: #ea580c;
+    font: inherit;
+    font-size: 0.7rem;
+    font-weight: 600;
+    cursor: pointer;
   }
 
   .notif-panel .section-title {

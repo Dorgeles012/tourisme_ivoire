@@ -3,6 +3,19 @@ declare(strict_types=1);
 
 function client_layout(string $page, string $title, string $content, ?array $user = null): void {
     $flash = client_flash();
+    $activePage = match ($page) {
+        'profile_edit', 'profile_photo_setup' => 'profile',
+        'destination' => 'explore',
+        'video', 'video_studio' => 'videos',
+        'offline_library' => 'settings',
+        default => $page,
+    };
+    $settings = is_array($GLOBALS['client_settings'] ?? null) ? $GLOBALS['client_settings'] : [];
+    $theme = in_array($settings['theme'] ?? '', ['systeme', 'clair', 'sombre'], true) ? $settings['theme'] : 'systeme';
+    $accessibility = is_array($settings['accessibilite_json'] ?? null) ? $settings['accessibilite_json'] : [];
+    $bodyClasses = ['portal', 'theme-' . $theme];
+    if (!empty($accessibility['contraste_eleve'])) $bodyClasses[] = 'accessibility-high-contrast';
+    if (!empty($accessibility['texte_agrandi'])) $bodyClasses[] = 'accessibility-large-text';
 
     $nav = [
         'dashboard'     => 'Accueil',
@@ -10,25 +23,25 @@ function client_layout(string $page, string $title, string $content, ?array $use
         'map'           => 'Carte',
         'heritage'      => 'Patrimoine',
         'transport'     => 'Transport',
-        'quizzes'       => 'Quiz culturels',
-        'quiz_results'  => 'Résultats des quiz',
         'videos'        => 'Vidéos',
         'profile'       => 'Mon profil',
         'passport'      => 'Passeport',
         'reservations'  => 'Réservations',
         'favorites'     => 'Favoris',
-        'history'       => 'Historique',
-        'payments'      => 'Paiements',
         'notifications' => 'Notifications',
-        'messages'      => 'Assistance',
         'settings'      => 'Paramètres',
-        'help'          => 'Aide & FAQ',
+    ];
+    $guestNav = [
+        'dashboard' => 'Accueil',
+        'explore' => 'Explorer',
+        'videos' => 'Vidéos',
+        'profile' => 'Mon profil',
     ];
 
     $isAuthPage = in_array($page, ['login', 'register', 'forgot', 'reset'], true);
     ?>
 <!doctype html>
-<html lang="fr">
+<html lang="fr" class="<?= !empty($accessibility['texte_agrandi']) ? 'accessibility-large-text' : '' ?>">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -290,18 +303,23 @@ function client_layout(string $page, string $title, string $content, ?array $use
             }
 
             .sidebar {
-                position: fixed;
-                inset: 0 auto 0 0;
-                width: 260px;
-                transform: translateX(-100%);
-                transition: transform 0.3s ease;
-                z-index: 100;
-                box-shadow: 4px 0 24px rgba(0, 0, 0, 0.1);
+                position: relative;
+                top: auto;
+                height: auto;
+                overflow: visible;
+                border-right: 0;
+                border-bottom: 1px solid var(--c-border);
+                padding: 0.65rem;
             }
 
-            .sidebar.open {
-                transform: translateX(0);
+            .sidebar nav {
+                flex-direction: row;
+                overflow-x: auto;
             }
+
+            .nav-link { white-space: nowrap; }
+            .side-label,
+            .sidebar-note { display: none; }
 
             .main-content {
                 padding: 1.25rem 1rem;
@@ -323,21 +341,142 @@ function client_layout(string $page, string $title, string $content, ?array $use
                 padding: 0.5rem;
             }
         }
+
+        html.accessibility-large-text { font-size: 118%; }
+
+        body.portal.theme-dark {
+            --c-bg: #171310;
+            --c-surface: #241e19;
+            --c-border: #4a3c32;
+            --c-text: #fff6ef;
+            --c-muted: #c9b9ae;
+            --c-primary-soft: rgba(249, 115, 22, .18);
+            color-scheme: dark;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body.portal.theme-system {
+                --c-bg: #171310;
+                --c-surface: #241e19;
+                --c-border: #4a3c32;
+                --c-text: #fff6ef;
+                --c-muted: #c9b9ae;
+                --c-primary-soft: rgba(249, 115, 22, .18);
+                color-scheme: dark;
+            }
+        }
+
+        body.portal.theme-dark .sidebar,
+        body.portal.theme-system .sidebar,
+        body.portal.theme-dark .panel,
+        body.portal.theme-system .panel,
+        body.portal.theme-dark .feature-card,
+        body.portal.theme-system .feature-card,
+        body.portal.theme-dark .stat-card,
+        body.portal.theme-system .stat-card,
+        body.portal.theme-dark .explore-card,
+        body.portal.theme-system .explore-card,
+        body.portal.theme-dark .heritage-card,
+        body.portal.theme-system .heritage-card,
+        body.portal.theme-dark .virtual-panel,
+        body.portal.theme-system .virtual-panel,
+        body.portal.theme-dark .notif-card,
+        body.portal.theme-system .notif-card,
+        body.portal.theme-dark .visits-panel,
+        body.portal.theme-system .visits-panel,
+        body.portal.theme-dark .dest-detail,
+        body.portal.theme-system .dest-detail,
+        body.portal.theme-dark .fav-card,
+        body.portal.theme-system .fav-card,
+        body.portal.theme-dark .res-card,
+        body.portal.theme-system .res-card,
+        body.portal.theme-dark .badge-card,
+        body.portal.theme-system .badge-card {
+            background-color: var(--c-surface) !important;
+            color: var(--c-text) !important;
+            border-color: var(--c-border) !important;
+        }
+
+        body.portal.theme-dark .panel p,
+        body.portal.theme-system .panel p,
+        body.portal.theme-dark .panel h2,
+        body.portal.theme-system .panel h2,
+        body.portal.theme-dark .panel h3,
+        body.portal.theme-system .panel h3,
+        body.portal.theme-dark .row-meta,
+        body.portal.theme-system .row-meta,
+        body.portal.theme-dark .notif-content,
+        body.portal.theme-system .notif-content,
+        body.portal.theme-dark .dest-content,
+        body.portal.theme-system .dest-content {
+            color: var(--c-muted) !important;
+        }
+
+        body.portal.theme-dark input,
+        body.portal.theme-dark select,
+        body.portal.theme-dark textarea,
+        body.portal.theme-system input,
+        body.portal.theme-system select,
+        body.portal.theme-system textarea {
+            background: var(--c-surface);
+            color: var(--c-text);
+            border-color: var(--c-border);
+        }
+
+        body.portal.theme-dark .list-row,
+        body.portal.theme-system .list-row,
+        body.portal.theme-dark .visit-row,
+        body.portal.theme-system .visit-row,
+        body.portal.theme-dark .virtual-row,
+        body.portal.theme-system .virtual-row {
+            background: var(--c-bg);
+            color: var(--c-text);
+            border-color: var(--c-border);
+        }
+
+        body.portal.accessibility-high-contrast {
+            --c-border: #46362b;
+            --c-muted: #49362b;
+            --c-primary-hover: #9a3500;
+        }
+
+        body.portal.theme-dark.accessibility-high-contrast {
+            --c-border: #fff;
+            --c-muted: #fff;
+            --c-primary: #ffb070;
+            --c-primary-hover: #ffd1ad;
+            --c-text: #fff;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body.portal.theme-system.accessibility-high-contrast {
+                --c-border: #fff;
+                --c-muted: #fff;
+                --c-primary: #ffb070;
+                --c-primary-hover: #ffd1ad;
+                --c-text: #fff;
+            }
+        }
+
+        body.portal.accessibility-high-contrast :focus-visible {
+            outline: 3px solid currentColor;
+            outline-offset: 2px;
+        }
     </style>
 
     <script defer src="assets.php?file=portal.js"></script>
 </head>
-<body class="portal">
+<body class="<?= client_h(implode(' ', $bodyClasses)) ?>">
 
-    <?php if ($user): ?>
+    <?php if (!$isAuthPage): ?>
     <div class="app-shell">
 
         <aside class="sidebar" id="portal-nav">
-            <div class="side-label">Espace voyageur</div>
+            <div class="side-label"><?= $user ? 'Espace voyageur' : 'Tourisme Ivoire' ?></div>
 
             <nav>
-                <?php foreach ($nav as $key => $label): ?>
-                    <a class="nav-link <?= $page === $key ? 'active' : '' ?>" href="?page=<?= client_h($key) ?>">
+                <?php foreach ($user ? $nav : $guestNav as $key => $label): ?>
+                    <a class="nav-link <?= $activePage === $key ? 'active' : '' ?>" href="?page=<?= client_h($key) ?>">
                         <?= client_h($label) ?>
                         <?php if ($key === 'notifications' && !empty($GLOBALS['unread_count'])): ?>
                             <span class="nav-count"><?= (int)$GLOBALS['unread_count'] ?></span>
@@ -351,11 +490,16 @@ function client_layout(string $page, string $title, string $content, ?array $use
                 <p>Explorez la Côte d’Ivoire à votre rythme.</p>
             </div>
 
-            <form method="post" action="?page=dashboard" class="logout-form">
-                <?= client_csrf_field() ?>
-                <input type="hidden" name="action" value="logout">
-                <button class="btn-logout" type="submit">Déconnexion</button>
-            </form>
+            <?php if ($user): ?>
+                <form method="post" action="?page=dashboard" class="logout-form">
+                    <?= client_csrf_field() ?>
+                    <input type="hidden" name="action" value="logout">
+                    <button class="btn-logout" type="submit">Déconnexion</button>
+                </form>
+            <?php else: ?>
+                <a class="nav-link" href="?page=login">Connexion</a>
+                <a class="nav-link" href="?page=register">Créer un compte</a>
+            <?php endif; ?>
         </aside>
 
         <main class="main-content">

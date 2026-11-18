@@ -38,14 +38,6 @@ final List<_FeatureData> _kFeatures = [
     builder: (api, _) => TransportScreen(api: api),
   ),
   _FeatureData(
-    icon: Icons.quiz_rounded,
-    title: 'Quiz & Culture',
-    subtitle: 'Testez vos connaissances',
-    shortLabel: 'Quiz',
-    color: const Color(0xFF8E44AD),
-    builder: (api, _) => QuizListScreen(api: api),
-  ),
-  _FeatureData(
     icon: Icons.account_balance_rounded,
     title: 'Patrimoine',
     subtitle: 'Visites et contenus culturels',

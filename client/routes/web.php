@@ -9,19 +9,23 @@ header('X-Frame-Options: DENY');
 header('Referrer-Policy: same-origin');
 header("Content-Security-Policy: default-src 'self'; img-src 'self' data: https:; media-src 'self' https: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'self'");
 
-$page = preg_match('/^[a-z_]+$/', (string)($_GET['page'] ?? '')) ? (string)$_GET['page'] : 'dashboard';
+$requestedPage = $_GET['page'] ?? null;
+$page = preg_match('/^[a-z_]+$/', (string)$requestedPage) ? (string)$requestedPage : 'dashboard';
 $publicPages = ['login', 'register', 'forgot', 'reset'];
+$guestPages = ['dashboard', 'explore', 'destination', 'heritage', 'map', 'transport', 'videos', 'video', 'profile'];
 $pageFiles = [
-    'dashboard' => ['Tableau de bord', 'dashboard.php'], 'profile' => ['Mon profil', 'profile.php'],
+    'dashboard' => ['Tourisme Ivoire', 'dashboard.php'], 'profile' => ['Mon profil', 'profile.php'],
+    'profile_edit' => ['Modifier mon profil', 'profile_edit.php'],
+    'profile_photo_setup' => ['Personnaliser mon espace', 'profile_photo_setup.php'],
     'reservations' => ['Mes réservations', 'reservations.php'], 'favorites' => ['Mes favoris', 'favorites.php'],
-    'history' => ['Historique', 'history.php'], 'payments' => ['Mes paiements', 'payments.php'],
-    'notifications' => ['Mes notifications', 'notifications.php'], 'messages' => ['Messagerie / Assistance', 'messages.php'],
-    'settings' => ['Paramètres du compte', 'settings.php'], 'help' => ['Aide et FAQ', 'help.php'],
-    'explore' => ['Explorer les destinations', 'explore.php'], 'destination' => ['Détail de destination', 'destination.php'],
-    'heritage' => ['Patrimoine ivoirien', 'heritage.php'], 'map' => ['Carte des destinations', 'map.php'],
-    'transport' => ['Transports et itinéraires', 'transport.php'], 'passport' => ['Passeport numérique', 'passport.php'],
-    'quizzes' => ['Quiz culturels', 'quizzes.php'], 'quiz' => ['Répondre au quiz', 'quiz.php'],
-    'quiz_results' => ['Résultats des quiz', 'quiz_results.php'], 'videos' => ['Vidéos de voyageurs', 'videos.php'],
+    'notifications' => ['Notifications', 'notifications.php'],
+    'settings' => ['Paramètres & accessibilité', 'settings.php'],
+    'offline_library' => ['Bibliothèque hors ligne', 'offline_library.php'],
+    'explore' => ['Explorer', 'explore.php'], 'destination' => ['Destination', 'destination.php'],
+    'heritage' => ['Patrimoine & culture', 'heritage.php'], 'map' => ['Carte touristique', 'map.php'],
+    'transport' => ['Transports', 'transport.php'], 'passport' => ['Passeport numérique', 'passport.php'],
+    'videos' => ['Communauté vidéo', 'videos.php'],
+    'video_studio' => ['Studio de création', 'video_studio.php'], 'video' => ['Détail de la vidéo', 'video.php'],
 ];
 
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
@@ -54,7 +58,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             $_SESSION['client_user'] = $userData;
             $_SESSION['client_csrf'] = bin2hex(random_bytes(32));
             client_flash($action === 'register' ? 'Votre compte est créé. Bienvenue !' : 'Connexion réussie. Bienvenue dans votre espace.');
-            client_redirect('dashboard');
+            client_redirect($action === 'register' ? 'profile_photo_setup' : 'dashboard');
         }
         if ($action === 'forgot') {
             client_api()->request('POST', 'api/auth/forgot-password', ['email' => strtolower(trim((string)($_POST['email'] ?? '')))]);
@@ -78,7 +82,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         $api = client_api();
         if ($action === 'profile') {
             $api->request('PUT', 'api/auth/me', ['nom' => trim((string)($_POST['nom'] ?? '')), 'prenom' => trim((string)($_POST['prenom'] ?? '')), 'telephone' => trim((string)($_POST['telephone'] ?? ''))]);
-            client_flash('Votre profil a été mis à jour.'); client_redirect('profile');
+            client_flash('Votre profil a été mis à jour.'); client_redirect('profile_edit');
         }
         if ($action === 'favorite_remove') {
             $id = filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT); if (!$id || $id < 1) throw new ClientApiException(422, 'Favori invalide.');
@@ -96,6 +100,17 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             $id = filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT); if (!$id || $id < 1) throw new ClientApiException(422, 'Notification invalide.');
             $api->request('PUT', 'api/notifications/' . $id . '/read', []); client_flash('Notification marquée comme lue.'); client_redirect('notifications');
         }
+        if ($action === 'notification_read_all') {
+            $payload = ClientApi::data($api->request('GET', 'api/notifications?page=1'));
+            $rows = is_array($payload['items'] ?? null) ? $payload['items'] : [];
+            foreach ($rows as $notification) {
+                if (!empty($notification['lu_at'])) continue;
+                $id = filter_var($notification['id'] ?? null, FILTER_VALIDATE_INT);
+                if (!$id || $id < 1) throw new ClientApiException(502, 'Une notification reçue est invalide.');
+                $api->request('PUT', 'api/notifications/' . $id . '/read', []);
+            }
+            client_flash('Notifications marquées comme lues.'); client_redirect('notifications');
+        }
         if ($action === 'visit_record') {
             $id = filter_var($_POST['destination_id'] ?? null, FILTER_VALIDATE_INT); if (!$id || $id < 1) throw new ClientApiException(422, 'Destination invalide.');
             $api->request('POST', 'api/passport/visits', ['destination_id' => $id]); client_flash('Visite ajoutée à votre passeport.'); header('Location: ?page=destination&id=' . $id); exit;
@@ -107,21 +122,14 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         if ($action === 'reserve') {
             $id = filter_var($_POST['itineraire_id'] ?? null, FILTER_VALIDATE_INT); $quantity = filter_var($_POST['quantite'] ?? 1, FILTER_VALIDATE_INT);
             if (!$id || $id < 1 || !$quantity || $quantity < 1 || $quantity > 20) throw new ClientApiException(422, 'Itinéraire ou quantité invalide.');
-            $api->request('POST', 'api/reservations', ['itineraire_id' => $id, 'quantite' => $quantity]); client_flash('Demande de réservation enregistrée. Elle reste en attente de confirmation.'); client_redirect('reservations');
-        }
-        if ($action === 'quiz_submit') {
-            $id = filter_var($_POST['quiz_id'] ?? null, FILTER_VALIDATE_INT); if (!$id || $id < 1) throw new ClientApiException(422, 'Quiz invalide.');
-            $answers = [];
-            $submitted = $_POST['reponses'] ?? [];
-            if (!is_array($submitted)) throw new ClientApiException(422, 'Les réponses du quiz sont invalides.');
-            foreach ($submitted as $answer) { $answer = filter_var($answer, FILTER_VALIDATE_INT); if ($answer) $answers[] = $answer; }
-            $result = $api->request('POST', 'api/quizzes/' . $id . '/submit', ['reponses' => $answers]);
-            $_SESSION['last_quiz_result'] = $result['data'] ?? null; client_flash('Quiz terminé : ' . (int)($result['data']['bonnes_reponses'] ?? 0) . ' bonne(s) réponse(s) sur ' . (int)($result['data']['total_questions'] ?? 0) . '.'); client_redirect('quiz_results');
+            $reservation = ClientApi::data($api->request('POST', 'api/reservations', ['itineraire_id' => $id, 'quantite' => $quantity]));
+            if (!is_array($reservation) || empty($reservation['reference'])) throw new ClientApiException(502, 'La référence de réservation est absente de la réponse.');
+            client_flash('Demande envoyée : ' . (string)$reservation['reference']); client_redirect('reservations');
         }
         if ($action === 'avatar_upload') {
             $file = $_FILES['avatar'] ?? [];
             if (($file['size'] ?? 0) < 1 || $file['size'] > 5 * 1024 * 1024) throw new ClientApiException(422, 'L’image doit faire au maximum 5 Mo.');
-            $api->upload('api/auth/me/avatar', [], 'avatar', $file); client_flash('Photo de profil mise à jour.'); client_redirect('profile');
+            $api->upload('api/auth/me/avatar', [], 'avatar', $file); client_flash('Photo de profil mise à jour.'); client_redirect($page === 'profile_photo_setup' ? 'dashboard' : 'profile_edit');
         }
         if ($action === 'video_upload') {
             $title = trim((string)($_POST['title'] ?? '')); $description = trim((string)($_POST['description'] ?? ''));
@@ -132,41 +140,80 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         }
         if ($action === 'video_like') {
             $id = filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT); if (!$id || $id < 1) throw new ClientApiException(422, 'Vidéo invalide.');
-            $api->request('POST', 'api/videos/' . $id . '/like', []); client_flash('Votre réaction a été enregistrée.'); client_redirect('videos');
+            $api->request('POST', 'api/videos/' . $id . '/like', []); client_flash('Votre réaction a été enregistrée.'); header('Location: ?page=video&id=' . $id); exit;
         }
         if ($action === 'video_comment') {
             $id = filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT); $comment = trim((string)($_POST['comment'] ?? ''));
             if (!$id || $id < 1 || $comment === '' || mb_strlen($comment) > 2000) throw new ClientApiException(422, 'Le commentaire doit contenir entre 1 et 2 000 caractères.');
-            $api->request('POST', 'api/videos/' . $id . '/comment', ['contenu' => $comment]); client_flash('Commentaire publié.'); client_redirect('videos');
-        }
-        if ($action === 'support_create') {
-            $api->request('POST', 'api/support/threads', ['subject' => trim((string)($_POST['subject'] ?? '')), 'message' => trim((string)($_POST['message'] ?? ''))]);
-            client_flash('Votre demande a été transmise à l’assistance.'); client_redirect('messages');
-        }
-        if ($action === 'support_reply') {
-            $id = filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT); if (!$id || $id < 1) throw new ClientApiException(422, 'Conversation invalide.');
-            $api->request('POST', 'api/support/threads/' . $id . '/messages', ['message' => trim((string)($_POST['message'] ?? ''))]);
-            client_flash('Votre message a été envoyé.'); client_redirect('messages');
+            $api->request('POST', 'api/videos/' . $id . '/comment', ['contenu' => $comment]); client_flash('Commentaire publié.'); header('Location: ?page=video&id=' . $id); exit;
         }
         if ($action === 'settings') {
             $theme = in_array($_POST['theme'] ?? '', ['systeme','clair','sombre'], true) ? (string)$_POST['theme'] : 'systeme';
-            $api->request('PUT', 'api/settings', ['theme' => $theme, 'notifications' => ['email' => isset($_POST['email_notifications'])], 'accessibilite' => ['contraste_eleve' => isset($_POST['contraste_eleve']), 'texte_agrandi' => isset($_POST['texte_agrandi'])]]);
+            $api->request('PUT', 'api/settings', ['theme' => $theme, 'accessibilite' => ['contraste_eleve' => isset($_POST['contraste_eleve']), 'texte_agrandi' => isset($_POST['texte_agrandi'])]]);
             client_flash('Vos préférences ont été enregistrées.'); client_redirect('settings');
-        }
-        if ($action === 'change_password') {
-            $api->request('POST', 'api/auth/change-password', ['mot_de_passe_actuel' => (string)($_POST['current_password'] ?? ''), 'nouveau_mot_de_passe' => (string)($_POST['new_password'] ?? '')]);
-            client_flash('Mot de passe modifié.'); client_redirect('settings');
         }
         throw new ClientApiException(404, 'Action inconnue.');
     } catch (ClientApiException $e) {
         if ($e->status === 401 && !in_array($action, ['login','register'], true)) { unset($_SESSION['client_token'], $_SESSION['client_user']); client_flash('Votre session a expiré. Veuillez vous reconnecter.', 'error'); client_redirect('login'); }
         client_flash($e->getMessage(), 'error');
-        if ($action === 'quiz_submit' && filter_var($_POST['quiz_id'] ?? null, FILTER_VALIDATE_INT)) { header('Location: ?page=quiz&id=' . (int)$_POST['quiz_id']); exit; }
+        if (in_array($action, ['video_like', 'video_comment'], true) && filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT)) { header('Location: ?page=video&id=' . (int)$_POST['id']); exit; }
         client_redirect($page);
     } catch (Throwable $e) {
         error_log('Client portal action failed: ' . $e->getMessage());
-        client_flash('Une erreur est survenue. Réessayez plus tard.', 'error'); client_redirect($page);
+        client_flash('Une erreur est survenue. Réessayez plus tard.', 'error');
+        if (in_array($action, ['video_like', 'video_comment'], true) && filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT)) { header('Location: ?page=video&id=' . (int)$_POST['id']); exit; }
+        client_redirect($page);
     }
+}
+
+if ($page === 'offline_library' && ($_GET['offline_data'] ?? '') === '1') {
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-store, private');
+    if (empty($_SESSION['client_token'])) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Votre session a expiré. Veuillez vous reconnecter.']);
+        exit;
+    }
+    try {
+        $api = client_api();
+        $user = ClientApi::data($api->request('GET', 'api/auth/me'));
+        if (!is_array($user) || ($user['role'] ?? '') !== 'Client') {
+            throw new ClientApiException(403, 'Espace réservé aux comptes clients.');
+        }
+        $destinations = [];
+        for ($pageNumber = 1; $pageNumber <= 20; $pageNumber++) {
+            $payload = ClientApi::data($api->request(
+                'GET',
+                'api/destinations?' . http_build_query(['page' => $pageNumber, 'per_page' => 50])
+            ));
+            $batch = is_array($payload['items'] ?? null) ? $payload['items'] : [];
+            foreach ($batch as $destination) {
+                $destinations[] = [
+                    'id' => (int)($destination['id'] ?? 0),
+                    'nom' => (string)($destination['nom'] ?? ''),
+                    'description' => (string)($destination['description'] ?? ''),
+                    'localite' => (string)($destination['localite'] ?? ''),
+                    'categorie' => (string)($destination['categorie'] ?? ''),
+                    'slug' => (string)($destination['slug'] ?? ''),
+                    'image_principale' => (string)($destination['image_principale'] ?? ''),
+                    'histoire' => (string)($destination['histoire'] ?? ''),
+                    'adresse' => (string)($destination['adresse'] ?? ''),
+                    'latitude' => $destination['latitude'] ?? null,
+                    'longitude' => $destination['longitude'] ?? null,
+                ];
+            }
+            if (count($batch) < 50) break;
+        }
+        echo json_encode(['destinations' => $destinations], JSON_THROW_ON_ERROR);
+    } catch (ClientApiException $e) {
+        http_response_code($e->status >= 500 ? 503 : $e->status);
+        echo json_encode(['error' => $e->getMessage()], JSON_THROW_ON_ERROR);
+    } catch (Throwable $e) {
+        error_log('Client offline library download failed: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['error' => 'La bibliothèque hors ligne n’a pas pu être téléchargée.'], JSON_THROW_ON_ERROR);
+    }
+    exit;
 }
 
 if (in_array($page, $publicPages, true)) {
@@ -176,12 +223,38 @@ if (in_array($page, $publicPages, true)) {
     exit;
 }
 
+if (in_array($page, $guestPages, true)) {
+    try {
+        $user = null;
+        $api = client_api();
+        if (!empty($_SESSION['client_token'])) {
+            $user = client_require_user();
+            $settings = ClientApi::data($api->request('GET', 'api/settings'));
+            if (!is_array($settings)) throw new ClientApiException(502, 'Les préférences du compte sont indisponibles.');
+            $GLOBALS['client_settings'] = $settings;
+        }
+        ob_start(); require CLIENT_ROOT . '/pages/' . $pageFiles[$page][1]; $content = ob_get_clean();
+        client_layout($page, $pageFiles[$page][0], $content, $user);
+    } catch (ClientApiException $e) {
+        http_response_code($e->status >= 500 ? 503 : 400);
+        ob_start(); ?><section class="card"><div class="empty"><div class="empty-icon">!</div><h3>Service temporairement indisponible</h3><p><?= client_h($e->getMessage()) ?></p><a class="btn" href="?page=<?= client_h($page) ?>">Réessayer</a></div></section><?php $content = ob_get_clean();
+        client_layout($page, $pageFiles[$page][0], $content, $user ?? null);
+    } catch (Throwable $e) {
+        error_log('Client public page render failed: ' . $e->getMessage()); http_response_code(500);
+        client_layout($page, 'Erreur', '<section class="card"><div class="empty"><h3>La page n’a pas pu être chargée.</h3></div></section>', $user ?? null);
+    }
+    exit;
+}
+
 if (!isset($pageFiles[$page])) $page = 'dashboard';
 try {
     $user = client_require_user();
     $api = client_api();
+    $settings = ClientApi::data($api->request('GET', 'api/settings'));
+    if (!is_array($settings)) throw new ClientApiException(502, 'Les préférences du compte sont indisponibles.');
+    $GLOBALS['client_settings'] = $settings;
     if ($page === 'notifications') {
-        $unread = ClientApi::data($api->request('GET', 'api/notifications?page=1&per_page=50'));
+        $unread = ClientApi::data($api->request('GET', 'api/notifications?page=1'));
         $GLOBALS['unread_count'] = count(array_filter(is_array($unread['items'] ?? null) ? $unread['items'] : [], static fn($n) => empty($n['lu_at'])));
     }
     ob_start(); require CLIENT_ROOT . '/pages/' . $pageFiles[$page][1]; $content = ob_get_clean();
@@ -189,7 +262,9 @@ try {
 } catch (ClientApiException $e) {
     if ($e->status === 401 || $e->status === 403) { unset($_SESSION['client_token'], $_SESSION['client_user']); client_redirect('login'); }
     http_response_code($e->status >= 500 ? 503 : 400);
-    ob_start(); ?><section class="card"><div class="empty"><div class="empty-icon">!</div><h3>Service temporairement indisponible</h3><p><?= client_h($e->getMessage()) ?></p><a class="btn" href="?page=<?= client_h($page) ?>">Réessayer</a></div></section><?php $content = ob_get_clean();
+    $retryUrl = '?page=' . rawurlencode($page);
+    if ($page === 'video' && filter_var($_GET['id'] ?? null, FILTER_VALIDATE_INT)) $retryUrl .= '&id=' . (int)$_GET['id'];
+    ob_start(); ?><section class="card"><div class="empty"><div class="empty-icon">!</div><h3>Service temporairement indisponible</h3><p><?= client_h($e->getMessage()) ?></p><a class="btn" href="<?= client_h($retryUrl) ?>">Réessayer</a></div></section><?php $content = ob_get_clean();
     client_layout($page, $pageFiles[$page][0], $content, $_SESSION['client_user'] ?? null);
 } catch (Throwable $e) {
     error_log('Client portal render failed: ' . $e->getMessage()); http_response_code(500);

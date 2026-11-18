@@ -32,7 +32,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     _Slide(
       icon: Icons.travel_explore_rounded,
       title: 'Un passeport à votre image',
-      subtitle: 'Gardez vos favoris, visites, quiz et badges dans un seul espace personnel.',
+      subtitle: 'Gardez vos favoris, visites et badges dans un seul espace personnel.',
       bgColor: ivorianInk,
       iconColor: ivorianGold,
     ),

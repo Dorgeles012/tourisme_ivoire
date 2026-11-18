@@ -1,63 +1,59 @@
 <?php
-$args = ['page' => 1, 'per_page' => 50];
-if (!empty($_GET['q'])) $args['q'] = trim((string)$_GET['q']);
-$payload = ClientApi::data($api->request('GET', 'api/destinations?' . http_build_query($args)));
-$items = is_array($payload['items'] ?? null) ? $payload['items'] : [];
-$query = (string)($_GET['q'] ?? '');
+// ===== Chargement des destinations =====
+$payload = ClientApi::data($api->request('GET', 'api/destinations?page=1&per_page=12'));
+$items   = is_array($payload['items'] ?? null) ? $payload['items'] : [];
+
+// Helper : construit l'URL Google Maps (équivalent _open de Flutter)
+$gmapsUrl = static function (array $item): string {
+    $query = trim((string)($item['nom'] ?? '') . ', ' . (string)($item['localite'] ?? '') . ', Côte d’Ivoire');
+    return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($query);
+};
 ?>
 
-<section class="panel map-search">
-  <p class="map-intro">
-    La carte interactive mobile est adaptée ici en liste géolocalisée,
-    avec ouverture de l’itinéraire dans le service de cartographie.
-  </p>
-
-  <form method="get" class="map-form">
-    <input type="hidden" name="page" value="map">
-
-    <div class="map-field">
-      <label for="q">Filtrer les lieux</label>
-      <input id="q" name="q" value="<?= client_h($query) ?>"
-             placeholder="Destination ou localité" maxlength="120">
+<!-- ===== Bandeau informatif (équivalent Card info_outline) ===== -->
+<section class="panel map-info">
+  <div class="map-info-row">
+    <span class="map-info-icon" aria-hidden="true">ℹ️</span>
+    <div class="map-info-text">
+      <strong>Carte externe</strong>
+      <p>La recherche ouvre votre application de cartes. Les coordonnées manquantes ne sont pas inventées.</p>
     </div>
-
-    <button class="btn-filter" type="submit">Filtrer</button>
-  </form>
+  </div>
 </section>
 
+<!-- ===== Liste des destinations ===== -->
 <?php if (!$items): ?>
   <section class="panel map-empty">
     <div class="empty">
       <div class="empty-icon">◉</div>
-      <h3>Aucun lieu trouvé</h3>
-      <p>Essayez un autre nom de destination ou de localité.</p>
+      <h3>Aucune destination publiée</h3>
+      <p>Aucune destination publiée à afficher sur la carte.</p>
     </div>
   </section>
 <?php else: ?>
-  <section class="map-grid">
+  <section class="map-grid" aria-label="Destinations cartographiables">
     <?php foreach ($items as $item): ?>
       <article class="map-card">
-        <div class="map-card-body">
-          <span class="map-card-eyebrow"><?= client_h($item['localite'] ?? '') ?></span>
-          <h2 class="map-card-title"><?= client_h($item['nom'] ?? '') ?></h2>
-          <p class="map-card-desc">
-            <?= client_h(mb_strimwidth((string)($item['description'] ?? ''), 0, 130, '…')) ?>
-          </p>
+        <div class="map-card-head">
+          <span class="map-card-pin" aria-hidden="true">📍</span>
+          <div class="map-card-headtext">
+            <h2 class="map-card-title"><?= client_h($item['nom'] ?? '') ?></h2>
+            <span class="map-card-locality"><?= client_h($item['localite'] ?? '') ?></span>
+          </div>
         </div>
 
         <div class="map-card-actions">
-          <a class="btn-details" href="?page=destination&amp;id=<?= (int)$item['id'] ?>">
+          <a class="btn-details"
+             href="?page=destination&amp;id=<?= (int)$item['id'] ?>">
             Détails
           </a>
-
-          <?php if (isset($item['latitude'], $item['longitude'])): ?>
-            <a class="btn-map"
-               target="_blank"
-               rel="noopener noreferrer"
-               href="https://www.google.com/maps/search/?api=1&amp;query=<?= rawurlencode((string)$item['latitude'] . ',' . (string)$item['longitude']) ?>">
-              Voir sur la carte ↗
-            </a>
-          <?php endif; ?>
+          <a class="btn-map"
+             target="_blank"
+             rel="noopener noreferrer"
+             title="Ouvrir la carte"
+             href="<?= client_h($gmapsUrl($item)) ?>">
+            <span aria-hidden="true">🗺️</span> Ouvrir
+          </a>
         </div>
       </article>
     <?php endforeach; ?>
@@ -65,112 +61,87 @@ $query = (string)($_GET['q'] ?? '');
 <?php endif; ?>
 
 <style>
-  *,
-  *::before,
-  *::after {
-    box-sizing: border-box;
-  }
+  *, *::before, *::after { box-sizing: border-box; }
 
-  .map-search {
-    background: #fff;
-    border: 1px solid #f1e4d8;
-    border-radius: 14px;
-    padding: 1rem 1.1rem;
-    box-shadow: 0 4px 18px -6px rgba(234, 88, 12, 0.15);
-    margin-bottom: 1rem;
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    overflow: hidden;
+  /* ===== En-tête ===== */
+  .page-header {
+    margin-bottom: 0.85rem;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
 
-  .map-intro {
-    font-size: 0.75rem;
+  .page-title {
+    font-size: 1.4rem;
+    font-weight: 900;
+    letter-spacing: -0.6px;
+    color: #1c1410;
+    margin: 0 0 0.25rem;
+  }
+
+  .page-subtitle {
+    font-size: 0.8rem;
     color: #8a7266;
-    line-height: 1.5;
-    margin: 0 0 0.85rem;
-    overflow-wrap: break-word;
+    margin: 0;
   }
 
-  .map-form {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 0.75rem;
-    align-items: end;
-    width: 100%;
-    max-width: 100%;
+  /* ===== Bandeau info ===== */
+  .panel {
+    background: #fff;
+    border: 1px solid #f1e4d8;
+    border-radius: 14px;
+    padding: 0.9rem 1rem;
+    box-shadow: 0 4px 18px -6px rgba(234, 88, 12, 0.15);
+    margin-bottom: 1rem;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
 
-  .map-field {
+  .map-info {
+    padding: 0.9rem 1rem;
+  }
+
+  .map-info-row {
     display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-    min-width: 0;
+    gap: 0.75rem;
+    align-items: flex-start;
   }
 
-  .map-field label {
-    font-size: 0.72rem;
-    font-weight: 600;
-    color: #1c1410;
-  }
-
-  .map-field input {
-    width: 100%;
-    min-width: 0;
-    padding: 0.6rem 0.85rem;
-    font-size: 0.82rem;
-    font-family: inherit;
-    color: #1c1410;
-    background: #fff8f3;
-    border: 1.5px solid #f1e4d8;
-    border-radius: 10px;
-    outline: none;
-    transition: all 0.2s ease;
-  }
-
-  .map-field input::placeholder { color: #d8bfa8; }
-
-  .map-field input:hover {
-    border-color: #e8d0bd;
-    background: #fff;
-  }
-
-  .map-field input:focus {
-    border-color: #f97316;
-    background: #fff;
-    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.10);
-  }
-
-  .btn-filter {
+  .map-info-icon {
+    flex-shrink: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.65rem 1.2rem;
-    font-size: 0.82rem;
-    font-weight: 600;
-    font-family: inherit;
-    color: #fff;
-    background: linear-gradient(135deg, #fb923c, #ea580c);
-    border: none;
+    width: 36px;
+    height: 36px;
     border-radius: 10px;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.30);
-    transition: all 0.2s ease;
-    white-space: nowrap;
+    background: rgba(249, 115, 22, 0.10);
+    color: #ea580c;
+    font-size: 1rem;
   }
 
-  .btn-filter:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(234, 88, 12, 0.40);
+  .map-info-text {
+    min-width: 0;
   }
 
+  .map-info-text strong {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: #1c1410;
+    margin-bottom: 0.2rem;
+  }
+
+  .map-info-text p {
+    font-size: 0.75rem;
+    color: #8a7266;
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  /* ===== Grille des cartes ===== */
   .map-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
     gap: 0.85rem;
     width: 100%;
-    max-width: 100%;
     min-width: 0;
   }
 
@@ -194,52 +165,58 @@ $query = (string)($_GET['q'] ?? '');
     transform: translateY(-2px);
   }
 
-  .map-card-body {
+  .map-card-head {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
     flex: 1;
-    min-width: 0;
     margin-bottom: 0.85rem;
+    min-width: 0;
   }
 
-  .map-card-eyebrow {
-    display: inline-block;
-    font-size: 0.62rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: #f97316;
-    margin-bottom: 0.3rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 100%;
+  .map-card-pin {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(249, 115, 22, 0.10);
+    color: #ea580c;
+    font-size: 1rem;
+  }
+
+  .map-card-headtext {
+    flex: 1;
+    min-width: 0;
   }
 
   .map-card-title {
     font-size: 0.95rem;
     font-weight: 700;
     color: #1c1410;
-    margin: 0 0 0.4rem;
+    margin: 0 0 0.15rem;
     line-height: 1.25;
     overflow: hidden;
-    text-overflow: ellipsis;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
   }
 
-  .map-card-desc {
-    font-size: 0.74rem;
-    color: #8a7266;
-    line-height: 1.5;
-    margin: 0;
+  .map-card-locality {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #f97316;
     overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow-wrap: break-word;
-    word-wrap: break-word;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
   }
 
+  /* ===== Actions ===== */
   .map-card-actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -254,9 +231,10 @@ $query = (string)($_GET['q'] ?? '');
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.5rem 0.75rem;
-    font-size: 0.72rem;
-    font-weight: 600;
+    gap: 0.3rem;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 700;
     border-radius: 9px;
     text-decoration: none;
     cursor: pointer;
@@ -266,6 +244,7 @@ $query = (string)($_GET['q'] ?? '');
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    font-family: inherit;
   }
 
   .btn-details {
@@ -291,15 +270,9 @@ $query = (string)($_GET['q'] ?? '');
     transform: translateY(-1px);
   }
 
+  /* ===== État vide ===== */
   .map-empty {
-    background: #fff;
-    border: 1px solid #f1e4d8;
-    border-radius: 14px;
     padding: 1.2rem 1rem;
-    box-shadow: 0 4px 18px -6px rgba(234, 88, 12, 0.15);
-    width: 100%;
-    max-width: 100%;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
 
   .empty {
@@ -334,21 +307,23 @@ $query = (string)($_GET['q'] ?? '');
     line-height: 1.4;
   }
 
+  /* ===== Responsive ===== */
   @media (max-width: 640px) {
-    .map-search { padding: 0.85rem 0.9rem; }
-    .map-form { grid-template-columns: 1fr; }
-    .btn-filter { width: 100%; }
+    .page-title { font-size: 1.2rem; }
     .map-grid {
       grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
       gap: 0.7rem;
     }
     .map-card { padding: 0.85rem 0.85rem 0.75rem; }
     .map-card-title { font-size: 0.88rem; }
-    .map-card-desc { font-size: 0.7rem; }
   }
 
   @media (max-width: 380px) {
     .map-grid { grid-template-columns: 1fr; }
     .map-card-actions { grid-template-columns: 1fr; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
   }
 </style>

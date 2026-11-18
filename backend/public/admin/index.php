@@ -13,7 +13,6 @@ $modules = [
     'virtual_visits' => ['label'=>'Visites virtuelles','sql'=>"SELECT v.id,CONCAT(v.titre,' — ',COALESCE(p.titre,d.nom)) AS label,v.statut FROM visites_virtuelles v LEFT JOIN patrimoines p ON p.id=v.patrimoine_id LEFT JOIN destinations d ON d.id=v.destination_id ORDER BY v.titre",'values'=>['actif','inactif']],
     'images' => ['label'=>'Médiathèque','sql'=>"SELECT id,CONCAT(nom_original,' — ',categorie) AS label,statut FROM medias ORDER BY created_at DESC",'values'=>[]],
     'videos' => ['label'=>'Vidéos','sql'=>"SELECT v.id,CONCAT(v.titre,' — ',u.nom) AS label,v.statut FROM videos v JOIN utilisateurs u ON u.id=v.utilisateur_id WHERE v.deleted_at IS NULL ORDER BY v.created_at DESC",'values'=>['en_attente','publie','rejete','archive']],
-    'quizzes' => ['label'=>'Quiz','sql'=>"SELECT id,titre AS label,statut FROM quiz ORDER BY created_at DESC",'values'=>['brouillon','publie','archive']],
     'badges' => ['label'=>'Badges','sql'=>"SELECT id,nom AS label,statut FROM badges ORDER BY nom",'values'=>['actif','inactif']],
     'reservations' => ['label'=>'Réservations','sql'=>"SELECT id,reference AS label,statut FROM reservations ORDER BY created_at DESC",'values'=>['demande','confirmee','annulee','terminee']],
     'reviews' => ['label'=>'Avis','sql'=>"SELECT a.id,CONCAT(d.nom,' — ',a.note,'/5') AS label,a.statut FROM avis a JOIN destinations d ON d.id=a.destination_id WHERE a.deleted_at IS NULL ORDER BY a.created_at DESC",'values'=>['en_attente','publie','rejete']],
@@ -257,7 +256,7 @@ function status_badge(string $status): string {
     <p class="eyebrow">GESTION DE CONTENU</p>
     <div class="module-heading">
       <h1><?= admin_escape($config['label']) ?></h1>
-      <?php if (in_array($module, ['users','destinations','categories','heritage','virtual_visits','images','quizzes'], true)): ?>
+      <?php if (in_array($module, ['users','destinations','categories','heritage','virtual_visits','images'], true)): ?>
       <div class="module-actions">
       <?php if ($module==='users' && $canManageRoles): ?><a class="button primary" href="create_user.php">Créer un utilisateur</a><?php endif; ?>
       <?php if ($module==='destinations' && $canManageModule): ?><a class="button primary" href="destination.php">Ajouter une destination</a><?php endif; ?>
@@ -266,7 +265,6 @@ function status_badge(string $status): string {
       <?php if ($module==='categories' && $canManageModule): ?><a class="button primary" href="category.php">Ajouter une catégorie</a> 
       <?php endif; ?>
       <?php if ($module==='images' && $canManageModule): ?><a class="button primary" href="image.php">Téléverser une image</a><?php endif; ?>
-      <?php if ($module==='quizzes' && $canManageModule): ?><a class="button primary" href="quiz.php">Créer un quiz</a><?php endif; ?>
       </div>
       <?php endif; ?>
     </div>
@@ -290,8 +288,7 @@ function status_badge(string $status): string {
               <?php if ($canManageModule && $module==='destinations'): ?> <a href="destination.php?id=<?= admin_escape($row['id']) ?>">Modifier</a>
               <?php elseif ($canManageModule && $module==='heritage'): ?> <a href="heritage.php?id=<?= admin_escape($row['id']) ?>">Modifier</a>
               <?php elseif ($canManageModule && $module==='virtual_visits'): ?> <a href="virtual_visit.php?id=<?= admin_escape($row['id']) ?>">Modifier</a>
-              <?php elseif ($canManageModule && $module==='categories'): ?> <a href="category.php?id=<?= admin_escape($row['id']) ?>">Modifier</a>
-              <?php elseif ($canManageModule && $module==='quizzes'): ?> <a href="quiz.php?id=<?= admin_escape($row['id']) ?>">Modifier</a><?php endif; ?>
+              <?php elseif ($canManageModule && $module==='categories'): ?> <a href="category.php?id=<?= admin_escape($row['id']) ?>">Modifier</a><?php endif; ?>
               <?php if ($canManageRoles && $module==='users'): ?> <a href="user_roles.php?id=<?= admin_escape($row['id']) ?>">Gérer les rôles</a><?php endif; ?>
             </td>
             <td><?= status_badge((string)$row['statut']) ?></td>

@@ -371,7 +371,6 @@ $csrf = client_csrf_field();
       Pas encore de compte ?
       <a class="text-link" href="?page=register">Créer mon compte</a>
     </p>
-
   </section>
 
   <script>

@@ -11,8 +11,6 @@ $pageModule = [
     'heritage.php' => 'heritage',
     'virtual_visit.php' => 'virtual_visits',
     'image.php' => 'images',
-    'quiz.php' => 'quizzes',
-     
     'geography.php' => 'geography',
     'notification.php' => 'notifications',
 ];
@@ -25,7 +23,6 @@ $sidebarLinks = [
  ['label'=>'Patrimoines','href'=>'index.php?module=heritage','page'=>'index.php','module'=>'heritage'],
  ['label'=>'Visites virtuelles','href'=>'index.php?module=virtual_visits','page'=>'index.php','module'=>'virtual_visits'],
  ['label'=>'Images','href'=>'index.php?module=images','page'=>'index.php','module'=>'images'],
- ['label'=>'Quiz','href'=>'index.php?module=quizzes','page'=>'index.php','module'=>'quizzes'],
  ['label'=>'Réservations','href'=>'index.php?module=reservations','page'=>'index.php','module'=>'reservations'],
  ['label'=>'Notifications','href'=>'notification.php','page'=>'notification.php','module'=>''],
  ['label'=>'Assistance clients','href'=>'support.php','page'=>'support.php','module'=>''],

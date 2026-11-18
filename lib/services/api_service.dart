@@ -301,22 +301,6 @@ class ApiService {
     return _asMap(_unwrap(response.data));
   }
 
-  Future<List<dynamic>> getQuizzes() async =>
-      _asList(await _get('api/quizzes'));
-
-  Future<Map<String, dynamic>> getQuiz(int id) async =>
-      _asMap(await _get('api/quizzes/$id'));
-
-  Future<Map<String, dynamic>> submitQuiz(int id, Map<int, int> answers) async {
-    final response = await _post('api/quizzes/$id/submit', {
-      'reponses': answers.values.toList(growable: false),
-    });
-    return _asMap(response);
-  }
-
-  Future<List<dynamic>> getQuizResults() async =>
-      _asList(await _get('api/quizzes/results'));
-
   Future<Map<String, dynamic>> getPassport() async =>
       _asMap(await _get('api/passport'));
 

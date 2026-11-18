@@ -65,7 +65,6 @@ class _PassportBody extends StatelessWidget {
     final niveau = passport['niveau'] as int? ?? 1;
     final visites = passport['visites'] as int? ?? 0;
     final badgesCount = passport['badges'] as int? ?? 0;
-    final quizTermines = passport['quiz_termines'] as int? ?? 0;
 
     return CustomScrollView(
       slivers: [
@@ -154,10 +153,6 @@ class _PassportBody extends StatelessWidget {
                           _PassportStat(
                               value: '$badgesCount',
                               label: 'Badges'),
-                          const SizedBox(width: 24),
-                          _PassportStat(
-                              value: '$quizTermines',
-                              label: 'Quiz'),
                         ],
                       ),
                     ],

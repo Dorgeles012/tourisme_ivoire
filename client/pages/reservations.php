@@ -200,7 +200,7 @@ if ($id && $id > 0) {
       <div class="empty-icon">▤</div>
       <h3>Aucune réservation pour le moment</h3>
       <p>Vos demandes de transport apparaîtront dès leur enregistrement.</p>
-      <a class="btn" href="?page=help">Comment réserver ?</a>
+      <a class="btn" href="?page=transport">Trouver un transport</a>
     </div>
   <?php else: ?>
     <div class="res-cards">
