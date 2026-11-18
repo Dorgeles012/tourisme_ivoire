@@ -105,8 +105,37 @@ final class ClientApi {
         return $payload;
     }
 
+    /** Upload one validated PHP upload without exposing the API token to the browser. */
+    public function upload(string $path, array $fields, string $fileField, array $file): array {
+        if (!function_exists('curl_init') || !class_exists(CURLFile::class)) {
+            throw new ClientApiException(501, 'Le téléversement nécessite l’extension PHP cURL.', 'upload_unavailable');
+        }
+        if (!preg_match('~^[a-z0-9/_?=&.%+-]+$~i', $path) || str_contains($path, '..')) {
+            throw new InvalidArgumentException('Chemin API invalide.');
+        }
+        $tmp = (string)($file['tmp_name'] ?? '');
+        if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !is_uploaded_file($tmp)) {
+            throw new ClientApiException(422, 'Le fichier envoyé est invalide.', 'upload_error');
+        }
+        $base = $this->baseUrl();
+        $parts = $fields;
+        $parts[$fileField] = new CURLFile($tmp, (string)($file['type'] ?? 'application/octet-stream'), basename((string)($file['name'] ?? 'upload')));
+        $headers = ['Accept: application/json'];
+        if ($this->token !== null && $this->token !== '') $headers[] = 'Authorization: Bearer ' . $this->token;
+        [$response, $status] = $this->requestWithCurl($base . ltrim($path, '/'), $base, 'POST', $headers, $parts);
+        try { $payload = json_decode($response, true, 512, JSON_THROW_ON_ERROR); }
+        catch (JsonException) { throw new ClientApiException(502, 'L’API a renvoyé une réponse illisible.', 'invalid_api_response'); }
+        if (!is_array($payload)) throw new ClientApiException(502, 'L’API a renvoyé une réponse invalide.', 'invalid_api_response');
+        if ($status < 200 || $status >= 300) {
+            $apiCode = $payload['error']['code'] ?? null;
+            $message = $status >= 500 ? 'Une erreur est survenue sur le serveur. Réessayez plus tard.' : ($payload['error']['message'] ?? 'Le téléversement a échoué.');
+            throw new ClientApiException($status ?: 502, is_string($message) ? $message : 'Le téléversement a échoué.', is_string($apiCode) ? $apiCode : null);
+        }
+        return $payload;
+    }
+
     /** @return array{0:string,1:int} */
-    private function requestWithCurl(string $url, string $base, string $method, array $headers, ?string $content): array {
+    private function requestWithCurl(string $url, string $base, string $method, array $headers, mixed $content): array {
         $handle = curl_init($url);
         if ($handle === false) {
             throw new ClientApiException(503, 'Impossible d’initialiser la connexion à l’API.', 'api_unavailable');

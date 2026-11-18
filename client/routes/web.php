@@ -7,7 +7,7 @@ header('Cache-Control: no-store, private');
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: DENY');
 header('Referrer-Policy: same-origin');
-header("Content-Security-Policy: default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'self'");
+header("Content-Security-Policy: default-src 'self'; img-src 'self' data: https:; media-src 'self' https: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'self'");
 
 $page = preg_match('/^[a-z_]+$/', (string)($_GET['page'] ?? '')) ? (string)$_GET['page'] : 'dashboard';
 $publicPages = ['login', 'register', 'forgot', 'reset'];
@@ -17,6 +17,11 @@ $pageFiles = [
     'history' => ['Historique', 'history.php'], 'payments' => ['Mes paiements', 'payments.php'],
     'notifications' => ['Mes notifications', 'notifications.php'], 'messages' => ['Messagerie / Assistance', 'messages.php'],
     'settings' => ['Paramètres du compte', 'settings.php'], 'help' => ['Aide et FAQ', 'help.php'],
+    'explore' => ['Explorer les destinations', 'explore.php'], 'destination' => ['Détail de destination', 'destination.php'],
+    'heritage' => ['Patrimoine ivoirien', 'heritage.php'], 'map' => ['Carte des destinations', 'map.php'],
+    'transport' => ['Transports et itinéraires', 'transport.php'], 'passport' => ['Passeport numérique', 'passport.php'],
+    'quizzes' => ['Quiz culturels', 'quizzes.php'], 'quiz' => ['Répondre au quiz', 'quiz.php'],
+    'quiz_results' => ['Résultats des quiz', 'quiz_results.php'], 'videos' => ['Vidéos de voyageurs', 'videos.php'],
 ];
 
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
@@ -91,6 +96,49 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             $id = filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT); if (!$id || $id < 1) throw new ClientApiException(422, 'Notification invalide.');
             $api->request('PUT', 'api/notifications/' . $id . '/read', []); client_flash('Notification marquée comme lue.'); client_redirect('notifications');
         }
+        if ($action === 'visit_record') {
+            $id = filter_var($_POST['destination_id'] ?? null, FILTER_VALIDATE_INT); if (!$id || $id < 1) throw new ClientApiException(422, 'Destination invalide.');
+            $api->request('POST', 'api/passport/visits', ['destination_id' => $id]); client_flash('Visite ajoutée à votre passeport.'); header('Location: ?page=destination&id=' . $id); exit;
+        }
+        if ($action === 'heritage_view') {
+            $id = filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT); if (!$id || $id < 1) throw new ClientApiException(422, 'Contenu invalide.');
+            $api->request('POST', 'api/patrimoines/' . $id . '/view', []); client_flash('Consultation enregistrée dans votre parcours culturel.'); client_redirect('heritage');
+        }
+        if ($action === 'reserve') {
+            $id = filter_var($_POST['itineraire_id'] ?? null, FILTER_VALIDATE_INT); $quantity = filter_var($_POST['quantite'] ?? 1, FILTER_VALIDATE_INT);
+            if (!$id || $id < 1 || !$quantity || $quantity < 1 || $quantity > 20) throw new ClientApiException(422, 'Itinéraire ou quantité invalide.');
+            $api->request('POST', 'api/reservations', ['itineraire_id' => $id, 'quantite' => $quantity]); client_flash('Demande de réservation enregistrée. Elle reste en attente de confirmation.'); client_redirect('reservations');
+        }
+        if ($action === 'quiz_submit') {
+            $id = filter_var($_POST['quiz_id'] ?? null, FILTER_VALIDATE_INT); if (!$id || $id < 1) throw new ClientApiException(422, 'Quiz invalide.');
+            $answers = [];
+            $submitted = $_POST['reponses'] ?? [];
+            if (!is_array($submitted)) throw new ClientApiException(422, 'Les réponses du quiz sont invalides.');
+            foreach ($submitted as $answer) { $answer = filter_var($answer, FILTER_VALIDATE_INT); if ($answer) $answers[] = $answer; }
+            $result = $api->request('POST', 'api/quizzes/' . $id . '/submit', ['reponses' => $answers]);
+            $_SESSION['last_quiz_result'] = $result['data'] ?? null; client_flash('Quiz terminé : ' . (int)($result['data']['bonnes_reponses'] ?? 0) . ' bonne(s) réponse(s) sur ' . (int)($result['data']['total_questions'] ?? 0) . '.'); client_redirect('quiz_results');
+        }
+        if ($action === 'avatar_upload') {
+            $file = $_FILES['avatar'] ?? [];
+            if (($file['size'] ?? 0) < 1 || $file['size'] > 5 * 1024 * 1024) throw new ClientApiException(422, 'L’image doit faire au maximum 5 Mo.');
+            $api->upload('api/auth/me/avatar', [], 'avatar', $file); client_flash('Photo de profil mise à jour.'); client_redirect('profile');
+        }
+        if ($action === 'video_upload') {
+            $title = trim((string)($_POST['title'] ?? '')); $description = trim((string)($_POST['description'] ?? ''));
+            $file = $_FILES['video'] ?? [];
+            if ($title === '' || mb_strlen($title) > 180 || ($file['size'] ?? 0) < 1 || $file['size'] > 100 * 1024 * 1024) throw new ClientApiException(422, 'Un titre et une vidéo de 100 Mo maximum sont requis.');
+            $fields = ['titre' => $title, 'description' => $description, 'autorisation_diffusion' => isset($_POST['rights_confirmed']) ? '1' : '0'];
+            $api->upload('api/videos', $fields, 'video', $file); client_flash('Vidéo envoyée. Elle sera visible après validation.'); client_redirect('videos');
+        }
+        if ($action === 'video_like') {
+            $id = filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT); if (!$id || $id < 1) throw new ClientApiException(422, 'Vidéo invalide.');
+            $api->request('POST', 'api/videos/' . $id . '/like', []); client_flash('Votre réaction a été enregistrée.'); client_redirect('videos');
+        }
+        if ($action === 'video_comment') {
+            $id = filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT); $comment = trim((string)($_POST['comment'] ?? ''));
+            if (!$id || $id < 1 || $comment === '' || mb_strlen($comment) > 2000) throw new ClientApiException(422, 'Le commentaire doit contenir entre 1 et 2 000 caractères.');
+            $api->request('POST', 'api/videos/' . $id . '/comment', ['contenu' => $comment]); client_flash('Commentaire publié.'); client_redirect('videos');
+        }
         if ($action === 'support_create') {
             $api->request('POST', 'api/support/threads', ['subject' => trim((string)($_POST['subject'] ?? '')), 'message' => trim((string)($_POST['message'] ?? ''))]);
             client_flash('Votre demande a été transmise à l’assistance.'); client_redirect('messages');
@@ -113,6 +161,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     } catch (ClientApiException $e) {
         if ($e->status === 401 && !in_array($action, ['login','register'], true)) { unset($_SESSION['client_token'], $_SESSION['client_user']); client_flash('Votre session a expiré. Veuillez vous reconnecter.', 'error'); client_redirect('login'); }
         client_flash($e->getMessage(), 'error');
+        if ($action === 'quiz_submit' && filter_var($_POST['quiz_id'] ?? null, FILTER_VALIDATE_INT)) { header('Location: ?page=quiz&id=' . (int)$_POST['quiz_id']); exit; }
         client_redirect($page);
     } catch (Throwable $e) {
         error_log('Client portal action failed: ' . $e->getMessage());
