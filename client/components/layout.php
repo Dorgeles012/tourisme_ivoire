@@ -24,6 +24,10 @@ function client_layout(string $page, string $title, string $content, ?array $use
         'heritage'      => 'Patrimoine',
         'transport'     => 'Transport',
         'videos'        => 'Vidéos',
+        'actualites'    => 'Actualités',
+        'promotions'    => 'Promotions',
+        'hebergements'  => 'Hébergements',
+        'activites'     => 'Activités',
         'profile'       => 'Mon profil',
         'passport'      => 'Passeport',
         'reservations'  => 'Réservations',
@@ -35,6 +39,10 @@ function client_layout(string $page, string $title, string $content, ?array $use
         'dashboard' => 'Accueil',
         'explore' => 'Explorer',
         'videos' => 'Vidéos',
+        'actualites' => 'Actualités',
+        'promotions' => 'Promotions',
+        'hebergements' => 'Hébergements',
+        'activites' => 'Activités',
         'profile' => 'Mon profil',
     ];
 
@@ -49,7 +57,9 @@ function client_layout(string $page, string $title, string $content, ?array $use
     <title><?= client_h($title) ?> · Tourisme Ivoire</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets.php?file=portal.css">
+    <?php $clientAssetBase = rtrim(str_replace('\\', '/', dirname((string)($_SERVER['SCRIPT_NAME'] ?? '/client/index.php'))), '/'); ?>
+    <link rel="stylesheet" href="<?= client_h($clientAssetBase . '/assets.php?file=portal.css') ?>">
+    <link rel="stylesheet" href="<?= client_h($clientAssetBase . '/assets.php?file=alerts.css') ?>">
 
     <style>
         :root {
@@ -76,17 +86,176 @@ function client_layout(string $page, string $title, string $content, ?array $use
 
         .app-shell {
             display: grid;
-            grid-template-columns: 240px 1fr;
+            grid-template-columns: 240px minmax(0, 1fr);
             min-height: 100vh;
+            padding-top: 68px;
+        }
+
+        .topbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            min-height: 68px;
+            padding: 0.75rem clamp(1rem, 3vw, 2.5rem);
+            background: var(--c-surface);
+            border-bottom: 1px solid var(--c-border);
+        }
+
+        .topbar-brand,
+        .topbar-user,
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+        }
+
+        .topbar-brand {
+            gap: 0.7rem;
+            color: var(--c-text);
+            text-decoration: none;
+        }
+
+        .topbar-brand-copy {
+            display: grid;
+            gap: 0.1rem;
+        }
+
+        .topbar-brand-copy strong {
+            font-size: 0.95rem;
+        }
+
+        .topbar-brand-copy small {
+            color: var(--c-muted);
+            font-size: 0.72rem;
+        }
+
+        .topbar-brand-mark,
+        .topbar-avatar {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #fb923c, #ea580c);
+            color: #fff;
+            font-size: 0.8rem;
+            font-weight: 800;
+        }
+
+        .topbar-actions {
+            gap: 0.7rem;
+        }
+
+        .topbar-link,
+        .topbar-notification,
+        .topbar-user {
+            gap: 0.55rem;
+            color: var(--c-muted);
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .topbar-link {
+            padding: 0.55rem 0.7rem;
+            border-radius: 9px;
+        }
+
+        .topbar-link:hover,
+        .topbar-notification:hover,
+        .topbar-user:hover {
+            color: var(--c-primary-hover);
+        }
+
+        .topbar-link:hover,
+        .topbar-notification:hover {
+            background: var(--c-primary-soft);
+        }
+
+        .topbar-notification {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+
+        .topbar-notification svg {
+            width: 20px;
+            height: 20px;
+            fill: none;
+            stroke: currentColor;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-width: 1.8;
+        }
+
+        .topbar-user-label {
+            max-width: 180px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .topbar-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            font-size: 0.75rem;
+        }
+
+        .topbar-button {
+            padding: 0.6rem 0.85rem;
+            border-radius: 9px;
+            background: var(--c-primary);
+            color: #fff;
+            font-size: 0.82rem;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .topbar-button:hover {
+            background: var(--c-primary-hover);
         }
 
         .sidebar {
+            position: fixed;
+            top: 68px;
+            bottom: 0;
+            left: 0;
+            z-index: 19;
+            width: 240px;
+            height: auto;
+            overflow-y: auto;
             background: var(--c-surface);
             border-right: 1px solid var(--c-border);
             padding: 1.5rem 1rem;
             display: flex;
             flex-direction: column;
             gap: 1rem;
+            scrollbar-width: thin;
+            scrollbar-color: #d3b39c transparent;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #d3b39c;
+            border-radius: 4px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: transparent;
         }
 
         .side-label {
@@ -191,7 +360,10 @@ function client_layout(string $page, string $title, string $content, ?array $use
         }
 
         .main-content {
-            padding: 1.75rem 2rem;
+            grid-column: 2;
+            margin: 0 auto;
+            min-width: 0;
+            padding: 0.5rem 2rem;
             max-width: 1400px;
             width: 100%;
         }
@@ -272,8 +444,6 @@ function client_layout(string $page, string $title, string $content, ?array $use
             z-index: 1;
             overflow-x: hidden;
             overflow-y: auto;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
             font-family: var(--c-font);
             margin: 0;
             padding: 2rem 1rem;
@@ -286,10 +456,9 @@ function client_layout(string $page, string $title, string $content, ?array $use
             background-attachment: fixed;
         }
 
-        .auth-main::-webkit-scrollbar { display: none; }
-
         .auth-login-main {
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
             padding: 1rem;
         }
 
@@ -300,16 +469,23 @@ function client_layout(string $page, string $title, string $content, ?array $use
         @media (max-width: 900px) {
             .app-shell {
                 grid-template-columns: 1fr;
+                padding-top: 60px;
             }
 
             .sidebar {
-                position: relative;
-                top: auto;
+                position: static;
+                grid-column: 1;
+                width: auto;
                 height: auto;
                 overflow: visible;
                 border-right: 0;
                 border-bottom: 1px solid var(--c-border);
                 padding: 0.65rem;
+            }
+
+            .topbar {
+                min-height: 60px;
+                padding: 0.65rem 1rem;
             }
 
             .sidebar nav {
@@ -322,13 +498,35 @@ function client_layout(string $page, string $title, string $content, ?array $use
             .sidebar-note { display: none; }
 
             .main-content {
-                padding: 1.25rem 1rem;
+                grid-column: 1;
+                padding: 0.35rem 1rem;
             }
         }
 
         @media (max-width: 520px) {
             .page-heading h1 {
                 font-size: 1.35rem;
+            }
+
+            .topbar-brand-copy small {
+                display: none;
+            }
+
+            .topbar-user-label {
+                max-width: 90px;
+            }
+
+            .topbar-actions {
+                gap: 0.25rem;
+            }
+
+            .topbar-link {
+                padding: 0.5rem;
+            }
+
+            .topbar-notification {
+                width: 36px;
+                height: 36px;
             }
 
             .auth-main {
@@ -464,12 +662,46 @@ function client_layout(string $page, string $title, string $content, ?array $use
         }
     </style>
 
-    <script defer src="assets.php?file=portal.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/sweetalert2@11.22.0/dist/sweetalert2.all.min.js"></script>
+    <script defer src="<?= client_h($clientAssetBase . '/assets.php?file=alerts.js') ?>"></script>
+    <script defer src="<?= client_h($clientAssetBase . '/assets.php?file=portal.js') ?>"></script>
 </head>
-<body class="<?= client_h(implode(' ', $bodyClasses)) ?>">
+<body class="<?= client_h(implode(' ', $bodyClasses)) ?>" data-content-sync="<?= $isAuthPage ? 'off' : 'on' ?>" data-notification-sync="<?= $user !== null ? 'on' : 'off' ?>">
 
     <?php if (!$isAuthPage): ?>
     <div class="app-shell">
+
+        <?php
+        $topbarName = trim((string)($user['prenom'] ?? '') . ' ' . (string)($user['nom'] ?? ''));
+        if ($topbarName === '') $topbarName = (string)($user['email'] ?? 'Mon compte');
+        $topbarInitial = mb_strtoupper(mb_substr($topbarName, 0, 1));
+        ?>
+        <header class="topbar">
+            <a class="topbar-brand" href="?page=dashboard">
+                <span class="topbar-brand-mark" aria-hidden="true">TI</span>
+                <span class="topbar-brand-copy">
+                    <strong>Tourisme Ivoire</strong>
+                    <small>Espace client</small>
+                </span>
+            </a>
+            <div class="topbar-actions">
+                <?php if ($user): ?>
+                    <a class="topbar-notification" href="?page=notifications" aria-label="Notifications">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
+                            <path d="M10 21h4"></path>
+                        </svg>
+                    </a>
+                    <a class="topbar-user" href="?page=profile">
+                        <span class="topbar-avatar" aria-hidden="true"><?= client_h($topbarInitial) ?></span>
+                        <span class="topbar-user-label"><?= client_h($topbarName) ?></span>
+                    </a>
+                <?php else: ?>
+                    <a class="topbar-link" href="?page=login">Connexion</a>
+                    <a class="topbar-button" href="?page=register">Créer un compte</a>
+                <?php endif; ?>
+            </div>
+        </header>
 
         <aside class="sidebar" id="portal-nav">
             <div class="side-label"><?= $user ? 'Espace voyageur' : 'Tourisme Ivoire' ?></div>
@@ -509,9 +741,7 @@ function client_layout(string $page, string $title, string $content, ?array $use
             </div>
 
             <?php if ($flash): ?>
-                <div class="alert alert-<?= client_h($flash['type'] ?? 'info') ?>" role="status">
-                    <?= client_h($flash['message'] ?? '') ?>
-                </div>
+                <div hidden data-client-swal-message data-client-swal-type="<?= client_h($flash['type'] ?? 'info') ?>"><?= client_h($flash['message'] ?? '') ?></div>
             <?php endif; ?>
 
             <?= $content ?>
@@ -521,9 +751,7 @@ function client_layout(string $page, string $title, string $content, ?array $use
     <?php else: ?>
     <main class="auth-main<?= $page === 'login' ? ' auth-login-main' : '' ?>">
         <?php if ($flash): ?>
-            <div class="alert alert-<?= client_h($flash['type'] ?? 'info') ?>" role="status">
-                <?= client_h($flash['message'] ?? '') ?>
-            </div>
+            <div hidden data-client-swal-message data-client-swal-type="<?= client_h($flash['type'] ?? 'info') ?>"><?= client_h($flash['message'] ?? '') ?></div>
         <?php endif; ?>
 
         <?= $content ?>

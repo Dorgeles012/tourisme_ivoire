@@ -9,7 +9,15 @@ function client_csrf(): string {
 function client_csrf_field(): string { return '<input type="hidden" name="csrf" value="' . client_h(client_csrf()) . '">'; }
 function client_check_csrf(): void {
     if (!isset($_SESSION['client_csrf']) || !hash_equals((string)$_SESSION['client_csrf'], (string)($_POST['csrf'] ?? ''))) {
-        http_response_code(403); exit('Jeton de sécurité invalide. Rechargez la page.');
+        client_flash('Jeton de sécurité invalide. Rechargez la page avant de réessayer.', 'error');
+        $page = (string)($_GET['page'] ?? 'login');
+        $knownPages = [
+            'login', 'register', 'forgot', 'reset', 'dashboard', 'profile',
+            'profile_edit', 'profile_photo_setup', 'reservations', 'favorites',
+            'notifications', 'settings', 'offline_library', 'explore', 'destination',
+            'heritage', 'map', 'transport', 'passport', 'videos', 'video_studio', 'video',
+        ];
+        client_redirect(in_array($page, $knownPages, true) ? $page : 'login');
     }
 }
 function client_api(): ClientApi { return new ClientApi(isset($_SESSION['client_token']) ? (string)$_SESSION['client_token'] : null); }
@@ -24,6 +32,7 @@ function client_require_user(): array {
     } catch (ClientApiException $e) {
         if ($e->status === 401 || $e->status === 403) {
             unset($_SESSION['client_token'], $_SESSION['client_user']);
+            client_flash('Votre session a expiré. Veuillez vous reconnecter.', 'warning');
             header('Location: ?page=login&expired=1'); exit;
         }
         throw $e;
@@ -42,4 +51,11 @@ function client_format_date(mixed $value): string {
 function client_money(mixed $amount, mixed $currency): string {
     if (!is_numeric($amount)) return 'Montant à confirmer';
     return number_format((float)$amount, 0, ',', ' ') . ' ' . client_h($currency ?: 'XOF');
+}
+function readableError(Throwable $error): string {
+    if ($error instanceof ClientApiException) {
+        return $error->getMessage();
+    }
+    error_log('Client page error: ' . get_class($error) . ': ' . $error->getMessage());
+    return 'Une erreur inattendue est survenue. Réessayez plus tard.';
 }

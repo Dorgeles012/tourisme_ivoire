@@ -1,13 +1,22 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/destination.dart';
 
 String _normalizeApiBaseUrl(String value) {
   final uri = Uri.tryParse(value.trim());
-  if (uri == null || !uri.hasAuthority || !{'http', 'https'}.contains(uri.scheme)) {
-    throw ArgumentError.value(value, 'API_BASE_URL', 'Une URL HTTP(S) absolue est requise.');
+  if (uri == null ||
+      !uri.hasAuthority ||
+      !{'http', 'https'}.contains(uri.scheme)) {
+    throw ArgumentError.value(
+      value,
+      'API_BASE_URL',
+      'Une URL HTTP(S) absolue est requise.',
+    );
   }
   final path = uri.path.endsWith('/') ? uri.path : '${uri.path}/';
   return uri.replace(path: path).toString();
@@ -55,6 +64,15 @@ class ApiService {
 
   Future<bool> get hasSession async =>
       (await _tokenStore.readToken())?.isNotEmpty ?? false;
+
+  Future<String> getContentVersion() async {
+    final payload = _asMap(await _get('api/content/updates'));
+    final version = payload['version'];
+    if (version is! String || version.isEmpty) {
+      throw const FormatException('Version du contenu invalide.');
+    }
+    return version;
+  }
 
   Future<List<Destination>> fetchDestinations({
     String? search,
@@ -209,9 +227,8 @@ class ApiService {
     return payload['code'] as String;
   }
 
-  Uri adminHandoffUri(String code) => Uri.parse(
-    _dio.options.baseUrl,
-  ).resolve('admin/handoff.php#$code');
+  Uri adminHandoffUri(String code) =>
+      Uri.parse(_dio.options.baseUrl).resolve('admin/handoff.php#$code');
 
   Future<void> logout() async {
     try {
@@ -331,17 +348,26 @@ class ApiService {
   Future<List<dynamic>> getDistricts() async =>
       _asList(await _get('api/districts'));
 
-  Future<List<dynamic>> getRegions({int? districtId}) async =>
-      _asList(await _get('api/regions', query: districtId == null ? null : {'district_id': districtId}));
+  Future<List<dynamic>> getRegions({int? districtId}) async => _asList(
+    await _get(
+      'api/regions',
+      query: districtId == null ? null : {'district_id': districtId},
+    ),
+  );
 
-  Future<List<dynamic>> getDepartements({int? regionId, int? districtId}) async {
+  Future<List<dynamic>> getDepartements({
+    int? regionId,
+    int? districtId,
+  }) async {
     if ((regionId == null) == (districtId == null)) {
       throw ArgumentError('Fournissez exactement regionId ou districtId.');
     }
-    return _asList(await _get('api/departements', query: {
-      'region_id': ?regionId,
-      'district_id': ?districtId,
-    }));
+    return _asList(
+      await _get(
+        'api/departements',
+        query: {'region_id': ?regionId, 'district_id': ?districtId},
+      ),
+    );
   }
 
   Future<List<dynamic>> getCategories() async =>
@@ -349,6 +375,12 @@ class ApiService {
 
   Future<List<dynamic>> getHeritage() async =>
       _asList(await _get('api/patrimoines'));
+
+  Future<List<dynamic>> getTourismContent(String type) async {
+    const supported = {'actualites', 'promotions', 'hebergements', 'activites'};
+    if (!supported.contains(type)) throw ArgumentError.value(type, 'type');
+    return _asList(await _get('api/contenus/$type'));
+  }
 
   Future<List<dynamic>> getVirtualVisits() async =>
       _asList(await _get('api/visites-virtuelles'));
@@ -366,12 +398,61 @@ class ApiService {
     return Uri.parse(_dio.options.baseUrl).resolve(relative);
   }
 
+  bool _isPublicContentPath(String path) => const {
+    'api/destinations',
+    'api/categories',
+    'api/regions',
+    'api/departements',
+    'api/districts',
+    'api/localites',
+    'api/transports',
+    'api/itineraires',
+    'api/videos',
+    'api/quizzes',
+    'api/patrimoines',
+    'api/visites-virtuelles',
+    'api/contenus/actualites',
+    'api/contenus/promotions',
+    'api/contenus/hebergements',
+    'api/contenus/activites',
+  }.contains(path);
+
+  String _contentCacheKey(String path, Map<String, dynamic>? query) {
+    final normalizedQuery = query?.map((key, value) => MapEntry(key, '$value'));
+    final uri = Uri(path: path, queryParameters: normalizedQuery);
+    return 'public_content_cache:$uri';
+  }
+
   Future<dynamic> _get(String path, {Map<String, dynamic>? query}) async {
-    final response = await _dio.get<Map<String, dynamic>>(
-      path,
-      queryParameters: query,
-    );
-    return _unwrap(response.data);
+    final shouldCache = _isPublicContentPath(path);
+    final cacheKey = shouldCache ? _contentCacheKey(path, query) : null;
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        path,
+        queryParameters: query,
+      );
+      final result = _unwrap(response.data);
+      if (cacheKey != null) {
+        try {
+          final preferences = await SharedPreferences.getInstance();
+          await preferences.setString(cacheKey, jsonEncode(result));
+        } catch (_) {
+          // Storage is an optimization and must not fail a successful request.
+        }
+      }
+      return result;
+    } on DioException catch (error) {
+      if (cacheKey != null && error.response == null) {
+        try {
+          final preferences = await SharedPreferences.getInstance();
+          final cached = preferences.getString(cacheKey);
+          if (cached != null) return jsonDecode(cached);
+        } catch (_) {
+          // Keep the original network error when no valid cache is available.
+        }
+      }
+      rethrow;
+    }
   }
 
   Future<dynamic> _post(String path, Object data) async {

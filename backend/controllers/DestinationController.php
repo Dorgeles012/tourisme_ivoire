@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 final class DestinationController {
-    private const SELECT = "SELECT d.id,d.nom,d.slug,d.description,d.histoire,d.latitude,d.longitude,d.adresse,d.conseils_visite,d.informations_pratiques,d.image_principale,d.published_at,l.nom AS localite,c.nom AS categorie FROM destinations d JOIN localites l ON l.id=d.localite_id JOIN departements dep ON dep.id=l.departement_id JOIN categories c ON c.id=d.categorie_id WHERE d.statut_publication='publie' AND d.deleted_at IS NULL";
+    private const SELECT = "SELECT d.id,d.nom,d.slug,d.description,d.histoire,d.latitude,d.longitude,d.adresse,d.conseils_visite,d.informations_pratiques,d.image_principale,d.published_at,l.nom AS localite,c.nom AS categorie FROM destinations d JOIN localites l ON l.id=d.localite_id JOIN departements dep ON dep.id=l.departement_id JOIN categories c ON c.id=d.categorie_id WHERE d.statut_publication='publie' AND d.deleted_at IS NULL AND d.is_demo=0";
     private static function publicImageUrl(?string $url): ?string {
         if ($url === null || $url === '') return $url;
         $path = str_replace('\\', '/', $url);
@@ -39,7 +39,7 @@ final class DestinationController {
                 $params[] = $value;
             }
         }
-        $from = ' FROM destinations d JOIN localites l ON l.id=d.localite_id JOIN departements dep ON dep.id=l.departement_id JOIN categories c ON c.id=d.categorie_id WHERE d.statut_publication=\'publie\' AND d.deleted_at IS NULL' . $where;
+        $from = ' FROM destinations d JOIN localites l ON l.id=d.localite_id JOIN departements dep ON dep.id=l.departement_id JOIN categories c ON c.id=d.categorie_id WHERE d.statut_publication=\'publie\' AND d.deleted_at IS NULL AND d.is_demo=0' . $where;
         $count = db()->prepare('SELECT COUNT(*)' . $from);
         $count->execute($params); $total = (int)$count->fetchColumn();
         $stmt = db()->prepare(self::SELECT . $where . ' ORDER BY d.published_at DESC,d.id DESC LIMIT ? OFFSET ?');

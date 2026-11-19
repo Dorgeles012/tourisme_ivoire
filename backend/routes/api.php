@@ -14,6 +14,8 @@ function api_route_definitions(): array {
         ['POST', '#^/api/auth/change-password$#D', static fn() => AuthController::changePassword()],
         ['POST', '#^/api/admin/handoff$#D', static fn() => AdminHandoffController::create()],
         ['POST', '#^/api/admin/handoff/consume$#D', static fn() => AdminHandoffController::consume()],
+        ['GET', '#^/api/content/updates$#D', static fn() => ContentController::updates()],
+        ['GET', '#^/api/contenus/(actualites|promotions|hebergements|activites)(?:/([a-z0-9-]+))?$#D', static fn(array $m) => TourismContentController::index($m[1], $m[2] ?? null)],
         ['GET', '#^/api/destinations$#D', static fn() => DestinationController::index()],
         ['GET', '#^/api/destinations/featured$#D', static fn() => DestinationController::featured()],
         ['GET', '#^/api/destinations/(\d+)$#D', static fn(array $m) => DestinationController::show((int)$m[1])],

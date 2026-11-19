@@ -17,7 +17,7 @@ final class PassportController {
     }
 
     public static function visits(): never {
-        $stmt = db()->prepare("SELECT v.id,v.visite_le,v.source,d.id AS destination_id,d.nom,d.slug,d.image_principale,l.nom AS localite FROM visites v JOIN destinations d ON d.id=v.destination_id JOIN localites l ON l.id=d.localite_id WHERE v.utilisateur_id=? ORDER BY v.visite_le DESC LIMIT 200");
+        $stmt = db()->prepare("SELECT v.id,v.visite_le,v.source,d.id AS destination_id,d.nom,d.slug,d.image_principale,l.nom AS localite FROM visites v JOIN destinations d ON d.id=v.destination_id JOIN localites l ON l.id=d.localite_id WHERE v.utilisateur_id=? AND d.is_demo=0 ORDER BY v.visite_le DESC LIMIT 200");
         $stmt->execute([AuthMiddleware::userId()]);
         json_response(['data' => $stmt->fetchAll()]);
     }
@@ -30,7 +30,7 @@ final class PassportController {
         $pdo = db();
         $pdo->beginTransaction();
         try {
-            $destination = $pdo->prepare("SELECT id FROM destinations WHERE id=? AND statut_publication='publie' AND deleted_at IS NULL FOR UPDATE");
+            $destination = $pdo->prepare("SELECT id FROM destinations WHERE id=? AND statut_publication='publie' AND deleted_at IS NULL AND is_demo=0 FOR UPDATE");
             $destination->execute([$destinationId]);
             if (!$destination->fetchColumn()) {
                 $pdo->rollBack();

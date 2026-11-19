@@ -450,7 +450,7 @@ $csrf = client_csrf_field();
       <div class="notice success" role="status"><?= client_h($success) ?></div>
     <?php endif; ?>
 
-    <form method="post" class="form-grid" autocomplete="on" novalidate>
+    <form method="post" class="form-grid" autocomplete="on" data-client-validation novalidate>
       <?= $csrf ?>
       <input type="hidden" name="action" value="register">
 
@@ -560,39 +560,6 @@ $csrf = client_csrf_field();
 
   </section>
 
-  <script>
-    document.querySelectorAll('[data-password-toggle]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var input = document.getElementById(btn.dataset.passwordToggle);
-        if (!input) return;
-        var show = input.type === 'password';
-        input.type = show ? 'text' : 'password';
-        btn.textContent = show ? 'Masquer' : 'Afficher';
-        btn.setAttribute('aria-pressed', show ? 'true' : 'false');
-        btn.setAttribute('aria-label', show ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
-        input.focus();
-      });
-    });
-
-    (function () {
-      var input = document.getElementById('password');
-      var bars  = document.querySelectorAll('.password-strength .strength-bar');
-      if (!input || !bars.length) return;
-
-      input.addEventListener('input', function () {
-        var v = input.value;
-        var score = 0;
-        if (v.length >= 10) score++;
-        if (/[a-z]/.test(v) && /[A-Z]/.test(v)) score++;
-        if (/\d/.test(v)) score++;
-        if (/[^A-Za-z0-9]/.test(v)) score++;
-
-        bars.forEach(function (bar, i) {
-          bar.classList.remove('active-1', 'active-2', 'active-3', 'active-4');
-          if (i < score) bar.classList.add('active-' + score);
-        });
-      });
-    })();
-  </script>
+  
 </body>
 </html>

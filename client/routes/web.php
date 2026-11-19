@@ -7,12 +7,40 @@ header('Cache-Control: no-store, private');
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: DENY');
 header('Referrer-Policy: same-origin');
-header("Content-Security-Policy: default-src 'self'; img-src 'self' data: https:; media-src 'self' https: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'self'");
+header("Content-Security-Policy: default-src 'self'; img-src 'self' data: https:; media-src 'self' https: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' https://cdn.jsdelivr.net; connect-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'self'");
 
 $requestedPage = $_GET['page'] ?? null;
 $page = preg_match('/^[a-z_]+$/', (string)$requestedPage) ? (string)$requestedPage : 'dashboard';
+if ($page === 'content_updates' && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-store, private');
+    try {
+        echo json_encode(client_api()->request('GET', 'api/content/updates'), JSON_THROW_ON_ERROR);
+    } catch (Throwable $e) {
+        http_response_code(503);
+        echo json_encode(['error' => ['code' => 'content_updates_unavailable', 'message' => 'Le statut des contenus est temporairement indisponible.']], JSON_THROW_ON_ERROR);
+    }
+    exit;
+}
+if ($page === 'notification_updates' && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-store, private');
+    if (empty($_SESSION['client_token'])) {
+        http_response_code(401);
+        echo json_encode(['error' => ['code' => 'authentication_required', 'message' => 'Session client requise.']], JSON_THROW_ON_ERROR);
+        exit;
+    }
+    try {
+        echo json_encode(client_api()->request('GET', 'api/notifications?page=1&per_page=20'), JSON_THROW_ON_ERROR);
+    } catch (ClientApiException $e) {
+        http_response_code($e->status === 401 || $e->status === 403 ? 401 : 503);
+        echo json_encode(['error' => ['code' => 'notifications_unavailable', 'message' => 'Les notifications sont temporairement indisponibles.']], JSON_THROW_ON_ERROR);
+    }
+    exit;
+}
+
 $publicPages = ['login', 'register', 'forgot', 'reset'];
-$guestPages = ['dashboard', 'explore', 'destination', 'heritage', 'map', 'transport', 'videos', 'video', 'profile'];
+$guestPages = ['dashboard', 'explore', 'destination', 'heritage', 'map', 'transport', 'videos', 'video', 'profile', 'actualites', 'promotions', 'hebergements', 'activites'];
 $pageFiles = [
     'dashboard' => ['Tourisme Ivoire', 'dashboard.php'], 'profile' => ['Mon profil', 'profile.php'],
     'profile_edit' => ['Modifier mon profil', 'profile_edit.php'],
@@ -25,6 +53,10 @@ $pageFiles = [
     'heritage' => ['Patrimoine & culture', 'heritage.php'], 'map' => ['Carte touristique', 'map.php'],
     'transport' => ['Transports', 'transport.php'], 'passport' => ['Passeport numérique', 'passport.php'],
     'videos' => ['Communauté vidéo', 'videos.php'],
+    'actualites' => ['Actualités', 'tourism_content.php'],
+    'promotions' => ['Promotions', 'tourism_content.php'],
+    'hebergements' => ['Hébergements', 'tourism_content.php'],
+    'activites' => ['Activités touristiques', 'tourism_content.php'],
     'video_studio' => ['Studio de création', 'video_studio.php'], 'video' => ['Détail de la vidéo', 'video.php'],
 ];
 
@@ -73,16 +105,25 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         if ($action === 'logout') {
             try { client_api()->request('POST', 'api/auth/logout'); }
             catch (Throwable $e) { error_log('Client logout token revocation failed: ' . $e->getMessage()); }
+            session_regenerate_id(true);
             $_SESSION = [];
-            if (ini_get('session.use_cookies')) { $p = session_get_cookie_params(); setcookie(session_name(), '', time() - 42000, $p['path'], '', $p['secure'], $p['httponly']); }
-            session_destroy();
-            header('Location: ?page=login'); exit;
+            client_flash('Vous êtes déconnecté de votre espace client.');
+            client_redirect('login');
         }
         $user = client_require_user();
         $api = client_api();
         if ($action === 'profile') {
-            $api->request('PUT', 'api/auth/me', ['nom' => trim((string)($_POST['nom'] ?? '')), 'prenom' => trim((string)($_POST['prenom'] ?? '')), 'telephone' => trim((string)($_POST['telephone'] ?? ''))]);
-            client_flash('Votre profil a été mis à jour.'); client_redirect('profile_edit');
+            $profileData = [
+                'nom' => trim((string)($_POST['nom'] ?? '')),
+                'prenom' => trim((string)($_POST['prenom'] ?? '')),
+                'telephone' => trim((string)($_POST['telephone'] ?? '')),
+            ];
+            $api->request('PUT', 'api/auth/me', $profileData);
+            if (is_array($_SESSION['client_user'] ?? null)) {
+                $_SESSION['client_user'] = array_merge($_SESSION['client_user'], $profileData);
+            }
+            client_flash('Votre profil a été mis à jour.');
+            client_redirect('profile');
         }
         if ($action === 'favorite_remove') {
             $id = filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT); if (!$id || $id < 1) throw new ClientApiException(422, 'Favori invalide.');
@@ -129,7 +170,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         if ($action === 'avatar_upload') {
             $file = $_FILES['avatar'] ?? [];
             if (($file['size'] ?? 0) < 1 || $file['size'] > 5 * 1024 * 1024) throw new ClientApiException(422, 'L’image doit faire au maximum 5 Mo.');
-            $api->upload('api/auth/me/avatar', [], 'avatar', $file); client_flash('Photo de profil mise à jour.'); client_redirect($page === 'profile_photo_setup' ? 'dashboard' : 'profile_edit');
+            $api->upload('api/auth/me/avatar', [], 'avatar', $file); client_flash('Photo de profil mise à jour.'); client_redirect($page === 'profile_photo_setup' ? 'dashboard' : 'profile');
         }
         if ($action === 'video_upload') {
             $title = trim((string)($_POST['title'] ?? '')); $description = trim((string)($_POST['description'] ?? ''));
@@ -154,7 +195,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         }
         throw new ClientApiException(404, 'Action inconnue.');
     } catch (ClientApiException $e) {
-        if ($e->status === 401 && !in_array($action, ['login','register'], true)) { unset($_SESSION['client_token'], $_SESSION['client_user']); client_flash('Votre session a expiré. Veuillez vous reconnecter.', 'error'); client_redirect('login'); }
+        if ($e->status === 401 && !in_array($action, ['login','register'], true)) { unset($_SESSION['client_token'], $_SESSION['client_user']); client_flash('Votre session a expiré. Veuillez vous reconnecter.', 'warning'); client_redirect('login'); }
         client_flash($e->getMessage(), 'error');
         if (in_array($action, ['video_like', 'video_comment'], true) && filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT)) { header('Location: ?page=video&id=' . (int)$_POST['id']); exit; }
         client_redirect($page);
@@ -237,11 +278,11 @@ if (in_array($page, $guestPages, true)) {
         client_layout($page, $pageFiles[$page][0], $content, $user);
     } catch (ClientApiException $e) {
         http_response_code($e->status >= 500 ? 503 : 400);
-        ob_start(); ?><section class="card"><div class="empty"><div class="empty-icon">!</div><h3>Service temporairement indisponible</h3><p><?= client_h($e->getMessage()) ?></p><a class="btn" href="?page=<?= client_h($page) ?>">Réessayer</a></div></section><?php $content = ob_get_clean();
+        ob_start(); ?><section class="card" role="alert"><div class="empty"><div class="empty-icon">!</div><h3>Service temporairement indisponible</h3><p data-client-alert data-client-alert-type="error"><?= client_h($e->getMessage()) ?></p><a class="btn" href="?page=<?= client_h($page) ?>">Réessayer</a></div></section><?php $content = ob_get_clean();
         client_layout($page, $pageFiles[$page][0], $content, $user ?? null);
     } catch (Throwable $e) {
         error_log('Client public page render failed: ' . $e->getMessage()); http_response_code(500);
-        client_layout($page, 'Erreur', '<section class="card"><div class="empty"><h3>La page n’a pas pu être chargée.</h3></div></section>', $user ?? null);
+        client_layout($page, 'Erreur', '<section class="card" role="alert"><div class="empty"><h3 data-client-alert data-client-alert-type="error">La page n’a pas pu être chargée.</h3></div></section>', $user ?? null);
     }
     exit;
 }
@@ -264,9 +305,9 @@ try {
     http_response_code($e->status >= 500 ? 503 : 400);
     $retryUrl = '?page=' . rawurlencode($page);
     if ($page === 'video' && filter_var($_GET['id'] ?? null, FILTER_VALIDATE_INT)) $retryUrl .= '&id=' . (int)$_GET['id'];
-    ob_start(); ?><section class="card"><div class="empty"><div class="empty-icon">!</div><h3>Service temporairement indisponible</h3><p><?= client_h($e->getMessage()) ?></p><a class="btn" href="<?= client_h($retryUrl) ?>">Réessayer</a></div></section><?php $content = ob_get_clean();
+    ob_start(); ?><section class="card" role="alert"><div class="empty"><div class="empty-icon">!</div><h3>Service temporairement indisponible</h3><p data-client-alert data-client-alert-type="error"><?= client_h($e->getMessage()) ?></p><a class="btn" href="<?= client_h($retryUrl) ?>">Réessayer</a></div></section><?php $content = ob_get_clean();
     client_layout($page, $pageFiles[$page][0], $content, $_SESSION['client_user'] ?? null);
 } catch (Throwable $e) {
     error_log('Client portal render failed: ' . $e->getMessage()); http_response_code(500);
-    client_layout($page, 'Erreur', '<section class="card"><div class="empty"><h3>La page n’a pas pu être chargée.</h3></div></section>', $_SESSION['client_user'] ?? null);
+    client_layout($page, 'Erreur', '<section class="card" role="alert"><div class="empty"><h3 data-client-alert data-client-alert-type="error">La page n’a pas pu être chargée.</h3></div></section>', $_SESSION['client_user'] ?? null);
 }

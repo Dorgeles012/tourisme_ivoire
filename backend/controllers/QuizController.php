@@ -2,13 +2,13 @@
 declare(strict_types=1);
 final class QuizController {
     public static function index(): never {
-        $stmt = db()->prepare("SELECT q.id,q.titre,q.slug,q.description,q.theme,q.difficulte,COUNT(DISTINCT question.id) AS nombre_questions FROM quiz q LEFT JOIN questions question ON question.quiz_id=q.id AND question.statut='actif' WHERE q.statut='publie' GROUP BY q.id ORDER BY q.created_at DESC LIMIT 100");
+        $stmt = db()->prepare("SELECT q.id,q.titre,q.slug,q.description,q.theme,q.difficulte,COUNT(DISTINCT question.id) AS nombre_questions FROM quiz q LEFT JOIN questions question ON question.quiz_id=q.id AND question.statut='actif' WHERE q.statut='publie' AND q.is_demo=0 GROUP BY q.id ORDER BY q.created_at DESC LIMIT 100");
         $stmt->execute();
         json_response(['data' => $stmt->fetchAll()]);
     }
 
     public static function show(int $id): never {
-        $stmt = db()->prepare("SELECT id,titre,slug,description,theme,difficulte FROM quiz WHERE id=? AND statut='publie' LIMIT 1");
+        $stmt = db()->prepare("SELECT id,titre,slug,description,theme,difficulte FROM quiz WHERE id=? AND statut='publie' AND is_demo=0 LIMIT 1");
         $stmt->execute([$id]);
         $quiz = $stmt->fetch();
         if (!$quiz) api_error('not_found', 'Quiz introuvable.', 404);
@@ -34,7 +34,7 @@ final class QuizController {
         $pdo = db();
         $pdo->beginTransaction();
         try {
-            $quizCheck = $pdo->prepare("SELECT id FROM quiz WHERE id=? AND statut='publie' FOR UPDATE");
+            $quizCheck = $pdo->prepare("SELECT id FROM quiz WHERE id=? AND statut='publie' AND is_demo=0 FOR UPDATE");
             $quizCheck->execute([$quizId]);
             if (!$quizCheck->fetchColumn()) {
                 $pdo->rollBack();

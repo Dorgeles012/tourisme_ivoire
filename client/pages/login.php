@@ -318,7 +318,7 @@ $csrf = client_csrf_field();
       <p class="row-meta">Connectez-vous pour retrouver vos réservations et vos découvertes.</p>
     </div>
 
-    <form method="post" class="form-grid">
+    <form method="post" class="form-grid" data-client-validation novalidate>
       <?= $csrf ?>
       <input type="hidden" name="action" value="login">
 
@@ -373,19 +373,6 @@ $csrf = client_csrf_field();
     </p>
   </section>
 
-  <script>
-    document.querySelectorAll('[data-password-toggle]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var input = document.getElementById(btn.dataset.passwordToggle);
-        if (!input) return;
-        var show = input.type === 'password';
-        input.type = show ? 'text' : 'password';
-        btn.textContent = show ? 'Masquer' : 'Afficher';
-        btn.setAttribute('aria-pressed', show ? 'true' : 'false');
-        btn.setAttribute('aria-label', show ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
-        input.focus();
-      });
-    });
-  </script>
+  
 </body>
 </html>

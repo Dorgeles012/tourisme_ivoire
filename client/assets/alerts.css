@@ -1,0 +1,106 @@
+.client-swal-popup {
+  width: min(30rem, calc(100vw - 2rem)) !important;
+  padding: 1.8rem !important;
+  border: 1px solid #f1e4d8 !important;
+  border-radius: 1.15rem !important;
+  background: #fff !important;
+  color: #1c1410 !important;
+  box-shadow: 0 1.25rem 3.5rem rgba(42, 26, 16, 0.2) !important;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+}
+
+.client-swal-title {
+  color: #1c1410 !important;
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+}
+
+.client-swal-message {
+  color: #715f55 !important;
+  font-size: 0.95rem !important;
+  line-height: 1.6 !important;
+  overflow-wrap: anywhere !important;
+}
+
+.client-swal-confirm,
+.client-swal-cancel {
+  min-width: 7rem;
+  padding: 0.7rem 1.15rem !important;
+  border: 0 !important;
+  border-radius: 0.7rem !important;
+  font-size: 0.9rem !important;
+  font-weight: 600 !important;
+}
+
+.client-swal-confirm {
+  background: linear-gradient(135deg, #fb923c, #ea580c) !important;
+  box-shadow: 0 0.35rem 0.9rem rgba(234, 88, 12, 0.24) !important;
+}
+
+.client-swal-cancel {
+  background: #f3eee9 !important;
+  color: #493a31 !important;
+}
+
+.client-swal-show {
+  animation: client-alert-enter 0.24s ease-out both;
+}
+
+.client-swal-hide {
+  animation: client-alert-exit 0.18s ease-in both;
+}
+
+.client-alert-fallback {
+  position: fixed;
+  z-index: 10000;
+  inset: 1rem 1rem auto auto;
+  width: min(26rem, calc(100vw - 2rem));
+  padding: 1rem 1.1rem;
+  border: 1px solid #f1e4d8;
+  border-left: 4px solid #ea580c;
+  border-radius: 0.9rem;
+  background: #fff;
+  color: #1c1410;
+  box-shadow: 0 0.8rem 2rem rgba(42, 26, 16, 0.18);
+  font: 0.95rem/1.5 Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.client-alert-fallback p {
+  margin: 0.4rem 0 0.8rem;
+  color: #715f55;
+  overflow-wrap: anywhere;
+}
+
+.client-alert-fallback button {
+  padding: 0.55rem 0.9rem;
+  border: 0;
+  border-radius: 0.6rem;
+  background: #ea580c;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+}
+
+@keyframes client-alert-enter {
+  from { opacity: 0; transform: translateY(0.65rem) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes client-alert-exit {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(0.35rem) scale(0.98); }
+}
+
+@media (max-width: 520px) {
+  .client-swal-popup {
+    width: calc(100vw - 1.25rem) !important;
+    padding: 1.35rem 1.1rem !important;
+  }
+
+  .client-swal-title { font-size: 1.1rem !important; }
+  .client-swal-confirm, .client-swal-cancel { min-width: 6rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .client-swal-show, .client-swal-hide { animation-duration: 0.01ms; }
+}

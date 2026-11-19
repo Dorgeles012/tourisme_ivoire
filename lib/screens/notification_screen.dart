@@ -1,27 +1,27 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'tourism_content_screen.dart';
 import '../services/api_service.dart';
 import '../services/notification_service.dart';
 import '../theme/design_system.dart';
 import '../widgets/app_alert.dart';
 import '../widgets/common.dart';
 
- 
 Color _typeColor(String? type) => switch (type) {
-      'success' => const Color(0xFF2E7D32),
-      'warning' => ivorianOcre,
-      'error' => ivorianTerracotta,
-      _ => ivorianForest,
-    };
+  'success' => const Color(0xFF2E7D32),
+  'warning' => ivorianOcre,
+  'error' => ivorianTerracotta,
+  _ => ivorianForest,
+};
 
 IconData _typeIcon(String? type) => switch (type) {
-      'success' => Icons.check_circle_outline,
-      'warning' => Icons.warning_amber_outlined,
-      'error' => Icons.error_outline,
-      _ => Icons.notifications_outlined,
-    };
+  'nouveau_contenu' => Icons.campaign_outlined,
+  'success' => Icons.check_circle_outline,
+  'warning' => Icons.warning_amber_outlined,
+  'error' => Icons.error_outline,
+  _ => Icons.notifications_outlined,
+};
 
- 
 String _relativeTime(String? iso) {
   if (iso == null) return '';
   final dt = DateTime.tryParse(iso);
@@ -35,7 +35,6 @@ String _relativeTime(String? iso) {
   return '${dt.day}/${dt.month}/${dt.year}';
 }
 
- 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({required this.api, super.key});
   final ApiService api;
@@ -55,6 +54,34 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   void _reload() =>
       setState(() => _notifications = NotificationService(widget.api).list());
+
+  Future<void> _openNotification(Map<String, dynamic> item) async {
+    try {
+      if (item['lu_at'] == null) {
+        await NotificationService(widget.api)
+            .markRead(int.parse('${item['id']}'));
+      }
+      if (!mounted) return;
+      _reload();
+      final target = Uri.tryParse('${item['cible_url'] ?? ''}');
+      final page = target?.queryParameters['page'];
+      if (const {
+        'actualites',
+        'promotions',
+        'hebergements',
+        'activites',
+      }.contains(page)) {
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) =>
+                TourismContentScreen(api: widget.api, initialType: page!),
+          ),
+        );
+      }
+    } catch (error) {
+      if (mounted) await AppAlert.error(context, readableError(error));
+    }
+  }
 
   Future<void> _markRead(int id) async {
     try {
@@ -86,6 +113,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     )) {
       return;
     }
+    if (!mounted) return;
     try {
       await AppAlert.runWithLoading(
         context,
@@ -115,8 +143,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           FutureBuilder<List<dynamic>>(
             future: _notifications,
             builder: (context, snapshot) {
-              final hasUnread = snapshot.data
-                      ?.any((r) => (r as Map)['lu_at'] == null) ??
+              final hasUnread =
+                  snapshot.data?.any((r) => (r as Map)['lu_at'] == null) ??
                   false;
               if (!hasUnread) return const SizedBox.shrink();
               return IconButton(
@@ -161,7 +189,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 final typeIcon = _typeIcon('${item['type']}');
 
                 return FadeSlideIn(
-                  delay: Duration(milliseconds: index * kStaggerDelay.inMilliseconds),
+                  delay: Duration(
+                    milliseconds: index * kStaggerDelay.inMilliseconds,
+                  ),
                   child: RepaintBoundary(
                     child: Padding(
                       padding: const EdgeInsets.only(bottom: 10),
@@ -186,28 +216,27 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           child: InkWell(
                             borderRadius: BorderRadius.circular(kRadiusMd),
                             splashColor: ivorianOrange.withValues(alpha: .08),
-                            onTap: isUnread
-                                ? () => _markRead(int.parse('${item['id']}'))
-                                : null,
+                            onTap: () => _openNotification(item),
                             child: Padding(
                               padding: const EdgeInsets.all(14),
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                   
                                   Container(
                                     width: 42,
                                     height: 42,
                                     decoration: BoxDecoration(
-                                      color:
-                                          typeColor.withValues(alpha: .12),
+                                      color: typeColor.withValues(alpha: .12),
                                       shape: BoxShape.circle,
                                     ),
-                                    child: Icon(typeIcon,
-                                        size: 20, color: typeColor),
+                                    child: Icon(
+                                      typeIcon,
+                                      size: 20,
+                                      color: typeColor,
+                                    ),
                                   ),
                                   const SizedBox(width: 12),
-                                   
+
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment:
@@ -232,8 +261,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                                 child: Container(
                                                   width: 8,
                                                   height: 8,
-                                                  margin: const EdgeInsets
-                                                      .only(left: 6),
+                                                  margin: const EdgeInsets.only(
+                                                    left: 6,
+                                                  ),
                                                   decoration: BoxDecoration(
                                                     color: ivorianOrange,
                                                     shape: BoxShape.circle,
@@ -247,8 +277,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                           '${item['contenu']}',
                                           style: TextStyle(
                                             fontSize: 13,
-                                            color: cs.onSurface
-                                                .withValues(alpha: .7),
+                                            color: cs.onSurface.withValues(
+                                              alpha: .7,
+                                            ),
                                             height: 1.4,
                                           ),
                                         ),
@@ -256,18 +287,22 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                         Row(
                                           children: [
                                             Text(
-                                              _relativeTime('${item['created_at']}'),
+                                              _relativeTime(
+                                                '${item['created_at']}',
+                                              ),
                                               style: TextStyle(
                                                 fontSize: 11,
-                                                color: cs.onSurface
-                                                    .withValues(alpha: .45),
+                                                color: cs.onSurface.withValues(
+                                                  alpha: .45,
+                                                ),
                                               ),
                                             ),
                                             if (isUnread) ...[
                                               const Spacer(),
                                               GestureDetector(
                                                 onTap: () => _markRead(
-                                                    int.parse('${item['id']}')),
+                                                  int.parse('${item['id']}'),
+                                                ),
                                                 child: Text(
                                                   'Marquer comme lu',
                                                   style: TextStyle(

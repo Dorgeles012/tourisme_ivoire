@@ -12,7 +12,7 @@ try {
     echo '<section class="panel empty-panel"><div class="empty">'
        . '<div class="empty-icon">❌</div>'
        . '<h3>Erreur de chargement</h3>'
-       . '<p>' . client_h(readableError($e)) . '</p>'
+       . '<p data-client-alert data-client-alert-type="error">' . client_h(readableError($e)) . '</p>'
        . '<a class="btn-go" href="?page=profile">Retour</a>'
        . '</div></section>';
     return;
@@ -43,7 +43,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ),
             ]);
             $flash = ['type' => 'success', 'text' => 'Photo de profil mise à jour.'];
-            // Recharger pour avoir la nouvelle URL
             $profile = ClientApi::data($api->request('GET', 'api/auth/me'));
             $avatarUrl = !empty($profile['avatar_url']) ? (string)$profile['avatar_url'] : '';
         } catch (Throwable $e) {
@@ -71,6 +70,254 @@ $nom       = (string)($profile['nom'] ?? '');
 $prenom    = (string)($profile['prenom'] ?? '');
 $telephone = (string)($profile['telephone'] ?? '');
 ?>
+
+<style>
+  /* ===== Reset global (1 seule fois) ===== */
+  html, body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #1c1410;
+  }
+
+  /* ===== Header ===== */
+  .page-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.85rem;
+  }
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #f7f1eb;
+    color: #5a4a40;
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: background 0.15s ease, color 0.15s ease;
+    flex-shrink: 0;
+  }
+  .back-link:hover { background: #fff8f3; color: #ea580c; }
+  .page-title {
+    font-size: 1.15rem;
+    font-weight: 900;
+    color: #1c1410;
+    margin: 0;
+    letter-spacing: -0.4px;
+  }
+
+  /* ===== Flash ===== */
+  .flash {
+    padding: 0.6rem 0.85rem;
+    border-radius: 8px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    margin-bottom: 0.85rem;
+  }
+  .flash-success {
+    background: rgba(46, 125, 50, 0.10);
+    border: 1px solid rgba(46, 125, 50, 0.3);
+    color: #2E7D32;
+  }
+  .flash-error {
+    background: rgba(192, 57, 43, 0.08);
+    border: 1px solid rgba(192, 57, 43, 0.25);
+    color: #c0392b;
+  }
+
+  /* ===== Hero édition ===== */
+  .edit-hero {
+    display: flex;
+    gap: 0.85rem;
+    align-items: flex-start;
+    padding: 1rem;
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.12), rgba(249, 115, 22, 0.03));
+    border: 1px solid rgba(249, 115, 22, 0.18);
+    border-radius: 14px;
+    margin-bottom: 1.15rem;
+  }
+  .edit-hero-avatar {
+    flex-shrink: 0;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: linear-gradient(135deg, #f97316, #c0392b);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 10px -2px rgba(234, 88, 12, 0.25);
+  }
+  .edit-hero-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .edit-hero-initials {
+    color: #fff;
+    font-size: 1.15rem;
+    font-weight: 900;
+  }
+  .edit-hero-text { flex: 1; min-width: 0; }
+  .edit-hero-title {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #1c1410;
+    margin: 0 0 0.15rem;
+  }
+  .edit-hero-subtitle {
+    font-size: 0.68rem;
+    color: #8a7266;
+    margin: 0 0 0.5rem;
+    line-height: 1.35;
+  }
+
+  .edit-avatar-form { margin: 0; }
+  .edit-avatar-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.35rem 0.65rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #ea580c;
+    background: transparent;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .edit-avatar-btn:hover { background: rgba(249, 115, 22, 0.10); }
+
+  /* ===== Formulaire ===== */
+  .edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    max-width: 520px;
+  }
+  .edit-field { display: flex; flex-direction: column; gap: 0.3rem; }
+  .edit-field label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #4a3f38;
+    letter-spacing: 0.02em;
+  }
+  .edit-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0 0.75rem;
+    background: #f7f1eb;
+    border: 1.5px solid transparent;
+    border-radius: 10px;
+    transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .edit-input-wrap:focus-within {
+    background: #fff;
+    border-color: rgba(249, 115, 22, 0.8);
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.10);
+  }
+  .edit-input-icon { font-size: 0.85rem; opacity: 0.7; }
+  .edit-input-wrap input {
+    flex: 1;
+    padding: 0.7rem 0;
+    font-family: inherit;
+    font-size: 0.78rem;
+    color: #1c1410;
+    background: transparent;
+    border: none;
+    outline: none;
+    min-width: 0;
+  }
+  .edit-input-wrap input::placeholder { color: #b8a598; }
+
+  .edit-submit {
+    margin-top: 0.75rem;
+    padding: 0.75rem 0.9rem;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, #fb923c, #ea580c);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 4px 12px -3px rgba(234, 88, 12, 0.4);
+  }
+  .edit-submit:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px -3px rgba(234, 88, 12, 0.5);
+  }
+
+  /* ===== États vides ===== */
+  .panel, .empty-panel {
+    background: #fff;
+    border: 1px solid #f1e4d8;
+    border-radius: 12px;
+    padding: 1.15rem 0.85rem;
+    box-shadow: 0 2px 12px -4px rgba(234, 88, 12, 0.1);
+  }
+  .empty { text-align: center; padding: 0.85rem 0.6rem; }
+  .empty-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    margin-bottom: 0.5rem;
+    background: rgba(249, 115, 22, 0.10);
+    color: #ea580c;
+    border-radius: 50%;
+    font-size: 1.1rem;
+  }
+  .empty h3 {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #1c1410;
+    margin: 0 0 0.25rem;
+  }
+  .empty p {
+    font-size: 0.7rem;
+    color: #8a7266;
+    margin: 0;
+    line-height: 1.4;
+  }
+  .btn-go {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, #fb923c, #ea580c);
+    border-radius: 8px;
+    text-decoration: none;
+    box-shadow: 0 3px 10px -2px rgba(249, 115, 22, 0.3);
+    transition: transform 0.15s ease;
+    margin-top: 0.4rem;
+  }
+  .btn-go:hover { transform: translateY(-1px); }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 520px) {
+    .page-title { font-size: 1rem; }
+    .edit-hero { flex-direction: column; }
+    .edit-hero-avatar { width: 46px; height: 46px; }
+    .edit-hero-initials { font-size: 1rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, .edit-input-wrap, .edit-submit, .back-link { transition: none !important; }
+  }
+</style>
 
 <header class="page-header">
   <a class="back-link" href="?page=profile" aria-label="Retour">←</a>
@@ -104,7 +351,7 @@ $telephone = (string)($profile['telephone'] ?? '');
       </label>
       <input type="file" id="avatarInput" name="avatar"
              accept="image/*" hidden
-             onchange="document.getElementById('avatarForm').submit();">
+             data-avatar-autosubmit>
     </form>
   </div>
 </section>
@@ -142,217 +389,7 @@ $telephone = (string)($profile['telephone'] ?? '');
   </div>
 
   <button type="submit" class="edit-submit"
-          onclick="return confirm('Enregistrer les modifications de votre profil ?');">
-    💾 Enregistrer les modifications
+          data-confirm-click="Enregistrer les modifications de votre profil ?">
+     Enregistrer les modifications
   </button>
 </form>
-
-<style>
-  *, *::before, *::after { box-sizing: border-box; }
-
-  .page-header {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    margin-bottom: 1rem;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  }
-
-  .back-link {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 38px; height: 38px;
-    border-radius: 50%;
-    background: #f7f1eb;
-    color: #5a4a40;
-    text-decoration: none;
-    font-size: 1rem;
-    transition: all 0.2s ease;
-    flex-shrink: 0;
-  }
-
-  .back-link:hover { background: #fff8f3; color: #ea580c; }
-
-  .page-title {
-    font-size: 1.4rem;
-    font-weight: 900;
-    color: #1c1410;
-    margin: 0;
-    letter-spacing: -0.4px;
-  }
-
-  /* ===== Flash ===== */
-  .flash {
-    padding: 0.75rem 1rem;
-    border-radius: 10px;
-    font-size: 0.82rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  }
-
-  .flash-success {
-    background: rgba(46,125,50,0.10);
-    border: 1px solid rgba(46,125,50,0.3);
-    color: #2E7D32;
-  }
-
-  .flash-error {
-    background: rgba(192,57,43,0.08);
-    border: 1px solid rgba(192,57,43,0.25);
-    color: #c0392b;
-  }
-
-  /* ===== Hero édition ===== */
-  .edit-hero {
-    display: flex;
-    gap: 1rem;
-    align-items: flex-start;
-    padding: 1.25rem;
-    background: linear-gradient(135deg, rgba(249,115,22,0.14), rgba(249,115,22,0.04));
-    border: 1px solid rgba(249,115,22,0.18);
-    border-radius: 16px;
-    margin-bottom: 1.5rem;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  }
-
-  .edit-hero-avatar {
-    flex-shrink: 0;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    overflow: hidden;
-    background: linear-gradient(135deg, #f97316, #c0392b);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 12px rgba(234,88,12,0.25);
-  }
-
-  .edit-hero-avatar img { width: 100%; height: 100%; object-fit: cover; }
-
-  .edit-hero-initials {
-    color: #fff;
-    font-size: 1.35rem;
-    font-weight: 900;
-  }
-
-  .edit-hero-text { flex: 1; min-width: 0; }
-
-  .edit-hero-title {
-    font-size: 0.95rem;
-    font-weight: 800;
-    color: #1c1410;
-    margin: 0 0 0.2rem;
-  }
-
-  .edit-hero-subtitle {
-    font-size: 0.75rem;
-    color: #8a7266;
-    margin: 0 0 0.65rem;
-    line-height: 1.35;
-  }
-
-  .edit-avatar-form { margin: 0; }
-
-  .edit-avatar-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    padding: 0.4rem 0.75rem;
-    font-size: 0.78rem;
-    font-weight: 700;
-    color: #ea580c;
-    background: transparent;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background 0.2s ease;
-  }
-
-  .edit-avatar-btn:hover { background: rgba(249,115,22,0.10); }
-
-  /* ===== Formulaire ===== */
-  .edit-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1.1rem;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    max-width: 560px;
-  }
-
-  .edit-field { display: flex; flex-direction: column; gap: 0.4rem; }
-
-  .edit-field label {
-    font-size: 0.78rem;
-    font-weight: 700;
-    color: #4a3f38;
-    letter-spacing: 0.02em;
-  }
-
-  .edit-input-wrap {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0 0.9rem;
-    background: #f7f1eb;
-    border: 1.5px solid transparent;
-    border-radius: 12px;
-    transition: all 0.2s ease;
-  }
-
-  .edit-input-wrap:focus-within {
-    background: #fff;
-    border-color: rgba(249,115,22,0.8);
-    box-shadow: 0 0 0 3px rgba(249,115,22,0.10);
-  }
-
-  .edit-input-icon { font-size: 1rem; opacity: 0.7; }
-
-  .edit-input-wrap input {
-    flex: 1;
-    padding: 0.9rem 0;
-    font-family: inherit;
-    font-size: 0.9rem;
-    color: #1c1410;
-    background: transparent;
-    border: none;
-    outline: none;
-    min-width: 0;
-  }
-
-  .edit-input-wrap input::placeholder { color: #b8a598; }
-
-  .edit-submit {
-    margin-top: 1rem;
-    padding: 0.95rem 1rem;
-    font-family: inherit;
-    font-size: 0.88rem;
-    font-weight: 700;
-    color: #fff;
-    background: linear-gradient(135deg, #fb923c, #ea580c);
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 6px 16px -6px rgba(234,88,12,0.5);
-  }
-
-  .edit-submit:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 8px 20px -6px rgba(234,88,12,0.6);
-  }
-
-  /* ===== Responsive ===== */
-  @media (max-width: 520px) {
-    .page-title { font-size: 1.2rem; }
-    .edit-hero { flex-direction: column; }
-    .edit-hero-avatar { width: 52px; height: 52px; }
-    .edit-hero-initials { font-size: 1.15rem; }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    *, .edit-input-wrap, .edit-submit, .back-link { transition: none !important; }
-  }
-</style>

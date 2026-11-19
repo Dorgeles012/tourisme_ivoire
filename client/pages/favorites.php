@@ -5,6 +5,291 @@ $destinations = is_array($destinations['items'] ?? null) ? $destinations['items'
 $savedIds = array_fill_keys(array_map(static fn($r) => (int)$r['id'], is_array($rows) ? $rows : []), true);
 ?>
 
+<style>
+  /* ===== Reset global (1 seule fois) ===== */
+  html, body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #1c1410;
+  }
+
+  /* ===== Panneaux ===== */
+  .fav-panel,
+  .fav-discover {
+    background: #fff;
+    border: 1px solid #f1e4d8;
+    border-radius: 12px;
+    padding: 0.9rem 0.9rem 0.75rem;
+    box-shadow: 0 2px 12px -4px rgba(234, 88, 12, 0.10);
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .fav-discover { margin-top: 0.85rem; }
+
+  .panel-head {
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.55rem;
+    border-bottom: 1px solid #f3ebe4;
+  }
+  .section-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #1c1410;
+    margin: 0;
+  }
+
+  /* ===== Grille favoris ===== */
+  .fav-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.6rem;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .fav-card {
+    display: flex;
+    flex-direction: column;
+    background: #fff8f3;
+    border: 1px solid #f1e4d8;
+    border-radius: 10px;
+    overflow: hidden;
+    min-width: 0;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  }
+  .fav-card:hover {
+    border-color: #fcd9b5;
+    box-shadow: 0 5px 14px -4px rgba(234, 88, 12, 0.18);
+    transform: translateY(-2px);
+  }
+
+  .fav-card-img {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    background: #f1e4d8;
+  }
+  .fav-card-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.35s ease;
+  }
+  .fav-card:hover .fav-card-img img { transform: scale(1.04); }
+
+  .fav-card-body {
+    padding: 0.6rem 0.7rem 0.4rem;
+    flex: 1;
+    min-width: 0;
+  }
+  .fav-card-body h3 {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #1c1410;
+    margin: 0 0 0.15rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .fav-card-meta {
+    font-size: 0.62rem;
+    color: #8a7266;
+    margin: 0 0 0.35rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .fav-card-desc {
+    font-size: 0.65rem;
+    color: #8a7266;
+    line-height: 1.4;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .fav-card-action {
+    padding: 0 0.7rem 0.6rem;
+  }
+
+  /* ===== Bouton retirer ===== */
+  .btn-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 0.4rem 0.7rem;
+    font-size: 0.68rem;
+    font-weight: 600;
+    font-family: inherit;
+    color: #ea580c;
+    background: transparent;
+    border: 1.5px solid #f97316;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .btn-outline:hover {
+    background: rgba(249, 115, 22, 0.08);
+  }
+
+  /* ===== Liste découvrir ===== */
+  .fav-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .fav-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    padding: 0.55rem 0.7rem;
+    background: #fff8f3;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    transition: background 0.15s ease, border-color 0.15s ease;
+    min-width: 0;
+  }
+  .fav-row:hover {
+    background: #fff;
+    border-color: #f1e4d8;
+  }
+
+  .fav-row-content {
+    min-width: 0;
+    flex: 1;
+  }
+  .fav-row-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #1c1410;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .fav-row-meta {
+    font-size: 0.62rem;
+    color: #8a7266;
+    margin-top: 0.08rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ===== Bouton ajouter ===== */
+  .btn-add {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.65rem;
+    font-weight: 600;
+    font-family: inherit;
+    color: #fff;
+    background: linear-gradient(135deg, #fb923c, #ea580c);
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px -2px rgba(249, 115, 22, 0.3);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    flex-shrink: 0;
+  }
+  .btn-add:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px -2px rgba(234, 88, 12, 0.4);
+  }
+
+  /* ===== Badge ===== */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.58rem;
+    font-weight: 700;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .badge.good {
+    background: #ecfdf5;
+    color: #047857;
+  }
+
+  /* ===== État vide ===== */
+  .empty {
+    text-align: center;
+    padding: 1rem 0.6rem;
+  }
+  .empty-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    margin-bottom: 0.5rem;
+    background: rgba(249, 115, 22, 0.10);
+    color: #ea580c;
+    border-radius: 50%;
+    font-size: 1.05rem;
+  }
+  .empty h3 {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #1c1410;
+    margin: 0 0 0.25rem;
+  }
+  .empty p {
+    font-size: 0.7rem;
+    color: #8a7266;
+    margin: 0;
+    line-height: 1.4;
+  }
+  .fav-empty-text {
+    font-size: 0.72rem;
+    color: #8a7266;
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 520px) {
+    .fav-panel,
+    .fav-discover {
+      padding: 0.8rem 0.75rem 0.65rem;
+    }
+    .fav-grid {
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 0.5rem;
+    }
+    .fav-card-body { padding: 0.55rem 0.6rem 0.35rem; }
+    .fav-card-action { padding: 0 0.6rem 0.55rem; }
+  }
+  @media (max-width: 380px) {
+    .fav-grid { grid-template-columns: 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, .fav-card, .fav-card-img img, .btn-add { transition: none !important; }
+  }
+</style>
+
 <section class="panel fav-panel">
   <header class="panel-head">
     <h2 class="section-title">Vos destinations enregistrées</h2>
@@ -81,294 +366,3 @@ $savedIds = array_fill_keys(array_map(static fn($r) => (int)$r['id'], is_array($
     </div>
   <?php endif; ?>
 </section>
-
-<style>
-  *,
-  *::before,
-  *::after {
-    box-sizing: border-box;
-  }
-
-  .fav-panel,
-  .fav-discover {
-    background: #fff;
-    border: 1px solid #f1e4d8;
-    border-radius: 14px;
-    padding: 1.1rem 1.1rem 0.9rem;
-    box-shadow: 0 4px 18px -6px rgba(234, 88, 12, 0.15);
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    overflow: hidden;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  }
-
-  .fav-discover {
-    margin-top: 1rem;
-  }
-
-  .fav-panel .panel-head,
-  .fav-discover .panel-head {
-    margin-bottom: 0.9rem;
-    padding-bottom: 0.65rem;
-    border-bottom: 1px solid #f3ebe4;
-  }
-
-  .fav-panel .section-title,
-  .fav-discover .section-title {
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: #1c1410;
-    margin: 0;
-  }
-
-  .fav-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 0.75rem;
-    width: 100%;
-    max-width: 100%;
-  }
-
-  .fav-card {
-    display: flex;
-    flex-direction: column;
-    background: #fff8f3;
-    border: 1px solid #f1e4d8;
-    border-radius: 12px;
-    overflow: hidden;
-    min-width: 0;
-    transition: all 0.2s ease;
-  }
-
-  .fav-card:hover {
-    border-color: #fcd9b5;
-    box-shadow: 0 6px 16px -6px rgba(234, 88, 12, 0.25);
-    transform: translateY(-2px);
-  }
-
-  .fav-card-img {
-    width: 100%;
-    aspect-ratio: 16 / 10;
-    overflow: hidden;
-    background: #f1e4d8;
-  }
-
-  .fav-card-img img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-
-  .fav-card-body {
-    padding: 0.7rem 0.8rem 0.5rem;
-    flex: 1;
-    min-width: 0;
-  }
-
-  .fav-card-body h3 {
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: #1c1410;
-    margin: 0 0 0.2rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .fav-card-meta {
-    font-size: 0.68rem;
-    color: #8a7266;
-    margin: 0 0 0.4rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .fav-card-desc {
-    font-size: 0.72rem;
-    color: #8a7266;
-    line-height: 1.4;
-    margin: 0;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .fav-card-action {
-    padding: 0 0.8rem 0.7rem;
-  }
-
-  .btn-outline {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    padding: 0.45rem 0.8rem;
-    font-size: 0.72rem;
-    font-weight: 600;
-    font-family: inherit;
-    color: #ea580c;
-    background: transparent;
-    border: 1.5px solid #f97316;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  .btn-outline:hover {
-    background: rgba(249, 115, 22, 0.08);
-  }
-
-  .fav-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-    width: 100%;
-    max-width: 100%;
-  }
-
-  .fav-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.7rem;
-    padding: 0.6rem 0.75rem;
-    background: #fff8f3;
-    border: 1px solid transparent;
-    border-radius: 10px;
-    transition: all 0.2s ease;
-    min-width: 0;
-  }
-
-  .fav-row:hover {
-    background: #fff;
-    border-color: #f1e4d8;
-  }
-
-  .fav-row-content {
-    min-width: 0;
-    flex: 1;
-  }
-
-  .fav-row-title {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #1c1410;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .fav-row-meta {
-    font-size: 0.68rem;
-    color: #8a7266;
-    margin-top: 0.1rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .btn-add {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.4rem 0.85rem;
-    font-size: 0.7rem;
-    font-weight: 600;
-    font-family: inherit;
-    color: #fff;
-    background: linear-gradient(135deg, #fb923c, #ea580c);
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    box-shadow: 0 3px 10px rgba(249, 115, 22, 0.30);
-    transition: all 0.2s ease;
-    flex-shrink: 0;
-  }
-
-  .btn-add:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 5px 14px rgba(234, 88, 12, 0.40);
-  }
-
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.2rem 0.55rem;
-    font-size: 0.62rem;
-    font-weight: 700;
-    border-radius: 999px;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-
-  .badge.good {
-    background: #ecfdf5;
-    color: #047857;
-  }
-
-  .empty {
-    text-align: center;
-    padding: 1.2rem 0.75rem;
-  }
-
-  .empty-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 42px;
-    height: 42px;
-    margin-bottom: 0.6rem;
-    background: rgba(249, 115, 22, 0.10);
-    color: #ea580c;
-    border-radius: 50%;
-    font-size: 1.15rem;
-  }
-
-  .empty h3 {
-    font-size: 0.88rem;
-    font-weight: 700;
-    color: #1c1410;
-    margin: 0 0 0.3rem;
-  }
-
-  .empty p {
-    font-size: 0.78rem;
-    color: #8a7266;
-    margin: 0;
-    line-height: 1.4;
-  }
-
-  .fav-empty-text {
-    font-size: 0.78rem;
-    color: #8a7266;
-    margin: 0;
-    line-height: 1.4;
-  }
-
-  @media (max-width: 520px) {
-    .fav-panel,
-    .fav-discover {
-      padding: 0.95rem 0.85rem 0.8rem;
-    }
-
-    .fav-grid {
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 0.6rem;
-    }
-
-    .fav-card-body { padding: 0.6rem 0.7rem 0.4rem; }
-    .fav-card-action { padding: 0 0.7rem 0.6rem; }
-  }
-
-  @media (max-width: 380px) {
-    .fav-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-</style>

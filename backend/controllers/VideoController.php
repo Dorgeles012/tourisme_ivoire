@@ -4,7 +4,7 @@ final class VideoController {
     public static function index(): never {
         $page = max(1, (int)($_GET['page'] ?? 1));
         $perPage = min(30, max(1, (int)($_GET['per_page'] ?? 12)));
-        $stmt = db()->prepare("SELECT v.id,v.titre,v.description,v.media_url,v.miniature_url,v.duree_secondes,v.created_at,u.id AS auteur_id,u.nom AS auteur,d.nom AS destination,(SELECT COUNT(*) FROM likes lk WHERE lk.video_id=v.id) AS likes,(SELECT COUNT(*) FROM commentaires co WHERE co.video_id=v.id AND co.statut='publie' AND co.deleted_at IS NULL) AS commentaires FROM videos v JOIN utilisateurs u ON u.id=v.utilisateur_id LEFT JOIN destinations d ON d.id=v.destination_id WHERE v.statut='publie' AND v.deleted_at IS NULL ORDER BY v.created_at DESC LIMIT ? OFFSET ?");
+        $stmt = db()->prepare("SELECT v.id,v.titre,v.description,v.media_url,v.miniature_url,v.duree_secondes,v.created_at,u.id AS auteur_id,u.nom AS auteur,d.nom AS destination,(SELECT COUNT(*) FROM likes lk WHERE lk.video_id=v.id) AS likes,(SELECT COUNT(*) FROM commentaires co WHERE co.video_id=v.id AND co.statut='publie' AND co.deleted_at IS NULL) AS commentaires FROM videos v JOIN utilisateurs u ON u.id=v.utilisateur_id LEFT JOIN destinations d ON d.id=v.destination_id WHERE v.statut='publie' AND v.deleted_at IS NULL AND v.is_demo=0 ORDER BY v.created_at DESC LIMIT ? OFFSET ?");
         $stmt->bindValue(1, $perPage, PDO::PARAM_INT);
         $stmt->bindValue(2, ($page - 1) * $perPage, PDO::PARAM_INT);
         $stmt->execute();
@@ -12,7 +12,7 @@ final class VideoController {
     }
 
     public static function show(int $id): never {
-        $stmt = db()->prepare("SELECT v.id,v.titre,v.description,v.media_url,v.miniature_url,v.duree_secondes,v.created_at,u.id AS auteur_id,u.nom AS auteur,d.nom AS destination,(SELECT COUNT(*) FROM likes lk WHERE lk.video_id=v.id) AS likes FROM videos v JOIN utilisateurs u ON u.id=v.utilisateur_id LEFT JOIN destinations d ON d.id=v.destination_id WHERE v.id=? AND v.statut='publie' AND v.deleted_at IS NULL LIMIT 1");
+        $stmt = db()->prepare("SELECT v.id,v.titre,v.description,v.media_url,v.miniature_url,v.duree_secondes,v.created_at,u.id AS auteur_id,u.nom AS auteur,d.nom AS destination,(SELECT COUNT(*) FROM likes lk WHERE lk.video_id=v.id) AS likes FROM videos v JOIN utilisateurs u ON u.id=v.utilisateur_id LEFT JOIN destinations d ON d.id=v.destination_id WHERE v.id=? AND v.statut='publie' AND v.deleted_at IS NULL AND v.is_demo=0 LIMIT 1");
         $stmt->execute([$id]);
         $video = $stmt->fetch();
         if (!$video) api_error('not_found', 'Vidéo introuvable.', 404);
@@ -60,7 +60,7 @@ final class VideoController {
     public static function toggleLike(int $videoId): never {
         $userId = AuthMiddleware::userId();
         $pdo = db();
-        $check = $pdo->prepare("SELECT id FROM videos WHERE id=? AND statut='publie' AND deleted_at IS NULL");
+        $check = $pdo->prepare("SELECT id FROM videos WHERE id=? AND statut='publie' AND deleted_at IS NULL AND is_demo=0");
         $check->execute([$videoId]);
         if (!$check->fetchColumn()) api_error('not_found', 'Vidéo introuvable.', 404);
         $existing = $pdo->prepare('SELECT id FROM likes WHERE utilisateur_id=? AND video_id=?');
@@ -75,7 +75,7 @@ final class VideoController {
     }
 
     public static function comments(int $videoId): never {
-        $check = db()->prepare("SELECT id FROM videos WHERE id=? AND statut='publie' AND deleted_at IS NULL");
+        $check = db()->prepare("SELECT id FROM videos WHERE id=? AND statut='publie' AND deleted_at IS NULL AND is_demo=0");
         $check->execute([$videoId]);
         if (!$check->fetchColumn()) api_error('not_found', 'Vidéo introuvable.', 404);
         $stmt = db()->prepare("SELECT c.id,c.contenu,c.created_at,u.id AS auteur_id,u.nom AS auteur FROM commentaires c JOIN utilisateurs u ON u.id=c.utilisateur_id WHERE c.video_id=? AND c.statut='publie' AND c.deleted_at IS NULL ORDER BY c.created_at DESC LIMIT 100");
@@ -88,7 +88,7 @@ final class VideoController {
         $data = request_json();
         $content = trim((string)($data['contenu'] ?? ''));
         if ($content === '' || mb_strlen($content) > 2000) api_error('validation_error', 'Un commentaire de 1 à 2 000 caractères est requis.', 422);
-        $check = db()->prepare("SELECT id FROM videos WHERE id=? AND statut='publie' AND deleted_at IS NULL");
+        $check = db()->prepare("SELECT id FROM videos WHERE id=? AND statut='publie' AND deleted_at IS NULL AND is_demo=0");
         $check->execute([$videoId]);
         if (!$check->fetchColumn()) api_error('not_found', 'Vidéo introuvable.', 404);
         $stmt = db()->prepare("INSERT INTO commentaires(utilisateur_id,video_id,contenu,statut) VALUES(?,?,?,'publie')");

@@ -13,7 +13,7 @@ final class UserModel {
         $stmt = db()->prepare("SELECT u.id,u.nom,u.prenom,u.email,u.telephone,u.avatar_url,u.created_at,
             (SELECT COUNT(*) FROM visites v WHERE v.utilisateur_id=u.id) AS visites,
             (SELECT COUNT(*) FROM favoris f JOIN destinations d ON d.id=f.destination_id
-                WHERE f.utilisateur_id=u.id AND d.statut_publication='publie' AND d.deleted_at IS NULL) AS favoris,
+                WHERE f.utilisateur_id=u.id AND d.statut_publication='publie' AND d.deleted_at IS NULL AND d.is_demo=0) AS favoris,
             COALESCE((SELECT p.points_total FROM passeports p WHERE p.utilisateur_id=u.id),0) AS points
             FROM utilisateurs u WHERE u.id=? AND u.statut='actif' AND u.deleted_at IS NULL");
         $stmt->execute([$id]);

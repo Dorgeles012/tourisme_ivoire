@@ -18,6 +18,7 @@ $sidebarLinks = [
  ['label'=>'Tableau de bord','href'=>'index.php','page'=>'index.php','module'=>''],
  ['label'=>'Utilisateurs','href'=>'index.php?module=users','page'=>'index.php','module'=>'users'],
  ['label'=>'Destinations','href'=>'index.php?module=destinations','page'=>'index.php','module'=>'destinations'],
+ ['label'=>'Actualités, offres & séjours','href'=>'tourism_content.php','page'=>'tourism_content.php','module'=>''],
  ['label'=>'Catégories','href'=>'index.php?module=categories','page'=>'index.php','module'=>'categories'],
  ['label'=>'Géographie','href'=>'geography.php','page'=>'geography.php','module'=>''],
  ['label'=>'Patrimoines','href'=>'index.php?module=heritage','page'=>'index.php','module'=>'heritage'],

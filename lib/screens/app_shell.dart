@@ -1,5 +1,5 @@
- 
- 
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -11,6 +11,7 @@ import 'explore_screen.dart';
 import 'home_screen.dart';
 import 'profile_screen.dart';
 import 'video_screen.dart';
+import 'tourism_content_screen.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({
@@ -28,14 +29,25 @@ class AppShell extends StatefulWidget {
   State<AppShell> createState() => _AppShellState();
 }
 
-class _AppShellState extends State<AppShell> {
+class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   late final ApiService _api;
   int _index = 0;
+  int _contentRevision = 0;
+  String? _lastContentVersion;
+  Timer? _contentPoll;
+  Timer? _notificationPoll;
+  bool _checkingContent = false;
+  bool _checkingNotifications = false;
+  int? _lastNotificationId;
 
   static const _destinations = [
     _NavItem(Icons.home_rounded, Icons.home_outlined, 'Accueil'),
     _NavItem(Icons.explore_rounded, Icons.explore_outlined, 'Explorer'),
-    _NavItem(Icons.play_circle_rounded, Icons.play_circle_outline_rounded, 'Vidéos'),
+    _NavItem(
+      Icons.play_circle_rounded,
+      Icons.play_circle_outline_rounded,
+      'Vidéos',
+    ),
     _NavItem(Icons.person_rounded, Icons.person_outline_rounded, 'Profil'),
   ];
 
@@ -43,7 +55,92 @@ class _AppShellState extends State<AppShell> {
   void initState() {
     super.initState();
     _api = widget.api ?? ApiService();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _routeExistingAdmin());
+    WidgetsBinding.instance.addObserver(this);
+    _contentPoll = Timer.periodic(
+      const Duration(seconds: 60),
+      (_) => _checkContentUpdates(),
+    );
+    _notificationPoll = Timer.periodic(
+      const Duration(seconds: 60),
+      (_) => _checkDatabaseNotifications(showNew: true),
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _routeExistingAdmin();
+      _checkContentUpdates();
+      _checkDatabaseNotifications();
+    });
+  }
+
+  Future<void> _checkDatabaseNotifications({bool showNew = false}) async {
+    if (_checkingNotifications) return;
+    _checkingNotifications = true;
+    try {
+      if (!await _api.hasSession) {
+        _lastNotificationId = null;
+        return;
+      }
+      final items = await _api.getNotifications(page: 1);
+      if (items.isEmpty) return;
+      final rows = items
+          .whereType<Map>()
+          .map(Map<String, dynamic>.from)
+          .toList();
+      if (rows.isEmpty) return;
+      final newestId = rows
+          .map((row) => int.tryParse('${row['id']}') ?? 0)
+          .reduce((a, b) => a > b ? a : b);
+      final previousId = _lastNotificationId;
+      _lastNotificationId = newestId;
+      if (!showNew ||
+          previousId == null ||
+          newestId <= previousId ||
+          !mounted) {
+        return;
+      }
+      final newest = rows.firstWhere(
+        (row) => (int.tryParse('${row['id']}') ?? 0) == newestId,
+      );
+      final target = Uri.tryParse('${newest['cible_url'] ?? ''}');
+      final type = target?.queryParameters['page'];
+      final canOpen = const {
+        'actualites',
+        'promotions',
+        'hebergements',
+        'activites',
+      }.contains(type);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${newest['titre'] ?? 'Nouveau contenu publié'}'),
+          action: canOpen
+              ? SnackBarAction(
+                  label: 'Ouvrir',
+                  onPressed: () => _openPublishedContent(type!),
+                )
+              : null,
+        ),
+      );
+    } catch (_) {
+      // MySQL notification polling must not block normal browsing when offline.
+    } finally {
+      _checkingNotifications = false;
+    }
+  }
+
+  void _openPublishedContent(String type) {
+    if (!const {
+      'actualites',
+      'promotions',
+      'hebergements',
+      'activites',
+    }.contains(type)) {
+      return;
+    }
+    setState(() => _index = 0);
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => TourismContentScreen(api: _api, initialType: type),
+      ),
+    );
   }
 
   Future<void> _routeExistingAdmin() async {
@@ -69,6 +166,47 @@ class _AppShellState extends State<AppShell> {
     }
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkContentUpdates();
+      _checkDatabaseNotifications(showNew: true);
+    }
+  }
+
+  Future<void> _checkContentUpdates() async {
+    if (_checkingContent) return;
+    _checkingContent = true;
+    try {
+      final version = await _api.getContentVersion();
+      if (!mounted) return;
+      if (_lastContentVersion != null && version != _lastContentVersion) {
+        setState(() => _contentRevision++);
+      }
+      _lastContentVersion = version;
+    } catch (_) {
+      // A version check must never block browsing while the API is unavailable.
+    } finally {
+      _checkingContent = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _contentPoll?.cancel();
+    _notificationPoll?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    if (widget.api == null) _api.dispose();
+    super.dispose();
+  }
+
+  Future<void> _refreshCurrentPage() async {
+    final revision = _contentRevision;
+    await _checkContentUpdates();
+    if (!mounted) return;
+    if (_contentRevision == revision) setState(() => _contentRevision++);
+  }
+
   List<Widget> get _pages => [
     HomeScreen(
       api: _api,
@@ -92,11 +230,12 @@ class _AppShellState extends State<AppShell> {
 
     if (useRail) {
       return _DesktopLayout(
-      index: _index,
-      onIndexChanged: (i) => setState(() => _index = i),
-      pages: _pages,
-      destinations: _destinations,
-    );
+        index: _index,
+        onIndexChanged: (i) => setState(() => _index = i),
+        pages: _pages,
+        destinations: _destinations,
+        contentRevision: _contentRevision,
+      );
     }
 
     return _MobileLayout(
@@ -104,11 +243,11 @@ class _AppShellState extends State<AppShell> {
       onIndexChanged: (i) => setState(() => _index = i),
       pages: _pages,
       destinations: _destinations,
+      contentRevision: _contentRevision,
+      onRefresh: _refreshCurrentPage,
     );
   }
 }
-
- 
 
 class _MobileLayout extends StatelessWidget {
   const _MobileLayout({
@@ -116,12 +255,16 @@ class _MobileLayout extends StatelessWidget {
     required this.onIndexChanged,
     required this.pages,
     required this.destinations,
+    required this.contentRevision,
+    required this.onRefresh,
   });
 
   final int index;
   final ValueChanged<int> onIndexChanged;
   final List<Widget> pages;
   final List<_NavItem> destinations;
+  final int contentRevision;
+  final Future<void> Function() onRefresh;
 
   @override
   Widget build(BuildContext context) {
@@ -133,13 +276,13 @@ class _MobileLayout extends StatelessWidget {
           duration: const Duration(milliseconds: 200),
           switchInCurve: Curves.easeOut,
           switchOutCurve: Curves.easeIn,
-          transitionBuilder: (child, animation) => FadeTransition(
-            opacity: animation,
-            child: child,
-          ),
+          transitionBuilder: (child, animation) =>
+              FadeTransition(opacity: animation, child: child),
           child: KeyedSubtree(
-            key: ValueKey(index),
-            child: pages[index],
+            key: ValueKey((index, contentRevision)),
+            child: index == 0
+                ? pages[index]
+                : RefreshIndicator(onRefresh: onRefresh, child: pages[index]),
           ),
         ),
       ),
@@ -163,20 +306,20 @@ class _MobileLayout extends StatelessWidget {
   }
 }
 
- 
-
 class _DesktopLayout extends StatelessWidget {
   const _DesktopLayout({
     required this.index,
     required this.onIndexChanged,
     required this.pages,
     required this.destinations,
+    required this.contentRevision,
   });
 
   final int index;
   final ValueChanged<int> onIndexChanged;
   final List<Widget> pages;
   final List<_NavItem> destinations;
+  final int contentRevision;
 
   @override
   Widget build(BuildContext context) {
@@ -185,7 +328,6 @@ class _DesktopLayout extends StatelessWidget {
       body: SafeArea(
         child: Row(
           children: [
-             
             NavigationRail(
               selectedIndex: index,
               onDestinationSelected: onIndexChanged,
@@ -193,7 +335,7 @@ class _DesktopLayout extends StatelessWidget {
               extended: true,
               minExtendedWidth: 200,
               indicatorColor: ivorianOrange.withValues(alpha: 0.14),
-               
+
               leading: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 24, 16, 20),
                 child: Row(
@@ -209,7 +351,11 @@ class _DesktopLayout extends StatelessWidget {
                         ),
                         borderRadius: BorderRadius.circular(kRadiusMd),
                       ),
-                      child: const Icon(Icons.landscape_rounded, color: Colors.white, size: 22),
+                      child: const Icon(
+                        Icons.landscape_rounded,
+                        color: Colors.white,
+                        size: 22,
+                      ),
                     ),
                     const SizedBox(width: 10),
                     const Text(
@@ -233,22 +379,20 @@ class _DesktopLayout extends StatelessWidget {
                   ),
               ],
             ),
-             
+
             VerticalDivider(
               width: 1,
               thickness: 1,
               color: scheme.outlineVariant.withValues(alpha: 0.4),
             ),
-             
+
             Expanded(
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 200),
-                transitionBuilder: (child, animation) => FadeTransition(
-                  opacity: animation,
-                  child: child,
-                ),
+                transitionBuilder: (child, animation) =>
+                    FadeTransition(opacity: animation, child: child),
                 child: KeyedSubtree(
-                  key: ValueKey(index),
+                  key: ValueKey((index, contentRevision)),
                   child: pages[index],
                 ),
               ),

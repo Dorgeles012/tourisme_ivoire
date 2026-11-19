@@ -17,6 +17,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') { http_response_code(204);
 require_once APP_ROOT . '/controllers/AuthController.php';
 require_once APP_ROOT . '/controllers/AdminHandoffController.php';
 require_once APP_ROOT . '/controllers/DestinationController.php';
+require_once APP_ROOT . '/controllers/ContentController.php';
+require_once APP_ROOT . '/controllers/TourismContentController.php';
 require_once APP_ROOT . '/controllers/ReferenceController.php';
 require_once APP_ROOT . '/controllers/FavoriteController.php';
 require_once APP_ROOT . '/controllers/TransportController.php';

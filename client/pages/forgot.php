@@ -325,7 +325,7 @@ $csrf = client_csrf_field();
       <div class="notice success" role="status"><?= client_h($success) ?></div>
     <?php endif; ?>
 
-    <form method="post" class="form-grid" autocomplete="on" novalidate>
+    <form method="post" class="form-grid" autocomplete="on" data-client-validation novalidate>
       <?= $csrf ?>
       <input type="hidden" name="action" value="forgot">
 

@@ -7,7 +7,7 @@ final class TransportController {
     }
 
     public static function itineraries(): never {
-        $where = ["i.statut='actif'", "i.disponibilite<>'indisponible'"];
+        $where = ["i.statut='actif'", "i.disponibilite<>'indisponible'", "i.is_demo=0", "(op.is_demo=0 OR op.id IS NULL)", "(op.statut='actif' OR op.id IS NULL)"];
         $params = [];
         $from = trim((string)($_GET['depart'] ?? ''));
         $to = trim((string)($_GET['arrivee'] ?? ''));
@@ -41,7 +41,7 @@ final class TransportController {
         $pdo = db();
         $pdo->beginTransaction();
         try {
-            $stmt = $pdo->prepare("SELECT id,depart_libelle,arrivee_libelle,tarif,devise,depart_at,disponibilite FROM itineraires WHERE id=? AND statut='actif' FOR UPDATE");
+            $stmt = $pdo->prepare("SELECT id,depart_libelle,arrivee_libelle,tarif,devise,depart_at,disponibilite FROM itineraires WHERE id=? AND statut='actif' AND is_demo=0 AND (transporteur_id IS NULL OR transporteur_id IN (SELECT id FROM transporteurs WHERE is_demo=0 AND statut='actif')) FOR UPDATE");
             $stmt->execute([$itineraryId]);
             $route = $stmt->fetch();
             if (!$route || $route['disponibilite'] === 'indisponible') {

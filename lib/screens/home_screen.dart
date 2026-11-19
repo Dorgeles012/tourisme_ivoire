@@ -30,6 +30,14 @@ class _FeatureData {
 
 final List<_FeatureData> _kFeatures = [
   _FeatureData(
+    icon: Icons.travel_explore_rounded,
+    title: 'Actualités & séjours',
+    subtitle: 'Offres, hébergements et activités',
+    shortLabel: 'À découvrir',
+    color: const Color(0xFF9B59B6),
+    builder: (api, _) => TourismContentScreen(api: api),
+  ),
+  _FeatureData(
     icon: Icons.directions_bus_rounded,
     title: 'Transport',
     subtitle: 'Rechercher et réserver',
